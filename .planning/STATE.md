@@ -2,17 +2,17 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Better Deckplans
-current_phase: 29
-current_phase_name: interactive-deckplan-map-editor-with-live-preview-yaml-sync-
+current_phase: 31
+current_phase_name: deckplan-format-per-deck-hulls-detail-linework
 status: ready
-stopped_at: Phase 31 context gathered
-last_updated: "2026-07-02T23:32:37.820Z"
-last_activity: 2026-06-30
-last_activity_desc: Phase 29 closed
+stopped_at: Phase 31 planned (3 plans, 3 waves)
+last_updated: "2026-07-29T16:49:53.000Z"
+last_activity: 2026-07-29
+last_activity_desc: Phase 31 planned (3 plans, 3 waves)
 progress:
   total_phases: 22
   completed_phases: 20
-  total_plans: 56
+  total_plans: 59
   completed_plans: 55
   percent: 91
 ---
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-12)
 
 **Core value:** Give the GM a single tool that enhances the tabletop experience with atmospheric digital interfaces without interrupting gameplay flow.
-**Current focus:** Phase 29 — interactive-deckplan-map-editor-with-live-preview-yaml-sync-
+**Current focus:** Phase 31 — deckplan-format-per-deck-hulls-detail-linework
 
 ## Current Position
 
 Phase: 29 (interactive-deckplan-map-editor-with-live-preview-yaml-sync-) — COMPLETE ✓
 Phase: 31 (deckplan-format-per-deck-hulls-detail-linework) — NEXT
-Status: Ready to plan Phase 31
-Last activity: 2026-06-30 — Phase 29 closed
+Status: Ready to execute Phase 31 (3 plans, 3 waves)
+Last activity: 2026-07-29 — Phase 31 planned
 
 ## v1.0 Milestone Archive
 
@@ -81,11 +81,11 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/31-deckplan-format-per-deck-hulls-detail-linework/31-CONTEXT.md
+**Resume file:** .planning/phases/31-deckplan-format-per-deck-hulls-detail-linework/31-01-PLAN.md
 
-Last session: 2026-07-02T23:32:37.799Z
-Stopped at: Phase 31 context gathered
-Next step: /gsd-plan-phase 31
+Last session: 2026-07-29T16:49:53.000Z
+Stopped at: Phase 31 planned (3 plans, 3 waves)
+Next step: /gsd-execute-phase 31
 
 ## Performance Metrics
 
