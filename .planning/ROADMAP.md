@@ -90,8 +90,13 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
     3. `deckplan.yaml` supports decorative detail linework attached to a room and to the deck exterior, and `EncounterMapRenderer` draws it
     4. Players viewing an unrevealed room do not see its interior detail linework; once revealed, the details appear
     5. Exterior/hull detail linework is always visible regardless of room reveal state
-  - **Plans:** 0 plans (run `/gsd:plan-phase 31` to break down)
+  - **Plans:** 3 plans
+    - [ ] 31-01-PLAN.md — Per-deck additive hulls: hullNormalizer + multi-polygon/holes rendering + patrol_gunboat two-deck testbed + hull schema doc (Wave 1)
+    - [ ] 31-02-PLAN.md — Detail linework: DetailEntry + detailNormalizer gating + DetailsLayer + interior details inside the room reveal group + details schema doc (Wave 2)
+    - [ ] 31-03-PLAN.md — Backend thin-passthrough regression guard + human visual verification of all five success criteria (Wave 3)
+  - **Note:** success criterion 1's "overrides" is refined to **additive** semantics per 31-CONTEXT.md D-02 — a deck hull adds geometry to the shared silhouette and never replaces it.
   - **UI hint**: yes
+  - Context: `.planning/phases/31-deckplan-format-per-deck-hulls-detail-linework/31-CONTEXT.md`
 
 - [ ] Phase 32: SVG Converter — Details, Per-Deck Hulls, Circular Rooms
   - **Goal:** Extend `tools/svg_to_map.py` to emit the new Phase 31 schema fields and circular rooms, so Inkscape-authored decks convert directly into richer `deckplan.yaml` output.
