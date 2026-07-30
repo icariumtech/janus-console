@@ -306,6 +306,38 @@ export interface VentPath {
   label?: string;
 }
 
+/**
+ * A decorative detail primitive — consoles, beds, furniture, machinery
+ * blocks, hull greebles — drawn in one fixed blueprint-grade renderer style
+ * (D-10). An entry carries exactly ONE of `points` (polyline) or `circle`;
+ * all coordinates are in grid-cell units, matching `VentPath.points`.
+ *
+ * `room` is the gating condition (D-08): present makes the entry INTERIOR
+ * — reveal-gated, rendered only inside that room's SVG group so it inherits
+ * the room's CRT flicker cascade and GM dimming for free (D-12/D-13);
+ * absent makes the entry EXTERIOR — always visible regardless of any
+ * room's reveal state (DET-03). A `room` value matching no room on the
+ * deck is a fail-safe (D-14): dropped for players, shown to the GM with a
+ * console warning — see `details/detailNormalizer.ts`.
+ *
+ * `id` is optional (D-09) — hand-authors name only what matters for future
+ * editor/MCP targeting; Phase 32's `svg_to_map.py` emits an id only when
+ * the Inkscape object carries a label, and flattens Inkscape curves into
+ * polyline segments.
+ *
+ * There are NO styling fields — appearance (stroke color/width) is fixed
+ * in the renderer (D-10); `filled` is the only appearance flag the format
+ * accepts, and only affects closed shapes (a `closed` polyline or a circle).
+ */
+export interface DetailEntry {
+  id?: string;
+  room?: string;                        // presence = interior/reveal-gated; absence = exterior/always-visible
+  points?: [number, number][];          // polyline variant — exactly one of points/circle
+  closed?: boolean;                     // close the polyline into a shape
+  circle?: { cx: number; cy: number; r: number };  // circle variant
+  filled?: boolean;                     // faint fill for closed shapes only (D-11)
+}
+
 /** Complete grid-based encounter map (new format) */
 export interface GridEncounterMapData {
   name: string;
@@ -325,6 +357,13 @@ export interface GridEncounterMapData {
   doors?: AuthoredDoor[];
   /** Ventilation paths — hidden from players until revealed by the GM */
   vents?: VentPath[];
+  /**
+   * Decorative detail linework — lives at the DECK level (mirrors `vents`),
+   * NOT nested under `GridRoom` (D-06). Each entry references a room by id
+   * (or omits `room` for exterior/hull details) rather than being authored
+   * inside that room's own list. See `DetailEntry` for the gating contract.
+   */
+  details?: DetailEntry[];
   terminals?: TerminalData[];
   poi?: PoiData[];
   metadata?: MapMetadata;

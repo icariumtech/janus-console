@@ -23,6 +23,7 @@ export const COLORS = {
   hullFill: '#142020',
   vent: '#2d7a5a',
   ventHidden: '#1a4a35',
+  detail: '#3a5a5a',
 };
 
 // Connection/door type styles
@@ -36,3 +37,10 @@ export const CONNECTION_STYLES: Record<string, { stroke: string; doorFill: strin
 
 // Wall stroke thickness in pixels (creates the heavy-wall aesthetic)
 export const WALL_THICKNESS = 5;
+
+// Detail linework — fixed thin stroke (~1/4 wall thickness, D-10) and faint
+// fill opacity for `filled: true` closed shapes (D-11). Derived from
+// WALL_THICKNESS so a future wall-thickness change keeps detail strokes
+// proportionally subordinate rather than hardcoding a pixel value.
+export const DETAIL_STROKE_WIDTH = WALL_THICKNESS / 4;
+export const DETAIL_FILL_OPACITY = 0.25;
