@@ -4,16 +4,16 @@ milestone: v3.0
 milestone_name: Better Deckplans
 current_phase: 31
 current_phase_name: deckplan-format-per-deck-hulls-detail-linework
-status: ready
-stopped_at: Phase 31 planned (3 plans, 3 waves)
-last_updated: "2026-07-29T16:49:53.000Z"
-last_activity: 2026-07-29
-last_activity_desc: Phase 31 planned (3 plans, 3 waves)
+status: executing
+stopped_at: Completed 31-01-PLAN.md
+last_updated: "2026-07-30T15:11:03.626Z"
+last_activity: 2026-07-30
+last_activity_desc: Phase 31 execution started
 progress:
   total_phases: 22
   completed_phases: 20
   total_plans: 59
-  completed_plans: 55
+  completed_plans: 56
   percent: 91
 ---
 
@@ -28,10 +28,9 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 
 ## Current Position
 
-Phase: 29 (interactive-deckplan-map-editor-with-live-preview-yaml-sync-) — COMPLETE ✓
-Phase: 31 (deckplan-format-per-deck-hulls-detail-linework) — NEXT
-Status: Ready to execute Phase 31 (3 plans, 3 waves)
-Last activity: 2026-07-29 — Phase 31 planned
+Phase: 31 (deckplan-format-per-deck-hulls-detail-linework) — EXECUTING
+Status: Executing Phase 31
+Last activity: 2026-07-30 — Phase 31 execution started
 
 ## v1.0 Milestone Archive
 
@@ -81,10 +80,10 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/31-deckplan-format-per-deck-hulls-detail-linework/31-01-PLAN.md
+**Resume file:** None
 
-Last session: 2026-07-29T16:49:53.000Z
-Stopped at: Phase 31 planned (3 plans, 3 waves)
+Last session: 2026-07-30T15:11:03.610Z
+Stopped at: Completed 31-01-PLAN.md
 Next step: /gsd-execute-phase 31
 
 ## Performance Metrics
@@ -97,7 +96,16 @@ Next step: /gsd-execute-phase 31
 | Phase 28.1 P01 | 12min | 2 tasks | 2 files |
 | Phase 28.1 P02 | interactive | 11 UAT tests | all pass |
 | Phase 28.1 P03 | 15min | 3 tasks | 3 VERIFICATION files |
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 31 P01 | ~15min | 2 tasks | 10 files |
 
 ## Operator Next Steps
 
 - Start the next milestone with /gsd:new-milestone
+
+## Decisions
+
+- [Phase ?]: Per-deck hulls are add-alongside (polygon/polygons both valid, no migration); hullNormalizer never throws — drops malformed polygons with a warning

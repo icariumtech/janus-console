@@ -24,8 +24,8 @@
 
 ### Hull Geometry (HULL)
 
-- [ ] **HULL-01**: A deck can declare its own hull polygon, overriding the location-level hull
-- [ ] **HULL-02**: A deck hull can consist of multiple disjoint polygons (pods, nacelles, detached modules)
+- [x] **HULL-01**: A deck can declare its own hull polygon, overriding the location-level hull
+- [x] **HULL-02**: A deck hull can consist of multiple disjoint polygons (pods, nacelles, detached modules)
 - [ ] **HULL-03**: `svg_to_map.py` emits per-deck hulls from per-deck Hull sublayers
 
 ### Circular Rooms (CIRC)
@@ -64,8 +64,8 @@
 | EDIT-04 | Phase 29 | Pending |
 | EDIT-05 | Phase 29 | Pending |
 | EDIT-06 | Phase 29 | Pending |
-| HULL-01 | Phase 31 | Pending |
-| HULL-02 | Phase 31 | Pending |
+| HULL-01 | Phase 31 | Complete |
+| HULL-02 | Phase 31 | Complete |
 | DET-01 | Phase 31 | Pending |
 | DET-03 | Phase 31 | Pending |
 | DET-02 | Phase 32 | Pending |
