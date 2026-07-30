@@ -8,17 +8,19 @@
  * are in grid-cell units. The `mapView` module is the ONLY producer of SVG
  * coordinates — it composes this module's output with a `Projection`.
  *
- * Allowed imports: `polygon2d`, `encounterMap` types.
+ * Allowed imports: `polygon2d`, `encounterMap` types, `hullNormalizer` (pure,
+ * no React/DOM — the single validation gate for hull polygons/holes).
  * Forbidden imports: `gridProjection` (would invert the dependency), pixel
  * concepts (ratios are fine; pixel ratios are not).
  */
-import { Door, GridRect, GridRoom, HullDef } from '../../../../types/encounterMap';
+import { Door, GridRect, GridRoom, HullDef, NormalizedHull } from '../../../../types/encounterMap';
 import {
   octagonFromRect,
   Point,
   Polygon,
   polygonAreaCentroid as polyAreaCentroid,
 } from '../../../../utils/polygon2d';
+import { normalizeHull } from '../hull/hullNormalizer';
 
 // ---- Grid-space coordinate types --------------------------------------
 
@@ -93,7 +95,7 @@ export function roomLabelGrid(room: GridRoom): GridPoint {
  */
 export function roomBBoxGrid(
   rooms: GridRoom[],
-  hull?: HullDef,
+  hull?: HullDef | NormalizedHull | null,
   padding = 0,
 ): GridRectArea {
   let minX = Infinity;
@@ -123,12 +125,19 @@ export function roomBBoxGrid(
       }
     }
   }
-  if (hull) {
-    for (const [px, py] of hull.polygon) {
-      minX = Math.min(minX, px);
-      minY = Math.min(minY, py);
-      maxX = Math.max(maxX, px);
-      maxY = Math.max(maxY, py);
+  // Normalize before iterating: collapses `polygon`/`polygons` into one
+  // list and validates each polygon (drop-and-warn on malformed entries).
+  // `holes` are skipped entirely — a hole is inside a polygon and can
+  // never extend the bounds.
+  const normalizedHull = normalizeHull(hull);
+  if (normalizedHull) {
+    for (const polygon of normalizedHull.polygons) {
+      for (const [px, py] of polygon) {
+        minX = Math.min(minX, px);
+        minY = Math.min(minY, py);
+        maxX = Math.max(maxX, px);
+        maxY = Math.max(maxY, py);
+      }
     }
   }
   if (!isFinite(minX)) {

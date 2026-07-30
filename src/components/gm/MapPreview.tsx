@@ -182,9 +182,11 @@ export function MapPreview({
         maxX = Math.max(maxX, cx + r); maxY = Math.max(maxY, cy + r);
       }
     }
-    // Include hull polygon in bounding box so aspect ratio accounts for full ship silhouette
+    // Include hull polygon in bounding box so aspect ratio accounts for full ship silhouette.
+    // NOTE: this only reads the singular `polygon` field; Task 2 (31-02) replaces this block
+    // with a full `mergeHulls`/`NormalizedHull.polygons` iteration covering `polygons:` too.
     if (effectiveHull) {
-      for (const [px, py] of effectiveHull.polygon) {
+      for (const [px, py] of effectiveHull.polygon ?? []) {
         minX = Math.min(minX, px); minY = Math.min(minY, py);
         maxX = Math.max(maxX, px); maxY = Math.max(maxY, py);
       }

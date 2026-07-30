@@ -1,6 +1,6 @@
 name: USCSS Patrol Gunboat
 facility_type: ship
-total_decks: 1
+total_decks: 2
 unit_size: 30
 hull:
   polygon:
@@ -164,4 +164,46 @@ decks:
   - {id: bridge_door_0, rooms: [bridge, corridor_3], type: standard, status: CLOSED, along: 0.5}
   - {id: corridor_1_door_0, rooms: [corridor_1, corridor_3], type: standard, status: CLOSED, along: 0.5}
   - {id: corridor_2_door_0, rooms: [corridor_2, corridor_3], type: standard, status: CLOSED, along: 0.5}
+- id: upper_deck
+  name: Upper Deck
+  level: 2
+  unit_size: 30
+  hull:
+    polygons:
+    - - [19, 8]
+      - [32, 8]
+      - [32, 26]
+      - [19, 26]
+    - - [42, 18]
+      - [48, 18]
+      - [48, 24]
+      - [42, 24]
+    holes:
+    - - [24, 14]
+      - [27, 14]
+      - [27, 18]
+      - [24, 18]
+  rooms:
+  - id: obs_deck
+    name: OBSERVATION
+    polygon:
+    - [20, 9]
+    - [31, 9]
+    - [31, 13]
+    - [20, 13]
+  - id: upper_corridor
+    name: ''
+    type: corridor
+    polygon:
+    - [24, 13]
+    - [27, 13]
+    - [27, 25]
+    - [24, 25]
+  - id: sensor_pod
+    name: SENSOR POD
+    polygon:
+    - [43, 19]
+    - [47, 19]
+    - [47, 23]
+    - [43, 23]
 

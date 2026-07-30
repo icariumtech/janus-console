@@ -40,6 +40,7 @@ import { DoorStatusPopup } from '../../gm/DoorStatusPopup';
 import { topDownProjection } from './geometry/gridProjection';
 import { makeMapView } from './geometry/mapView';
 import { normalizeDoor, normalizeDoors } from './doors/doorNormalizer';
+import { hullPathD, mergeHulls } from './hull/hullNormalizer';
 import { useRoomRevealAnimations } from './animation/useRoomRevealAnimations';
 import { COLORS } from './renderer/mapColors';
 import { RoomsLayer } from './renderer/RoomsLayer';
@@ -77,9 +78,11 @@ interface EncounterMapRendererProps {
   onTokenMove?: (id: string, x: number, y: number, roomId: string) => void;
   onTokenRemove?: (id: string) => void;
   onTokenStatusToggle?: (id: string, status: TokenStatus) => void;
-  /** Hull polygon override — takes precedence over mapData.hull.
-   *  For multi-deck maps, pass the manifest hull here so every deck shows
-   *  the same ship silhouette regardless of which level is active. */
+  /** The shared location/manifest hull silhouette — renders on EVERY deck.
+   *  `mapData.hull` carries this deck's own additional geometry (pods,
+   *  nacelles, detached modules); neither replaces the other — both render
+   *  additively (D-02). For multi-deck maps, pass the manifest hull here so
+   *  every deck shows the same base silhouette regardless of active level. */
   hull?: HullDef;
   /** Optional style override for the root container div (e.g. position:absolute when embedded in MapPreview) */
   style?: React.CSSProperties;
@@ -156,8 +159,15 @@ export function EncounterMapRenderer({
   onPoiMove,
   onEmptyCellClick,
 }: EncounterMapRendererProps) {
-  // Hull override (manifest-level) takes precedence over per-deck hull
-  const effectiveHull = hullProp ?? mapData.hull;
+  // Additive hull (D-02): the shared location/manifest silhouette (hullProp)
+  // renders on every deck AND this deck's own hull (mapData.hull), if any,
+  // adds its geometry on top — neither replaces the other. mergeHulls
+  // dedupes by reference identity so passing the same object twice never
+  // double-draws it.
+  const effectiveHull = useMemo(
+    () => mergeHulls(hullProp, mapData.hull),
+    [hullProp, mapData.hull],
+  );
 
   // Single exclusive-popover state — opening any slot closes all others.
   const { popover, open: openPopover, close: closePopover } = useExclusivePopover<EncounterPopover>();
@@ -212,7 +222,7 @@ export function EncounterMapRenderer({
 
   // SVG dimensions — always computed from ALL rooms + hull (never filtered by visibility)
   const { originX, originY, svgWidth, svgHeight } = useMemo(() => {
-    const bb = view.bbox(mapData.rooms, effectiveHull, viewPadding);
+    const bb = view.bbox(mapData.rooms, effectiveHull ?? undefined, viewPadding);
     return {
       originX: bb.originX,
       originY: bb.originY,
@@ -232,15 +242,25 @@ export function EncounterMapRenderer({
   const rotViewBoxW = rotIs90or270 ? svgHeight : svgWidth;
   const rotViewBoxH = rotIs90or270 ? svgWidth : svgHeight;
 
-  // Hull SVG polygon points string — projected via mapView
-  const hullSvgPoints = useMemo(() => {
+  // Hull SVG geometry — projected via mapView. `fillPath` unions every
+  // outer polygon and hole into one evenodd path (RoomsLayer's hole
+  // technique, scaled to N outer polygons); `outlines`/`holeOutlines` are
+  // the per-polygon stroke rings drawn on top of the fill.
+  const hullSvg = useMemo(() => {
     if (!effectiveHull) return null;
-    return effectiveHull.polygon
-      .map(([x, y]) => {
-        const sp = view.project({ gx: x, gy: y });
-        return `${sp.x},${sp.y}`;
-      })
-      .join(' ');
+    const projectPoint = (gx: number, gy: number) => view.project({ gx, gy });
+    const toPoints = (poly: [number, number][]) =>
+      poly
+        .map(([x, y]) => {
+          const sp = projectPoint(x, y);
+          return `${sp.x},${sp.y}`;
+        })
+        .join(' ');
+    return {
+      fillPath: hullPathD(effectiveHull, projectPoint),
+      outlines: effectiveHull.polygons.map(toPoints),
+      holeOutlines: effectiveHull.holes.map(toPoints),
+    };
   }, [effectiveHull, view]);
 
   // Check if a room is visible (default to true if no visibility state)
@@ -474,21 +494,36 @@ export function EncounterMapRenderer({
             Filled with hull-interior color so the space between rooms
             reads as solid hull material rather than empty void.
             Rendered above the background grid but below room floors. */}
-        {hullSvgPoints && (
+        {hullSvg && (
           <g className="encounter-map__hull">
-            <polygon
-              points={hullSvgPoints}
+            <path
+              d={hullSvg.fillPath}
+              fillRule="evenodd"
               fill={COLORS.hullFill}
               className="encounter-map__hull-fill"
             />
-            <polygon
-              points={hullSvgPoints}
-              fill="none"
-              stroke={COLORS.hullFill}
-              strokeWidth={4}
-              strokeLinejoin="miter"
-              className="encounter-map__hull-outline"
-            />
+            {hullSvg.outlines.map((pts, i) => (
+              <polygon
+                key={`hull-poly-${i}`}
+                points={pts}
+                fill="none"
+                stroke={COLORS.hullFill}
+                strokeWidth={4}
+                strokeLinejoin="miter"
+                className="encounter-map__hull-outline"
+              />
+            ))}
+            {hullSvg.holeOutlines.map((pts, i) => (
+              <polygon
+                key={`hull-hole-${i}`}
+                points={pts}
+                fill="none"
+                stroke={COLORS.hullFill}
+                strokeWidth={4}
+                strokeLinejoin="miter"
+                className="encounter-map__hull-outline"
+              />
+            ))}
           </g>
         )}
 

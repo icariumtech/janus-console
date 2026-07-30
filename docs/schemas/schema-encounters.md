@@ -58,8 +58,22 @@ candidates so you can ask the GM which one.
 
 | Field | Type | Required | Note |
 |---|---|---|---|
-| `hull` | mapping | no | Hull outline: `polygon: [[x,y],...]` in grid cells |
+| `hull` | mapping | no | Shared/manifest hull outline — see **Hull fields** below |
 | `decks` | list | yes | List of deck entries |
+
+### Hull fields
+
+A hull mapping (top-level or per-deck, see below) accepts:
+
+| Field | Type | Required | Note |
+|---|---|---|---|
+| `polygon` | list | no | Single outer polygon: `[[x,y],...]` in grid cells |
+| `polygons` | list | no | Multiple disjoint outer polygons: `[[[x,y],...],...]` — pods, nacelles, detached modules |
+| `holes` | list | no | Polygons subtracted from the hull fill via SVG fill-rule evenodd; not paired to any specific outer polygon |
+
+`polygon` and `polygons` may both appear on the same hull — they combine into one polygon list
+(shared silhouette + disjoint modules). At least one of `polygon`/`polygons` must be present for
+the hull to render.
 
 ### Deck entry fields
 
@@ -70,6 +84,7 @@ candidates so you can ask the GM which one.
 | `level` | integer | yes | Sort key — 1 = lowest deck |
 | `default` | boolean | no | First deck shown on load |
 | `unit_size` | integer | no | Pixels per grid cell (default 30) |
+| `hull` | mapping | no | Deck-level hull (same shape as top-level, see **Hull fields**) — renders **in addition to** the top-level hull. The top-level hull is the shared silhouette drawn on every deck; a deck hull only adds geometry (pods, nacelles), it never replaces or shrinks the shared outline. |
 | `rooms` | list | yes | List of room entries (see GridRoom fields) |
 | `doors` | list | no | Top-level door definitions (see Door fields) |
 | `vents` | list | no | Ventilation path definitions (see Vent fields) |

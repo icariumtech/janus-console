@@ -267,9 +267,36 @@ export interface GridRoom {
   label_offset?: [number, number];  // [dx, dy] in grid-cell units — nudges label from computed center
 }
 
-/** Ship hull outline — optional outer frame polygon for the deck */
+/**
+ * Ship hull outline — optional outer frame polygon(s) for a deck or the
+ * shared location/manifest silhouette.
+ *
+ * `polygon` (singular) and `polygons` (plural) are both accepted authored
+ * forms and may both appear on the same hull — they combine into one
+ * internal polygon list (a deliberate add-alongside transition; `polygon`
+ * remains valid forever, no migration of existing authored data). `holes`
+ * are subtracted from the hull fill (SVG fill-rule evenodd) and are NOT
+ * paired to a specific outer polygon — a hole is "inside whichever polygon
+ * contains it". See `hullNormalizer.normalizeHull` for the single
+ * validation gate that resolves all three into a `NormalizedHull`.
+ */
 export interface HullDef {
-  polygon: [number, number][];  // vertices in grid cell coords
+  polygon?: [number, number][];        // single outer polygon, grid cell coords
+  polygons?: [number, number][][];     // multiple disjoint outer polygons (pods, nacelles, detached modules)
+  holes?: [number, number][][];        // polygons punched out of the hull fill; unpaired to any outer polygon
+}
+
+/**
+ * Canonical post-normalization hull shape — always a flat outer-polygon
+ * list plus a holes list, with `polygon`/`polygons` already combined and
+ * every entry validated. Structurally assignable to `HullDef` (both fields
+ * there are optional), so a `NormalizedHull` can be passed anywhere a
+ * `HullDef` is expected — e.g. `mapView.bbox(rooms, hull?, padding)` — with
+ * no signature churn.
+ */
+export interface NormalizedHull {
+  polygons: [number, number][][];
+  holes: [number, number][][];
 }
 
 /** A ventilation path — a multi-segment polyline through the ship */
