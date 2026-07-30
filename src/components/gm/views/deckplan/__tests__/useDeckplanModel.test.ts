@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { buildIdRangeMap, deckToMapData, parseYamlSafe } from '../useDeckplanModel';
+import { buildIdRangeMap, deckToMapData, parseYamlSafe, DeckplanDoc } from '../useDeckplanModel';
 
 const FIXTURE_PATH = resolve(__dirname, '../__fixtures__/deckplan.fixture.yaml');
 const FIXTURE_TEXT = readFileSync(FIXTURE_PATH, 'utf8');
@@ -138,10 +138,47 @@ describe('deckToMapData', () => {
     expect(data!.rooms.length).toBe(2);
   });
 
-  it('falls back to deckplan-level hull when deck has no hull', () => {
+  it('additive: carries the document-level hull when the deck has no hull of its own', () => {
     const data = deckToMapData(parsed, 'main_deck');
-    // Fixture has hull at deckplan level; neither deck overrides it
+    // Fixture has hull at deckplan level; main_deck declares no hull of its own.
     expect(data!.hull).toBeDefined();
-    expect(data!.hull!.polygon).toBeInstanceOf(Array);
+    expect(data!.hull!.polygons).toBeInstanceOf(Array);
+    expect(data!.hull!.polygons!.length).toBeGreaterThan(0);
+  });
+
+  describe('additive hull merge (D-02)', () => {
+    const docHull = { polygon: [[0, 0], [20, 0], [20, 20]] as [number, number][] };
+    const deckHull = {
+      polygons: [
+        [[30, 30], [40, 30], [40, 40]] as [number, number][],
+        [[50, 50], [60, 50], [60, 60]] as [number, number][],
+      ],
+    };
+
+    const makeDoc = (hull?: typeof docHull, deckOverrides: Record<string, unknown> = {}): DeckplanDoc => ({
+      name: 'Test Ship',
+      hull,
+      decks: [{ id: 'deck_a', name: 'Deck A', rooms: [], ...deckOverrides }],
+    });
+
+    it('document has a hull, deck has none -> result carries the document polygons', () => {
+      const data = deckToMapData(makeDoc(docHull), 'deck_a');
+      expect(data!.hull!.polygons!.length).toBe(1);
+    });
+
+    it('document has none, deck has a hull -> result carries the deck polygons', () => {
+      const data = deckToMapData(makeDoc(undefined, { hull: deckHull }), 'deck_a');
+      expect(data!.hull!.polygons!.length).toBe(2);
+    });
+
+    it('both present -> result.hull.polygons contains document AND deck polygons (sum of counts)', () => {
+      const data = deckToMapData(makeDoc(docHull, { hull: deckHull }), 'deck_a');
+      expect(data!.hull!.polygons!.length).toBe(1 + 2);
+    });
+
+    it('neither present -> result.hull is undefined', () => {
+      const data = deckToMapData(makeDoc(undefined, {}), 'deck_a');
+      expect(data!.hull).toBeUndefined();
+    });
   });
 });

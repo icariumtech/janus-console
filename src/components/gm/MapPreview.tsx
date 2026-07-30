@@ -25,6 +25,7 @@ import { DoorStatusPopup } from './DoorStatusPopup';
 import { TokenLayer } from '@/components/domain/encounter/TokenLayer';
 import { TokenPopup } from '@/components/domain/encounter/TokenPopup';
 import { EncounterMapRenderer } from '@/components/domain/encounter/EncounterMapRenderer';
+import { mergeHulls } from '@/components/domain/encounter/hull/hullNormalizer';
 import { getGridCell } from '@/utils/svgCoordinates';
 import { message } from 'antd';
 
@@ -161,7 +162,12 @@ export function MapPreview({
   //   flex container with definite height (from position:absolute + inset:0).
   if (isGridEncounterMap(mapData)) {
     const gridMap = mapData as GridEncounterMapData;
-    const effectiveHull = hull ?? gridMap.hull;
+    // Additive hull (D-02): merged ONLY for this component's local bbox/aspect-ratio
+    // math. The raw `hull` prop is passed straight through to EncounterMapRenderer
+    // unchanged below — the renderer performs the merge itself exactly once, and
+    // mergeHulls's reference-identity dedupe covers a caller supplying the same
+    // object twice.
+    const mergedHull = mergeHulls(hull, gridMap.hull);
     const us = gridMap.unit_size ?? 40;
     const pad = 2;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -182,13 +188,15 @@ export function MapPreview({
         maxX = Math.max(maxX, cx + r); maxY = Math.max(maxY, cy + r);
       }
     }
-    // Include hull polygon in bounding box so aspect ratio accounts for full ship silhouette.
-    // NOTE: this only reads the singular `polygon` field; Task 2 (31-02) replaces this block
-    // with a full `mergeHulls`/`NormalizedHull.polygons` iteration covering `polygons:` too.
-    if (effectiveHull) {
-      for (const [px, py] of effectiveHull.polygon ?? []) {
-        minX = Math.min(minX, px); minY = Math.min(minY, py);
-        maxX = Math.max(maxX, px); maxY = Math.max(maxY, py);
+    // Include every hull polygon in the bounding box so aspect ratio accounts for
+    // the full ship silhouette, including detached pods/nacelles. Holes are
+    // skipped — a hole is inside a polygon and can never extend the bounds.
+    if (mergedHull) {
+      for (const polygon of mergedHull.polygons) {
+        for (const [px, py] of polygon) {
+          minX = Math.min(minX, px); minY = Math.min(minY, py);
+          maxX = Math.max(maxX, px); maxY = Math.max(maxY, py);
+        }
       }
     }
     if (!isFinite(minX)) { minX = 0; minY = 0; maxX = 10; maxY = 10; }
@@ -211,7 +219,7 @@ export function MapPreview({
         }}>
           <EncounterMapRenderer
             mapData={gridMap}
-            hull={effectiveHull}
+            hull={hull}
             roomVisibility={roomVisibility}
             tokens={tokens}
             isGM={isGM ?? true}

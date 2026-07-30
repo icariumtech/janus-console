@@ -11,6 +11,7 @@
 
 import { parseDocument, LineCounter, parse as parseYaml, YAMLMap, YAMLSeq, Scalar } from 'yaml';
 import type { GridEncounterMapData, GridRoom, AuthoredDoor, VentPath, PoiData, PoiType } from '@/types/encounterMap';
+import { mergeHulls } from '@/components/domain/encounter/hull/hullNormalizer';
 
 // ============================================================
 // Plain-JS deckplan shapes (from `yaml.parse()`, not CST)
@@ -238,8 +239,10 @@ export function deckToMapData(
       name: deck.name ?? parsedDeckplan.name ?? '',
       unit_size: deck.unit_size ?? parsedDeckplan.unit_size ?? 40,
       rotation: deck.rotation,
-      // Per HULL-01 (future phase): deck-level hull overrides deckplan-level hull
-      hull: deck.hull ?? parsedDeckplan.hull,
+      // D-02 (shipped): additive hull — the document-level hull is the shared
+      // silhouette shown on every deck; a deck-level hull adds geometry on
+      // top (pods, nacelles). Neither replaces the other.
+      hull: mergeHulls(parsedDeckplan.hull, deck.hull) ?? undefined,
       rooms: deck.rooms ?? [],
       doors: deck.doors ?? [],
       vents: deck.vents ?? [],

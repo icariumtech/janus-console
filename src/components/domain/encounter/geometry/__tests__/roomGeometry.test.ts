@@ -142,6 +142,26 @@ describe('roomBBoxGrid', () => {
     expect(roomBBoxGrid([r], undefined, 2)).toEqual({ gx: -2, gy: -2, gw: 8, gh: 8 });
   });
 
+  it('widens the bbox to cover a second hull polygon sitting far outside the first', () => {
+    const r = rectRoom('a', 5, 5, 2, 2);
+    const hull: HullDef = {
+      polygons: [
+        [[0, 0], [10, 0], [10, 10], [0, 10]],
+        [[50, 50], [60, 50], [60, 60], [50, 60]],
+      ],
+    };
+    const bb = roomBBoxGrid([r], hull);
+    expect(bb.gw).toBe(60);
+    expect(bb.gh).toBe(60);
+    expect(bb).toEqual({ gx: 0, gy: 0, gw: 60, gh: 60 });
+  });
+
+  it('does not shrink or widen the box beyond the rooms when hull geometry is only holes', () => {
+    const r = rectRoom('a', 0, 0, 4, 4);
+    const hull: HullDef = { holes: [[[1, 1], [2, 1], [2, 2], [1, 2]]] };
+    expect(roomBBoxGrid([r], hull)).toEqual({ gx: 0, gy: 0, gw: 4, gh: 4 });
+  });
+
   it('falls back to (0,0)–(10,10) for empty input', () => {
     expect(roomBBoxGrid([])).toEqual({ gx: 0, gy: 0, gw: 10, gh: 10 });
   });
