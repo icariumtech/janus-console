@@ -10,7 +10,7 @@
  */
 
 import { parseDocument, LineCounter, parse as parseYaml, YAMLMap, YAMLSeq, Scalar } from 'yaml';
-import type { GridEncounterMapData, GridRoom, AuthoredDoor, VentPath, PoiData, PoiType } from '@/types/encounterMap';
+import type { GridEncounterMapData, GridRoom, AuthoredDoor, VentPath, DetailEntry, PoiData, PoiType } from '@/types/encounterMap';
 import { mergeHulls } from '@/components/domain/encounter/hull/hullNormalizer';
 
 // ============================================================
@@ -45,6 +45,7 @@ export interface DeckplanDeck {
   rooms?: DeckplanRoom[];
   doors?: AuthoredDoor[];
   vents?: VentPath[];
+  details?: DetailEntry[];
   poi?: RawPoiEntry[];
 }
 
@@ -246,6 +247,7 @@ export function deckToMapData(
       rooms: deck.rooms ?? [],
       doors: deck.doors ?? [],
       vents: deck.vents ?? [],
+      details: deck.details ?? [],
       poi: normalizeClientPoi(deck),
     };
   } catch {
