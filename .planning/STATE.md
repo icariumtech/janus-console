@@ -5,15 +5,15 @@ milestone_name: Better Deckplans
 current_phase: 31
 current_phase_name: deckplan-format-per-deck-hulls-detail-linework
 status: executing
-stopped_at: Completed 31-01-PLAN.md
-last_updated: "2026-07-30T15:11:03.626Z"
-last_activity: 2026-07-30
-last_activity_desc: Phase 31 execution started
+stopped_at: Completed 31-02-PLAN.md
+last_updated: "2026-07-31T18:56:19.096Z"
+last_activity: 2026-07-31
+last_activity_desc: Phase 31 plan 02 (detail linework) executed
 progress:
   total_phases: 22
   completed_phases: 20
   total_plans: 59
-  completed_plans: 56
+  completed_plans: 57
   percent: 91
 ---
 
@@ -29,8 +29,8 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 ## Current Position
 
 Phase: 31 (deckplan-format-per-deck-hulls-detail-linework) — EXECUTING
-Status: Executing Phase 31
-Last activity: 2026-07-30 — Phase 31 execution started
+Status: Executing Phase 31 (plan 02 of 3 complete)
+Last activity: 2026-07-31 — Phase 31 plan 02 (detail linework) executed
 
 ## v1.0 Milestone Archive
 
@@ -82,8 +82,8 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 **Resume file:** None
 
-Last session: 2026-07-30T15:11:03.610Z
-Stopped at: Completed 31-01-PLAN.md
+Last session: 2026-07-31T18:56:19.082Z
+Stopped at: Completed 31-02-PLAN.md
 Next step: /gsd-execute-phase 31
 
 ## Performance Metrics
@@ -101,6 +101,7 @@ Next step: /gsd-execute-phase 31
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 31 P01 | ~15min | 2 tasks | 10 files |
+| Phase 31 P02 | ~20min | 3 tasks | 11 files |
 
 ## Operator Next Steps
 
@@ -109,3 +110,4 @@ Next step: /gsd-execute-phase 31
 ## Decisions
 
 - [Phase ?]: Per-deck hulls are add-alongside (polygon/polygons both valid, no migration); hullNormalizer never throws — drops malformed polygons with a warning
+- [Phase ?]: detailNormalizer is deliberately not reveal-aware; interior details gain reveal gating structurally by mounting inside the room's existing SVG reveal group (D-12/D-13)

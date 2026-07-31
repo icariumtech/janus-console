@@ -18,9 +18,9 @@
 
 ### Map Detail Linework (DET)
 
-- [ ] **DET-01**: `deckplan.yaml` supports decorative detail linework attached to rooms and to the deck exterior (hull greebles, consoles, beds, furniture)
+- [x] **DET-01**: `deckplan.yaml` supports decorative detail linework attached to rooms and to the deck exterior (hull greebles, consoles, beds, furniture)
 - [ ] **DET-02**: `svg_to_map.py` converts Inkscape "Details" sublayers into detail linework in the output YAML
-- [ ] **DET-03**: Players see a room's interior details only when that room is revealed; exterior/hull details are always visible
+- [x] **DET-03**: Players see a room's interior details only when that room is revealed; exterior/hull details are always visible
 
 ### Hull Geometry (HULL)
 
@@ -66,8 +66,8 @@
 | EDIT-06 | Phase 29 | Pending |
 | HULL-01 | Phase 31 | Complete |
 | HULL-02 | Phase 31 | Complete |
-| DET-01 | Phase 31 | Pending |
-| DET-03 | Phase 31 | Pending |
+| DET-01 | Phase 31 | Complete |
+| DET-03 | Phase 31 | Complete |
 | DET-02 | Phase 32 | Pending |
 | HULL-03 | Phase 32 | Pending |
 | CIRC-01 | Phase 32 | Pending |
