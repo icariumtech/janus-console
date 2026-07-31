@@ -206,4 +206,9 @@ decks:
     - [47, 19]
     - [47, 23]
     - [43, 23]
+  details:
+  - {id: obs_console, room: obs_deck, points: [[21, 10], [30, 10], [30, 11]]}
+  - {room: sensor_pod, points: [[44, 20], [46, 20], [46, 22], [44, 22]], closed: true, filled: true}
+  - {id: pod_strut, points: [[32, 21], [42, 21]]}
+  - {circle: {cx: 45, cy: 16, r: 1.5}}
 

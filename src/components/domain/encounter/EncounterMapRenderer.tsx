@@ -41,9 +41,11 @@ import { topDownProjection } from './geometry/gridProjection';
 import { makeMapView } from './geometry/mapView';
 import { normalizeDoor, normalizeDoors } from './doors/doorNormalizer';
 import { hullPathD, mergeHulls } from './hull/hullNormalizer';
+import { partitionDetails } from './details/detailNormalizer';
 import { useRoomRevealAnimations } from './animation/useRoomRevealAnimations';
 import { COLORS } from './renderer/mapColors';
 import { RoomsLayer } from './renderer/RoomsLayer';
+import { DetailsLayer } from './renderer/DetailsLayer';
 import { DoorsLayer } from './renderer/DoorsLayer';
 import { PoiLayer } from './renderer/PoiLayer';
 import { PoiInfoPopup } from './renderer/PoiInfoPopup';
@@ -262,6 +264,17 @@ export function EncounterMapRenderer({
       holeOutlines: effectiveHull.holes.map(toPoints),
     };
   }, [effectiveHull, view]);
+
+  // Partitioned detail linework (DET-01/DET-03): `exterior` is always
+  // visible regardless of any room's reveal state; `byRoom` entries are
+  // passed to RoomsLayer, which mounts them INSIDE each room's own SVG
+  // reveal group so they inherit that room's gating and CRT flicker
+  // cascade structurally (D-12/D-13) — see detailNormalizer for the D-14
+  // dangling-room-ref fail-safe.
+  const { exterior: exteriorDetails, byRoom: detailsByRoom } = useMemo(
+    () => partitionDetails(mapData.details, mapData.rooms, isGM),
+    [mapData.details, mapData.rooms, isGM],
+  );
 
   // Check if a room is visible (default to true if no visibility state)
   const isRoomVisible = useCallback((roomId: string): boolean => {
@@ -527,6 +540,11 @@ export function EncounterMapRenderer({
           </g>
         )}
 
+        {/* Exterior detail linework (DET-03) — hull greebles, always visible
+            regardless of any room's reveal state. No GM gating, no reveal
+            gating: unlike the vents block below, these are never hidden. */}
+        <DetailsLayer details={exteriorDetails} view={view} />
+
         {/* Rooms (with walls, floor fill, context menu targets, labels) */}
         <RoomsLayer
           rooms={mapData.rooms}
@@ -536,6 +554,7 @@ export function EncounterMapRenderer({
           view={view}
           unitSize={unitSize}
           mapRotation={mapRotation}
+          detailsByRoom={detailsByRoom}
           onRoomContextMenu={handleRoomContextMenu}
           onRoomPointerDown={handleRoomPointerDown}
           onRoomPointerUp={handleRoomPointerUp}

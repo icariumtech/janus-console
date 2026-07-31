@@ -10,9 +10,10 @@
  * This hybrid approach keeps correct wall sharing for plain multi-rect rooms
  * while giving chamfered rooms clean diagonal corners.
  */
-import { GridRoom } from '../../../../types/encounterMap';
+import { DetailEntry, GridRoom } from '../../../../types/encounterMap';
 import { MapView } from '../geometry/mapView';
 import { RoomAnimEntry } from '../animation/useRoomRevealAnimations';
+import { DetailShape } from './DetailsLayer';
 import { COLORS, WALL_THICKNESS } from './mapColors';
 
 interface RoomsLayerProps {
@@ -23,6 +24,10 @@ interface RoomsLayerProps {
   view: MapView;
   unitSize: number;
   mapRotation: number;
+  /** Interior detail entries (DET-03), keyed by room id — mounted INSIDE
+   *  each room's own reveal `<g>` so they inherit that room's gating and
+   *  CRT flicker cascade structurally (D-12/D-13). */
+  detailsByRoom?: Map<string, DetailEntry[]>;
   onRoomContextMenu: (e: React.MouseEvent, room: GridRoom) => void;
   onRoomPointerDown: (e: React.PointerEvent) => void;
   onRoomPointerUp: (e: React.PointerEvent, room: GridRoom) => void;
@@ -36,6 +41,7 @@ export function RoomsLayer({
   view,
   unitSize,
   mapRotation,
+  detailsByRoom,
   onRoomContextMenu,
   onRoomPointerDown,
   onRoomPointerUp,
@@ -98,6 +104,18 @@ export function RoomsLayer({
       );
     })() : null;
 
+    // Interior detail linework for this room (DET-01/DET-03) — undefined
+    // when there's no map or no entries for this room id. Mounting these
+    // as children of the same reveal <g> as the walls/floor below IS the
+    // entire gating mechanism (D-12/D-13): no separate visibility check,
+    // opacity, or animation is applied to details anywhere in this file.
+    const roomDetails = detailsByRoom?.get(room.id);
+    const detailEls = roomDetails && roomDetails.length > 0
+      ? roomDetails.map((d, i) => (
+        <DetailShape key={d.id ?? `detail-${i}`} detail={d} view={view} />
+      ))
+      : undefined;
+
     // === Circular room ===
     if (room.circle) {
       const center = view.project({ gx: room.circle.cx, gy: room.circle.cy });
@@ -136,6 +154,7 @@ export function RoomsLayer({
               className="encounter-map__room"
             />
           )}
+          {detailEls}
           {labelEl}
         </g>
       );
@@ -216,6 +235,7 @@ export function RoomsLayer({
               />
             )
           )}
+          {detailEls}
           {labelEl}
         </g>
       );
@@ -350,6 +370,7 @@ export function RoomsLayer({
           />
         ))}
 
+        {detailEls}
         {labelEl}
       </g>
     );
