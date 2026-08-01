@@ -93,7 +93,7 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
   - **Plans:** 3 plans
     - [x] 31-01-PLAN.md — Per-deck additive hulls: hullNormalizer + multi-polygon/holes rendering + patrol_gunboat two-deck testbed + hull schema doc (Wave 1)
     - [x] 31-02-PLAN.md — Detail linework: DetailEntry + detailNormalizer gating + DetailsLayer + interior details inside the room reveal group + details schema doc (Wave 2)
-    - [ ] 31-03-PLAN.md — Backend thin-passthrough regression guard + human visual verification of all five success criteria (Wave 3)
+    - [x] 31-03-PLAN.md — Backend thin-passthrough regression guard + human visual verification of all five success criteria (Wave 3)
   - **Note:** success criterion 1's "overrides" is refined to **additive** semantics per 31-CONTEXT.md D-02 — a deck hull adds geometry to the shared silhouette and never replaces it.
   - **UI hint**: yes
   - Context: `.planning/phases/31-deckplan-format-per-deck-hulls-detail-linework/31-CONTEXT.md`
@@ -136,6 +136,6 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 28.1. Audit Gap Closure (INSERTED) | v2.0 | 3/3 | ✓ Complete | 2026-06-05 |
 | 29. Deckplan Map Editor | v3.0 | 4/4 | ✓ Complete | 2026-06-30 |
 | 30. AI Map Editing MCP Tools | (ad-interim) | 3/3 | ✓ Complete | 2026-06-06 |
-| 31. Deckplan Format — Hulls & Details | v3.0 | 2/3 | In Progress|  |
+| 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | In Progress|  |
 | 32. SVG Converter — Details/Hulls/Circles | v3.0 | 0/? | Not started | - |
 | 33. Isometric View | v3.0 | 0/? | Not started | - |

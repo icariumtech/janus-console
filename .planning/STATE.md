@@ -5,16 +5,16 @@ milestone_name: Better Deckplans
 current_phase: 31
 current_phase_name: deckplan-format-per-deck-hulls-detail-linework
 status: executing
-stopped_at: Completed 31-02-PLAN.md
-last_updated: "2026-07-31T18:56:19.096Z"
+stopped_at: Blocked at 31-03-PLAN.md Task 2 checkpoint (human-verify, gate=blocking) — Task 1 (Django regression guard) complete and committed
+last_updated: "2026-07-31T21:51:13.057Z"
 last_activity: 2026-07-31
 last_activity_desc: Phase 31 plan 02 (detail linework) executed
 progress:
   total_phases: 22
-  completed_phases: 20
+  completed_phases: 21
   total_plans: 59
-  completed_plans: 57
-  percent: 91
+  completed_plans: 58
+  percent: 95
 ---
 
 # Project State
@@ -80,10 +80,10 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 ## Session Continuity
 
-**Resume file:** None
+**Resume file:** .planning/phases/31-deckplan-format-per-deck-hulls-detail-linework/31-03-PLAN.md
 
-Last session: 2026-07-31T18:56:19.082Z
-Stopped at: Completed 31-02-PLAN.md
+Last session: 2026-07-31T21:24:11.691Z
+Stopped at: Blocked at 31-03-PLAN.md Task 2 checkpoint (human-verify, gate=blocking) — Task 1 (Django regression guard) complete and committed
 Next step: /gsd-execute-phase 31
 
 ## Performance Metrics
@@ -102,6 +102,7 @@ Next step: /gsd-execute-phase 31
 |------|----------|-------|-------|
 | Phase 31 P01 | ~15min | 2 tasks | 10 files |
 | Phase 31 P02 | ~20min | 3 tasks | 11 files |
+| Phase 31 P03 | ~60min (Task 1 only) | 1 tasks | 1 files |
 
 ## Operator Next Steps
 
@@ -111,3 +112,8 @@ Next step: /gsd-execute-phase 31
 
 - [Phase ?]: Per-deck hulls are add-alongside (polygon/polygons both valid, no migration); hullNormalizer never throws — drops malformed polygons with a warning
 - [Phase ?]: detailNormalizer is deliberately not reveal-aware; interior details gain reveal gating structurally by mounting inside the room's existing SVG reveal group (D-12/D-13)
+- [Phase ?]: Phase 31 plan 03 Task 1 confirmed the backend thin-passthrough assumption with zero source changes (Django regression suite, 6 tests); Task 2 is a blocking human-verify checkpoint for the five ROADMAP success criteria, not yet approved
+
+### Blockers
+
+- Phase 31 plan 03 Task 2 (checkpoint:human-verify, gate=blocking) awaiting human visual verification of the five ROADMAP success criteria on patrol_gunboat Upper Deck. Both dev servers running (Django :8000, Vite :5173). See 31-03-SUMMARY.md Checkpoint Status.
