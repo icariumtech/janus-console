@@ -5,16 +5,16 @@ milestone_name: Better Deckplans
 current_phase: 31
 current_phase_name: deckplan-format-per-deck-hulls-detail-linework
 status: executing
-stopped_at: Blocked at 31-03-PLAN.md Task 2 checkpoint (human-verify, gate=blocking) — Task 1 (Django regression guard) complete and committed
-last_updated: "2026-07-31T21:51:13.057Z"
-last_activity: 2026-07-31
-last_activity_desc: Phase 31 plan 02 (detail linework) executed
+stopped_at: Completed 31-03-PLAN.md — Phase 31 complete (Task 2 human-verify checkpoint approved)
+last_updated: "2026-08-04T00:00:00.000Z"
+last_activity: 2026-08-04
+last_activity_desc: Phase 31 plan 03 Task 2 checkpoint approved — Phase 31 (deckplan-format-per-deck-hulls-detail-linework) complete
 progress:
   total_phases: 22
-  completed_phases: 21
+  completed_phases: 22
   total_plans: 59
-  completed_plans: 58
-  percent: 95
+  completed_plans: 59
+  percent: 100
 ---
 
 # Project State
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 
 ## Current Position
 
-Phase: 31 (deckplan-format-per-deck-hulls-detail-linework) — EXECUTING
-Status: Executing Phase 31 (plan 02 of 3 complete)
-Last activity: 2026-07-31 — Phase 31 plan 02 (detail linework) executed
+Phase: 31 (deckplan-format-per-deck-hulls-detail-linework) — COMPLETE
+Status: Phase 31 complete (3 of 3 plans executed and approved)
+Last activity: 2026-08-04 — Phase 31 plan 03 Task 2 checkpoint approved; phase closed
 
 ## v1.0 Milestone Archive
 
@@ -80,11 +80,11 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/31-deckplan-format-per-deck-hulls-detail-linework/31-03-PLAN.md
+**Resume file:** None
 
-Last session: 2026-07-31T21:24:11.691Z
-Stopped at: Blocked at 31-03-PLAN.md Task 2 checkpoint (human-verify, gate=blocking) — Task 1 (Django regression guard) complete and committed
-Next step: /gsd-execute-phase 31
+Last session: 2026-08-04T00:00:00.000Z
+Stopped at: Completed 31-03-PLAN.md — Phase 31 complete (Task 2 human-verify checkpoint approved)
+Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
 
@@ -102,7 +102,7 @@ Next step: /gsd-execute-phase 31
 |------|----------|-------|-------|
 | Phase 31 P01 | ~15min | 2 tasks | 10 files |
 | Phase 31 P02 | ~20min | 3 tasks | 11 files |
-| Phase 31 P03 | ~60min (Task 1 only) | 1 tasks | 1 files |
+| Phase 31 P03 | ~60min (Task 1) + human verification | 2 tasks | 1 files |
 
 ## Operator Next Steps
 
@@ -112,8 +112,9 @@ Next step: /gsd-execute-phase 31
 
 - [Phase ?]: Per-deck hulls are add-alongside (polygon/polygons both valid, no migration); hullNormalizer never throws — drops malformed polygons with a warning
 - [Phase ?]: detailNormalizer is deliberately not reveal-aware; interior details gain reveal gating structurally by mounting inside the room's existing SVG reveal group (D-12/D-13)
-- [Phase ?]: Phase 31 plan 03 Task 1 confirmed the backend thin-passthrough assumption with zero source changes (Django regression suite, 6 tests); Task 2 is a blocking human-verify checkpoint for the five ROADMAP success criteria, not yet approved
+- [Phase ?]: Phase 31 plan 03 Task 1 confirmed the backend thin-passthrough assumption with zero source changes (Django regression suite, 6 tests); Task 2's human-verify checkpoint was approved 2026-08-04, closing Phase 31
+- [Phase 31]: Task 2 checkpoint approved via iterative screenshot review (3 of 8 how-to-verify sub-items directly confirmed: HULL-02, DET-01, DET-03) followed by a final unqualified "approved" covering the remaining sub-items on trust. See 31-03-SUMMARY.md Checkpoint Status for full traceability.
 
 ### Blockers
 
-- Phase 31 plan 03 Task 2 (checkpoint:human-verify, gate=blocking) awaiting human visual verification of the five ROADMAP success criteria on patrol_gunboat Upper Deck. Both dev servers running (Django :8000, Vite :5173). See 31-03-SUMMARY.md Checkpoint Status.
+None.

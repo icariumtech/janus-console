@@ -80,7 +80,7 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
     - [x] 30-02-PLAN.md — Stable element ids — already satisfied (slug+unique exists; doors use derived id) (Wave 1)
     - [x] 30-03-PLAN.md — MCP tools `find_map_element`/`edit_map_element` + schema docs (Wave 2)
 
-- [ ] Phase 31: Deckplan Format — Per-Deck Hulls & Detail Linework
+- [x] Phase 31: Deckplan Format — Per-Deck Hulls & Detail Linework
   - **Goal:** Extend the `deckplan.yaml` schema and `EncounterMapRenderer` so decks can declare their own hull geometry and decorative detail linework, with interior details gated by room reveal.
   - **Depends on:** Phase 29 (deckplan.yaml is the sole format; editor preview benefits from but does not require this)
   - **Requirements**: HULL-01, HULL-02, DET-01, DET-03
@@ -136,6 +136,6 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 28.1. Audit Gap Closure (INSERTED) | v2.0 | 3/3 | ✓ Complete | 2026-06-05 |
 | 29. Deckplan Map Editor | v3.0 | 4/4 | ✓ Complete | 2026-06-30 |
 | 30. AI Map Editing MCP Tools | (ad-interim) | 3/3 | ✓ Complete | 2026-06-06 |
-| 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | In Progress|  |
+| 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | ✓ Complete | 2026-08-04 |
 | 32. SVG Converter — Details/Hulls/Circles | v3.0 | 0/? | Not started | - |
 | 33. Isometric View | v3.0 | 0/? | Not started | - |

@@ -31,7 +31,7 @@ key-decisions:
   - "Zero source changes needed — load_deckplan returns yaml.safe_load output verbatim, both payload paths spread the deck dict ({**deck, ...}), and normalize_deck_poi shallow-copies (dict(deck)) rather than allow-listing keys, so hull/details survive unchanged on both paths"
   - "Task 2 (visual verification of the five ROADMAP success criteria) cannot be completed by an executor agent — it is a checkpoint:human-verify with gate=\"blocking\" per the plan; this SUMMARY documents Task 1's completion and Task 2's pending state rather than fabricating a verification result"
 
-requirements-completed: []  # HULL-01/HULL-02/DET-01/DET-03 were already marked complete by 31-01/31-02; this plan's Task 2 checkpoint is the final human confirmation and has not yet been approved
+requirements-completed: [HULL-01, HULL-02, DET-01, DET-03]  # Task 2 checkpoint approved; HULL-01/HULL-02/DET-01/DET-03 now fully confirmed end-to-end
 
 coverage:
   - id: D1
@@ -75,24 +75,28 @@ coverage:
     human_judgment: false
   - id: D6
     description: "GM and player see the five ROADMAP Phase 31 success criteria working end-to-end on patrol_gunboat's Upper Deck: additive shared silhouette + deck spine + detached sensor pod with atrium cutout, hull greebles, room interior details, reveal-gated interior linework with correct flicker cascade, always-visible exterior details, somnus no-regression, editor preview parity, and click-through on rooms with detail linework"
-    verification: []
+    verification:
+      - kind: manual
+        ref: "Human checkpoint approval, 2026-08-04 — see 'Checkpoint Status' below"
+        status: pass
     human_judgment: true
-    rationale: "No component-render or browser-driven test harness exists in this codebase (vitest covers pure modules and YAML fixtures only, per 31-CONTEXT.md's flagged_assumptions). This is Task 2 of the plan — a checkpoint:human-verify with gate=\"blocking\" — and has not yet been performed. Both dev servers (Django on :8000, Vite on :5173) were started and confirmed responsive by the executor to remove friction from the human verification step, but the verification itself requires a human browser session and has not occurred."
+    rationale: "No component-render or browser-driven test harness exists in this codebase (vitest covers pure modules and YAML fixtures only, per 31-CONTEXT.md's flagged_assumptions). Task 2 (checkpoint:human-verify, gate=\"blocking\") was approved by the human. The approval was reached iteratively with the orchestrator across three screenshot rounds directly confirming HULL-02 (detached sensor pod + atrium hole + strut + sensor dish), DET-01 (console line thinner than wall stroke), and DET-03 (interior detail absent while hidden, appears together with the room's reveal cascade — not a separate pop-in). The remaining 5 of the 8 how-to-verify sub-items (Main Deck HULL-01 toggle, exterior-always-visible, atrium hole close-up as a standalone check, editor preview parity, click-through) were covered by the final unqualified \"approved\" response without additional screenshots. Recorded here for traceability in case anything surfaces later."
 
-duration: ~60min (Task 1 only; Task 2 pending)
-completed: null
-status: blocked
+duration: ~60min (Task 1) + Task 2 human verification
+completed: 2026-08-04
+status: complete
 ---
 
-# Phase 31 Plan 03: Backend Passthrough Regression Guard + Pending Visual Verification Summary
+# Phase 31 Plan 03: Backend Passthrough Regression Guard + Visual Verification Summary
 
-**A new Django regression suite (`core/tests/test_deckplan_passthrough.py`, 6 tests) proves — with zero source changes — that deck-level `hull:` and `details:` survive both the SSE payload path and the `api_encounter_map_data` REST endpoint unmodified; the plan's second task (human visual verification of the five ROADMAP success criteria) is a blocking checkpoint awaiting human sign-off.**
+**A new Django regression suite (`core/tests/test_deckplan_passthrough.py`, 6 tests) proves — with zero source changes — that deck-level `hull:` and `details:` survive both the SSE payload path and the `api_encounter_map_data` REST endpoint unmodified; the plan's second task (human visual verification of the five ROADMAP success criteria) was approved on 2026-08-04, closing out Phase 31.**
 
 ## Performance
 
-- **Duration:** ~60 min (Task 1 only)
+- **Duration:** ~60 min (Task 1) + human verification session (Task 2)
 - **Started:** 2026-07-31T20:08:06Z
-- **Tasks:** 1/2 completed (Task 2 is a blocking human-verify checkpoint, not yet performed)
+- **Completed:** 2026-08-04
+- **Tasks:** 2/2 completed
 - **Files modified:** 1 new test file + 1 deferred-items log
 
 ## Accomplishments
@@ -108,8 +112,7 @@ status: blocked
 ## Task Commits
 
 1. **Task 1: Django regression guard — deck-level hull and details survive both payload paths** - `e13f880` (test)
-
-**Task 2 (checkpoint:human-verify, gate="blocking") is pending** — not yet performed. See "Checkpoint Status" below.
+2. **Task 2: Visual verification of the five phase success criteria** - `checkpoint:human-verify` — **approved**, no code commit (verification-only task). See "Checkpoint Status" below.
 
 ## Files Created/Modified
 
@@ -145,13 +148,39 @@ None for Task 1. Task 2 is intentionally incomplete — see Checkpoint Status.
 
 ## Checkpoint Status
 
-**Task 2: Visual verification of the five phase success criteria** — `type="checkpoint:human-verify" gate="blocking"` — **PENDING, not yet performed.**
+**Task 2: Visual verification of the five phase success criteria** — `type="checkpoint:human-verify" gate="blocking"` — **APPROVED, 2026-08-04.**
 
-Both dev servers are running and ready for verification:
+The human replied "approved" to close the checkpoint. The approval was reached iteratively with
+the orchestrator rather than as a single blind pass over the full 8-point script:
+
+1. **Screenshot round 1** — Upper Deck GM view showing the shared silhouette + spine block +
+   detached SENSOR POD (unclipped) + sensor-dish circle + strut line + filled rectangle in
+   SENSOR POD. This directly confirmed HULL-02 (multiple disjoint polygons, atrium hole punched
+   near the spine) and the DET-01 strut/dish/fill linework. The orchestrator flagged two open
+   items at this point — the atrium hole not being clearly visible against the dark
+   GM-unrevealed rendering, and low overall contrast — which were resolved by the next round.
+2. **Screenshot rounds 2-3** — OBSERVATION room hidden vs. revealed on the player terminal.
+   These directly confirmed DET-01 (the console line renders visibly thinner than the room wall
+   stroke) and DET-03 (the console line is completely absent while OBSERVATION is hidden, then
+   appears together with the room's own reveal cascade when the GM reveals it — not a separate
+   pop-in, and not always-rendered-but-dimmed).
+3. **Final "approved"** — sent without further screenshots for the remaining sub-items: Main
+   Deck HULL-01 toggle (spine appears/disappears while shared silhouette persists), always-visible
+   exterior details with both rooms hidden, atrium hole as a standalone close-up check, editor
+   preview parity in the GM Console file editor, and click-through on rooms with detail linework.
+
+**Traceability note:** of the plan's 8 how-to-verify sub-items, 3 (HULL-02, DET-01, DET-03) were
+directly visually confirmed via screenshot exchange; the remaining 5 (HULL-01 deck toggle,
+always-visible exterior details, atrium hole standalone close-up, editor preview parity,
+click-through) were covered by the final approval on trust rather than individually
+screenshotted. Per the resume instructions this is treated as full checkpoint approval and is
+not being re-litigated — recorded here so it is traceable if anything surfaces later.
+
+Both dev servers were running for the verification session:
 - Django: `http://localhost:8000/gmconsole/` (and `/terminal/` for the player view)
 - Vite: `http://localhost:5173/` (HMR dev server backing the above)
 
-See the plan's Task 2 `<what-built>` / `<how-to-verify>` / `<resume-signal>` (`.planning/phases/31-deckplan-format-per-deck-hulls-detail-linework/31-03-PLAN.md`) for the full 8-point verification script covering HULL-01, HULL-02, DET-01, DET-03, always-visible exterior details, somnus no-regression, editor preview parity, and click-through on detailed rooms.
+See the plan's Task 2 `<what-built>` / `<how-to-verify>` / `<resume-signal>` (`.planning/phases/31-deckplan-format-per-deck-hulls-detail-linework/31-03-PLAN.md`) for the full 8-point verification script.
 
 ## User Setup Required
 
@@ -160,13 +189,13 @@ None - no external service configuration required. (Dev servers were started by 
 ## Next Phase Readiness
 
 - Task 1's regression guard is committed and green — the backend passthrough contract Phase 32's SVG converter will emit into is now proven, not assumed.
-- This plan (31-03) — and therefore Phase 31 as a whole — cannot be marked complete until Task 2's checkpoint is approved by a human. `HULL-01`/`HULL-02`/`DET-01`/`DET-03` remain marked complete in REQUIREMENTS.md from 31-01/31-02 (the underlying code is proven correct by unit/integration tests), but the phase-level visual sign-off covering the ROADMAP success criteria is still open.
-- Once Task 2 is approved (or issues are reported and fixed), a continuation run should: record the resume signal, update this SUMMARY's `status` to `complete` and `completed` date, and proceed with the plan's final state/roadmap updates and metadata commit.
+- Task 2's checkpoint is approved — Phase 31 as a whole is now complete. `HULL-01`/`HULL-02`/`DET-01`/`DET-03` are confirmed both by unit/integration test (backend passthrough) and by human visual verification (frontend rendering, reveal gating).
+- Phase 32 (deckplan SVG converter) can proceed on a backend and frontend contract that is now fully proven end-to-end, not assumed.
 
 ---
 *Phase: 31-deckplan-format-per-deck-hulls-detail-linework*
-*Completed: pending Task 2 checkpoint approval*
+*Completed: 2026-08-04*
 
 ## Self-Check: PASSED
 
-`core/tests/test_deckplan_passthrough.py` found on disk; commit `e13f880` confirmed present in `git log --oneline --all`.
+`core/tests/test_deckplan_passthrough.py` found on disk; commit `e13f880` confirmed present in `git log --oneline --all`. Task 2 checkpoint approval recorded via human response, not a filesystem/commit artifact — no further self-check applicable for a verification-only task.
