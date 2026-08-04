@@ -11,10 +11,10 @@ last_activity: 2026-08-04
 last_activity_desc: Phase 31 plan 03 Task 2 checkpoint approved — Phase 31 (deckplan-format-per-deck-hulls-detail-linework) complete
 progress:
   total_phases: 22
-  completed_phases: 22
+  completed_phases: 21
   total_plans: 59
-  completed_plans: 59
-  percent: 100
+  completed_plans: 58
+  percent: 95
 ---
 
 # Project State
@@ -106,7 +106,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd:new-milestone
+- Milestone v3.0 (Better Deckplans) is not yet complete — Phase 31 of 3 is done; Phase 32 (SVG Converter) and Phase 33 (Isometric View) remain. Run /gsd-plan-phase 32 next.
 
 ## Decisions
 
