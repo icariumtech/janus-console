@@ -56,6 +56,11 @@ function isValidPrimitive(entry: DetailEntry, index: number): boolean {
     return false;
   }
 
+  if (hasPoints && hasCircle) {
+    console.warn(`[detailNormalizer] dropped entry at index ${index}: both points and circle present, exactly one expected`);
+    return false;
+  }
+
   if (hasPoints) {
     const points = entry.points as unknown;
     if (!Array.isArray(points) || points.length < 2) {

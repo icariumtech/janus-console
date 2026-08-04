@@ -112,7 +112,7 @@ export function mergeHulls(
     holes.push(...normalized.holes);
   }
 
-  if (polygons.length === 0 && holes.length === 0) return null;
+  if (polygons.length === 0) return null; // holes with nothing to punch never render
   return { polygons, holes };
 }
 

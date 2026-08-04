@@ -90,6 +90,19 @@ describe('mergeHulls', () => {
     expect(mergeHulls()).toBeNull();
     expect(mergeHulls(null, undefined)).toBeNull();
   });
+
+  it('returns null when every source contributes only holes and no polygon (WR-02)', () => {
+    const holesOnly: HullDef = { holes: [[[2, 2], [4, 2], [4, 4]]] };
+    expect(mergeHulls(holesOnly)).toBeNull();
+  });
+
+  it('keeps holes from a holes-only deck hull when merged with a shared hull that has a polygon (WR-02)', () => {
+    const holesOnlyDeck: HullDef = { holes: [[[2, 2], [4, 2], [4, 4]]] };
+    expect(mergeHulls(shared, holesOnlyDeck)).toEqual({
+      polygons: [shared.polygon],
+      holes: holesOnlyDeck.holes,
+    });
+  });
 });
 
 describe('hullPathD', () => {

@@ -87,6 +87,30 @@ describe('partitionDetails', () => {
     warnSpy.mockRestore();
   });
 
+  it('drops an entry with both points and circle present, warns, and does not fall back to the malformed circle (WR-01)', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const bad: DetailEntry = {
+      points: [[0, 0], [1, 1]],
+      circle: { cx: NaN, cy: NaN, r: -1 },
+    };
+    const result = partitionDetails([bad], [], false);
+    expect(result.exterior).toEqual([]);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('both points and circle'));
+    warnSpy.mockRestore();
+  });
+
+  it('drops an entry with both points and a valid circle present, warns (exactly one expected)', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const bad: DetailEntry = {
+      points: [[0, 0], [1, 1]],
+      circle: { cx: 5, cy: 5, r: 1 },
+    };
+    const result = partitionDetails([bad], [], false);
+    expect(result.exterior).toEqual([]);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('both points and circle'));
+    warnSpy.mockRestore();
+  });
+
   it('drops a polyline with a single vertex and warns', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const bad: DetailEntry = { points: [[0, 0]] };
