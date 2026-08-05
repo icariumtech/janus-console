@@ -10,9 +10,9 @@ Give the GM a single tool that enhances the tabletop experience with atmospheric
 
 ## Current State
 
-**Shipped:** v1.0 MVP (2026-05-07) · v2.0 AI Tooling (2026-06-12) · **Active:** between milestones (Phase 30 shipped ad-interim; Phase 29 context gathered)
+**Shipped:** v1.0 MVP (2026-05-07) · v2.0 AI Tooling (2026-06-12) · **Active:** v3.0 Better Deckplans — Phase 31 (Deckplan Format — Per-Deck Hulls & Detail Linework) complete; Phase 32 (SVG Converter) and Phase 33 (Isometric View) remain
 
-- 30 phases complete (Phase 29 pending) · v2.0 archived 2026-06-12
+- Phases 1–31 complete · v2.0 archived 2026-06-12
 - ~40k LOC first-party source (TypeScript + Python) + standalone `janus-skills` repo (10 Claude Code skills, schema resources, install.sh)
 - Tech stack: Django 5.2.7, React 19, TypeScript, Vite 5.4, React Three Fiber 9.0, Zustand, GSAP, Ant Design 6.1
 - Data: YAML/Markdown files, flat location directory, per-entity character files
@@ -84,12 +84,12 @@ Key systems shipped in v1.0:
 - ✓ MCP image upload — portraits/logos/maps with conversion — v2.0
 - ✓ GM Console file editor — Monaco editor + data-changed SSE refresh — v2.0
 - ✓ AI targeted map editing — element resolver + find/edit_map_element MCP tools — post-v2.0 (Phase 30)
+- ✓ Interactive deckplan map editor — live preview, YAML sync, POI placement — v3.0 (Phase 29)
+- ✓ Per-deck hull polygons — additive merge with the shared silhouette, multi-polygon + evenodd holes — v3.0 (Phase 31)
+- ✓ Map detail linework — room-interior + hull-exterior decorative linework, interior details reveal-gated via the room's own SVG reveal group — v3.0 (Phase 31)
 
 ### Active
 
-- [ ] Interactive deckplan map editor — live preview, YAML sync, POI placement (Phase 29, context gathered 2026-06-05) — v3.0
-- [ ] Map detail linework — room interiors + hull greebles via SVG Details layers — v3.0
-- [ ] Per-deck hull polygons — v3.0
 - [ ] Circular room SVG conversion — v3.0
 - [ ] Isometric view toggle (player + GM) — v3.0
 - [ ] UI audio — click sounds, transition effects, ambient atmosphere (AUDI-01..03, deferred from v1.0; not in v3.0)
@@ -144,6 +144,7 @@ Key systems shipped in v1.0:
 | Generic `data-changed` SSE event | One event covers all AI/GM data writes; player terminals re-fetch active view | ✓ Good |
 | Targeted map-element edit endpoint (resolver + verbs) | AI edits one room/door/POI without rewriting deckplan.yaml; 404/409 return suggestions instead of failing | ✓ Good |
 | Phase 26 shipped ad-hoc without plans | Small polish pass; formal planning overhead not justified | ✓ Accepted |
+| Per-deck hulls are additive, not override | Roadmap originally said a deck hull "overrides" the shared silhouette; discussion refined this so the shared outline always renders and deck hulls add geometry on top — avoids a deck hull ever hiding the ship's baseline shape | ✓ Good |
 
 ## Evolution
 
@@ -163,4 +164,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-12 — v3.0 Better Deckplans milestone started*
+*Last updated: 2026-08-04 — Phase 31 complete (per-deck hulls + detail linework validated)*
