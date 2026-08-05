@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Better Deckplans
-current_phase: 31
-current_phase_name: deckplan-format-per-deck-hulls-detail-linework
-status: executing
+current_phase: 32
+current_phase_name: svg converter — details, per deck hulls, circular rooms
+status: planning
 stopped_at: Completed 31-03-PLAN.md — Phase 31 complete (Task 2 human-verify checkpoint approved)
-last_updated: "2026-08-04T00:00:00.000Z"
+last_updated: "2026-08-05T02:38:27.701Z"
 last_activity: 2026-08-04
-last_activity_desc: Phase 31 plan 03 Task 2 checkpoint approved — Phase 31 (deckplan-format-per-deck-hulls-detail-linework) complete
+last_activity_desc: Phase 31 complete, transitioned to Phase 32
 progress:
   total_phases: 22
   completed_phases: 21
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 
 ## Current Position
 
-Phase: 31 (deckplan-format-per-deck-hulls-detail-linework) — COMPLETE
-Status: Phase 31 complete (3 of 3 plans executed and approved)
-Last activity: 2026-08-04 — Phase 31 plan 03 Task 2 checkpoint approved; phase closed
+Phase: 32 — svg converter — details, per deck hulls, circular rooms
+Status: Ready to plan
+Last activity: 2026-08-04 — Phase 31 complete, transitioned to Phase 32
 
 ## v1.0 Milestone Archive
 
