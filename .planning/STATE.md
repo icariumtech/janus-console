@@ -5,16 +5,16 @@ milestone_name: Better Deckplans
 current_phase: 32
 current_phase_name: svg converter — details, per deck hulls, circular rooms
 status: planning
-stopped_at: Completed 31-03-PLAN.md — Phase 31 complete (Task 2 human-verify checkpoint approved)
-last_updated: "2026-08-05T02:38:27.701Z"
+stopped_at: Phase 32 context gathered
+last_updated: "2026-08-07T17:10:54.539Z"
 last_activity: 2026-08-04
 last_activity_desc: Phase 31 complete, transitioned to Phase 32
 progress:
-  total_phases: 22
+  total_phases: 23
   completed_phases: 21
   total_plans: 59
   completed_plans: 58
-  percent: 95
+  percent: 91
 ---
 
 # Project State
@@ -80,10 +80,10 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 ## Session Continuity
 
-**Resume file:** None
+**Resume file:** /home/gjohnson/src/janus-console/.planning/phases/32-svg-converter-details-per-deck-hulls-circular-rooms/32-CONTEXT.md
 
-Last session: 2026-08-04T00:00:00.000Z
-Stopped at: Completed 31-03-PLAN.md — Phase 31 complete (Task 2 human-verify checkpoint approved)
+Last session: 2026-08-07T17:10:54.497Z
+Stopped at: Phase 32 context gathered
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
