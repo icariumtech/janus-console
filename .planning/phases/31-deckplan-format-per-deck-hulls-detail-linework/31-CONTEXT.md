@@ -111,13 +111,32 @@ rendered on that deck".
 **Downstream agents MUST read these before planning or implementing.**
 
 ### Frontend — types & renderer (the core of this phase)
-- `src/types/encounterMap.ts` — `HullDef` (line ~271, single `polygon:` today,
-  extend with `polygons:`/`holes:`), `GridEncounterMapData.hull`, `VentPath`
-  (the `points:` polyline precedent details follow), `GridRoom`.
-- `src/components/domain/encounter/EncounterMapRenderer.tsx` — hull resolution
-  (`hullProp ?? mapData.hull`, line ~179), hull SVG rendering (~1315–1330),
-  room reveal gating (`roomVisibility[roomId] !== false`, ~280), room reveal
-  groups/flicker (~789), vent rendering precedent (~1342).
+
+**Note (updated 2026-07-27):** commit `a0ea006` (2026-07-08, post-context-gathering)
+decomposed `EncounterMapRenderer.tsx` from 1689 → 780 lines, extracting layers
+into `src/components/domain/encounter/renderer/`. Line numbers and file
+locations below reflect the current layout.
+
+- `src/types/encounterMap.ts` — `HullDef` (line 271, still single `polygon:`
+  today, extend with `polygons:`/`holes:`), `GridEncounterMapData.hull` (~290),
+  `VentPath` (~276, the `points:` polyline precedent details follow), `GridRoom`
+  (~258). Unchanged since context-gathering.
+- `src/components/domain/encounter/EncounterMapRenderer.tsx` (now 780 lines,
+  pure orchestration — pan/zoom, popover state, projection, top-level SVG
+  structure) — hull resolution (`hullProp ?? mapData.hull`, line 160), hull SVG
+  rendering (lines 477–490, stayed inline rather than moving to a layer file),
+  room-visible check (`roomVisibility[roomId] !== false`, line 249), vent
+  polyline rendering (still inline; only the GM right-click popup was
+  extracted to `renderer/VentTogglePopup.tsx`).
+- `src/components/domain/encounter/renderer/RoomsLayer.tsx` — **new file**,
+  did not exist at context-gathering. Room wall/geometry rendering incl. hole
+  precedent (`hole-wall-${i}`, ~line 170) and the `isRoomVisible` gating
+  consumer (~line 44) now live here, not in the top-level renderer.
+- `src/components/domain/encounter/animation/useRoomRevealAnimations.ts` and
+  `.../animation/scheduleReveal.ts` — **new files**, did not exist at
+  context-gathering. Room reveal groups/CRT flicker cascade (D-12/D-13
+  dependency) now live here instead of inline in
+  `EncounterMapRenderer.tsx` (~789 as originally cited).
 
 ### Backend — loader & payload passthrough
 - `core/data_loader.py` — `load_deckplan()` (~lines 670–700) returns
@@ -154,14 +173,17 @@ rendered on that deck".
 - `EncounterMapRenderer.tsx` hull pipeline: `effectiveHull` memo + bbox
   computation (`view.bbox(mapData.rooms, effectiveHull, viewPadding)`) — extend
   both to iterate a normalized polygon list instead of one polygon.
-- Room polygon-hole rendering already exists in the renderer (`hole-wall-${i}`)
-  — precedent/machinery for hull holes.
-- `VentPath` rendering — the existing "decorative polyline over the map"
-  pattern (projection via `mapView`, per-segment SVG) that detail polylines can
-  follow.
-- Room reveal groups + flicker animation — interior details mount inside these
-  groups to inherit gating and animation for free (D-12, D-13).
-- Vitest infrastructure (Phase 21/29) — geometry/normalizer unit tests for the
+- Room polygon-hole rendering already exists in `renderer/RoomsLayer.tsx`
+  (`hole-wall-${i}`, ~line 170) — precedent/machinery for hull holes.
+- `VentPath` rendering (inline in `EncounterMapRenderer.tsx`) — the existing
+  "decorative polyline over the map" pattern (projection via `mapView`,
+  per-segment SVG) that detail polylines can follow.
+- Room reveal groups + flicker animation — now in
+  `animation/useRoomRevealAnimations.ts` + `animation/scheduleReveal.ts`
+  (extracted post-context, see canonical_refs note) — interior details mount
+  inside these groups to inherit gating and animation for free (D-12, D-13).
+- Vitest infrastructure (Phase 21/29), now with additional coverage from the
+  post-context test pass (`87e3640`) — geometry/normalizer unit tests for the
   hull normalizer and detail gating.
 
 ### Established Patterns
