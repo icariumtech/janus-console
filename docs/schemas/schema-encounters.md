@@ -295,15 +295,41 @@ Key flags: `--detect-doors` (outputs B-pos door entries from shared SVG edges),
 
 Single-deck (flat layers — backwards compatible):
 - `Hull` — optional hull outline path
-- `Rooms` — one `<path>` per room; `inkscape:label` = room name
-- `Corridors` — one `<path>` per corridor
+- `Rooms` — one `<path>` per room; `inkscape:label` = room name. A `<circle>`, a true
+  `<ellipse>` (rx == ry), or an Inkscape-native `sodipodi:type="arc"` path inside
+  Rooms/Corridors becomes a `circle` room/corridor. An ellipse that is not circular
+  (rx != ry) is rejected with a stderr warning — never approximated; fix the shape in
+  Inkscape. Circle rooms/corridors do not currently participate in polygon-based
+  door-to-room adjacency (auto door-detection and doors-layer room association can only
+  edge-test/contain-test polygons) — author doors touching a circle room manually via the
+  Doors layer.
+- `Corridors` — one `<path>` per corridor. A `<circle>`, a true `<ellipse>` (rx == ry), or an
+  Inkscape-native `sodipodi:type="arc"` path inside Rooms/Corridors becomes a `circle`
+  room/corridor. An ellipse that is not circular (rx != ry) is rejected with a stderr
+  warning — never approximated; fix the shape in Inkscape. Circle rooms/corridors do not
+  currently participate in polygon-based door-to-room adjacency (auto door-detection and
+  doors-layer room association can only edge-test/contain-test polygons) — author doors
+  touching a circle room manually via the Doors layer.
 - `Vents` — optional; one `<path>` per vent route; `inkscape:label` = vent name
 
 Multi-deck (nested layers — auto-detected):
 - `Hull` — optional hull outline path (top-level)
 - `<Deck Label>` — one layer per deck (e.g. `"Main Deck"`, `"Engineering Deck"`)
-  - `Rooms` — room paths within this deck
-  - `Corridors` — corridor paths within this deck
+  - `Rooms` — room paths within this deck. A `<circle>`, a true `<ellipse>` (rx == ry), or an
+    Inkscape-native `sodipodi:type="arc"` path inside Rooms/Corridors becomes a `circle`
+    room/corridor. An ellipse that is not circular (rx != ry) is rejected with a stderr
+    warning — never approximated; fix the shape in Inkscape. Circle rooms/corridors do not
+    currently participate in polygon-based door-to-room adjacency (auto door-detection and
+    doors-layer room association can only edge-test/contain-test polygons) — author doors
+    touching a circle room manually via the Doors layer.
+  - `Corridors` — corridor paths within this deck. A `<circle>`, a true `<ellipse>` (rx ==
+    ry), or an Inkscape-native `sodipodi:type="arc"` path inside Rooms/Corridors becomes a
+    `circle` room/corridor. An ellipse that is not circular (rx != ry) is rejected with a
+    stderr warning — never approximated; fix the shape in Inkscape. Circle rooms/corridors
+    do not currently participate in polygon-based door-to-room adjacency (auto
+    door-detection and doors-layer room association can only edge-test/contain-test
+    polygons) — author doors
+    touching a circle room manually via the Doors layer.
   - `Vents` — optional vent routes within this deck
 
 Multi-deck is triggered automatically when any top-level layer contains `Rooms` or `Corridors`

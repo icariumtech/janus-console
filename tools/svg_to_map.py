@@ -89,6 +89,7 @@ import xml.etree.ElementTree as ET
 
 SVG = "http://www.w3.org/2000/svg"
 INK = "http://www.inkscape.org/namespaces/inkscape"
+SODIPODI = "http://sodipodi.sourceforge.net/DTD/sodipodi-0.0.dtd"
 
 # ── SVG path parser ──────────────────────────────────────────────────────────
 
@@ -526,6 +527,34 @@ def _extract_circle_shape(
         cx = float(elem.get("cx", "0"))
         cy = float(elem.get("cy", "0"))
         r = float(elem.get("r", "0"))
+    elif elem.tag == f"{{{SVG}}}ellipse":
+        cx = float(elem.get("cx", "0"))
+        cy = float(elem.get("cy", "0"))
+        rx = float(elem.get("rx", "0"))
+        ry = float(elem.get("ry", "0"))
+        if abs(rx - ry) > 1e-4:
+            print(
+                f"  WARNING: {ctx} is not circular (rx={rx:.2f} != ry={ry:.2f}) "
+                "— skipping. Use a true circle (rx == ry) or fix the shape in "
+                "Inkscape.",
+                file=sys.stderr,
+            )
+            return None
+        r = rx
+    elif elem.tag == f"{{{SVG}}}path" and elem.get(f"{{{SODIPODI}}}type") == "arc":
+        cx = float(elem.get(f"{{{SODIPODI}}}cx", "0"))
+        cy = float(elem.get(f"{{{SODIPODI}}}cy", "0"))
+        rx = float(elem.get(f"{{{SODIPODI}}}rx", "0"))
+        ry = float(elem.get(f"{{{SODIPODI}}}ry", "0"))
+        if abs(rx - ry) > 1e-4:
+            print(
+                f"  WARNING: {ctx} is not circular (rx={rx:.2f} != ry={ry:.2f}) "
+                "— skipping. Use a true circle (rx == ry) or fix the shape in "
+                "Inkscape.",
+                file=sys.stderr,
+            )
+            return None
+        r = rx
     else:
         return None
 
@@ -537,9 +566,15 @@ def _extract_circle_shape(
 def _get_circle_shape_elements(
     parent: ET.Element, layer_label: str
 ) -> list[ET.Element]:
-    """Collect literal <circle> (and, later, <ellipse>/sodipodi-arc) elements
-    from the named layer."""
-    return get_layer_shapes(parent, layer_label, "circle")
+    """Collect literal <circle>/<ellipse> and sodipodi:type="arc" <path>
+    elements from the named layer."""
+    circles_and_ellipses = get_layer_shapes(parent, layer_label, "circle", "ellipse")
+    arc_paths = [
+        p
+        for p in get_layer_shapes(parent, layer_label, "path")
+        if p.get(f"{{{SODIPODI}}}type") == "arc"
+    ]
+    return circles_and_ellipses + arc_paths
 
 
 def _extract_areas(
@@ -555,6 +590,11 @@ def _extract_areas(
     seen_ids: dict[str, int] = {}
     rooms: list[dict] = []
     for path in get_layer_paths(parent, "Rooms"):
+        if path.get(f"{{{SODIPODI}}}type") == "arc":
+            # Handled by the circle/ellipse shape loop below — skip here to
+            # avoid a spurious "unsupported curve command" warning from
+            # parse_path_d on a shape that converts successfully as a circle.
+            continue
         label = get_ink_label(path) or path.get("id", "room")
         # Label "-" means: no display name; use SVG element id for the room id.
         if label == "-":
@@ -611,6 +651,11 @@ def _extract_areas(
 
     corridors: list[dict] = []
     for i, path in enumerate(get_layer_paths(parent, "Corridors")):
+        if path.get(f"{{{SODIPODI}}}type") == "arc":
+            # Handled by the circle/ellipse shape loop below — skip here to
+            # avoid a spurious "unsupported curve command" warning from
+            # parse_path_d on a shape that converts successfully as a circle.
+            continue
         label = get_ink_label(path)
         base_id = to_snake(label) if label else f"corridor_{i + 1}"
         cid = _unique_id(base_id, seen_ids)
@@ -620,6 +665,21 @@ def _extract_areas(
         poly = remove_collinear(verts_to_grid(_apply_translate(subpaths[0], tx, ty), unit))
         corridors.append({"id": cid, "polygon": poly})
         print(f"  Corridor '{cid}': {len(poly)} vertices")
+
+    for i, elem in enumerate(_get_circle_shape_elements(parent, "Corridors")):
+        label = get_ink_label(elem)
+        base_id = to_snake(label) if label else f"circle_corridor_{i + 1}"
+        cid = _unique_id(base_id, seen_ids)
+        circle_data = _extract_circle_shape(
+            elem, unit, tx, ty, ctx=f"circle/ellipse in Corridors (label: {label!r})"
+        )
+        if circle_data is None:
+            continue
+        corridors.append({"id": cid, "circle": circle_data})
+        print(
+            f"  Corridor '{cid}' (circle): cx={fv(circle_data['cx'])} "
+            f"cy={fv(circle_data['cy'])} r={fv(circle_data['r'])}"
+        )
 
     return rooms, corridors
 
@@ -862,9 +922,16 @@ def _write_deckplan_yaml(
             for corr in d["corridors"]:
                 f.write(f"  - id: {corr['id']}\n")
                 f.write("    name: ''\n")
-                f.write("    polygon:\n")
-                for x, y in corr["polygon"]:
-                    f.write(f"    - [{fv(x)}, {fv(y)}]\n")
+                if corr.get("circle"):
+                    c = corr["circle"]
+                    f.write(
+                        f"    circle: {{cx: {fv(c['cx'])}, cy: {fv(c['cy'])}, "
+                        f"r: {fv(c['r'])}}}\n"
+                    )
+                else:
+                    f.write("    polygon:\n")
+                    for x, y in corr["polygon"]:
+                        f.write(f"    - [{fv(x)}, {fv(y)}]\n")
                 f.write("    type: corridor\n")
 
             doors = d["doors"]
