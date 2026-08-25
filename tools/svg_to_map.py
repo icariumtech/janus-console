@@ -974,6 +974,9 @@ def _write_deckplan_yaml(
             f.write(f"  level: {level}\n")
             f.write(f"  default: {'true' if level == 1 else 'false'}\n")
             f.write(f"  unit_size: {unit_size}\n")
+            if d.get("hull"):
+                f.write("  hull:\n")
+                _write_hull_block(f, d["hull"], indent="    ")
             f.write("  rooms:\n")
 
             for room in d["rooms"]:
@@ -1123,6 +1126,12 @@ def convert(
             else:
                 doors = []
             vents = _extract_vents_layer(deck_elem, unit, dtx, dty)
+            deck_hull_data = _extract_hull_layer(deck_elem, unit)
+            if deck_hull_data:
+                print(
+                    f"  Hull (per-deck): {sum(len(p) for p in deck_hull_data['polygons'])} "
+                    f"vertices across {len(deck_hull_data['polygons'])} polygon(s)"
+                )
             decks_data.append(
                 {
                     "id": deck_id_local,
@@ -1132,6 +1141,7 @@ def convert(
                     "doors": doors,
                     "doors_from_layer": doors_from_layer,
                     "vents": vents,
+                    "hull": deck_hull_data,
                 }
             )
             print()

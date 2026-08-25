@@ -313,6 +313,11 @@ Single-deck (flat layers — backwards compatible):
 - `Vents` — optional; one `<path>` per vent route; `inkscape:label` = vent name
 
 Multi-deck (nested layers — auto-detected):
+
+Per-deck `Hull` and `Details` sublayers only apply in multi-deck mode — single-deck SVGs use
+only the existing top-level Hull layer; there is no per-deck equivalent when there is only one
+deck.
+
 - `Hull` — optional hull outline path (top-level)
 - `<Deck Label>` — one layer per deck (e.g. `"Main Deck"`, `"Engineering Deck"`)
   - `Rooms` — room paths within this deck. A `<circle>`, a true `<ellipse>` (rx == ry), or an
@@ -330,6 +335,8 @@ Multi-deck (nested layers — auto-detected):
     door-detection and doors-layer room association can only edge-test/contain-test
     polygons) — author doors
     touching a circle room manually via the Doors layer.
+  - `Hull` — optional per-deck hull sublayer (pods, nacelles, detached modules); adds to,
+    never replaces, the top-level hull
   - `Vents` — optional vent routes within this deck
 
 Multi-deck is triggered automatically when any top-level layer contains `Rooms` or `Corridors`
