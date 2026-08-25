@@ -268,6 +268,11 @@ and is shown only to the GM, with a console warning naming the unknown room id.
 emits these entries from an Inkscape "Details" sublayer, flattening curves into
 polyline segments.
 
+A detail's room association uses its first vertex (or, for a circle detail, its
+center) as the authored probe position, tested with the same smallest-containing-room
+tie-break rule used for door-to-room adjacency. Details without an `inkscape:label`
+get an auto-generated id (`detail_1`, `detail_2`, ...), matching the Vents convention.
+
 ---
 
 ## Corridor Fields
@@ -338,6 +343,9 @@ deck.
   - `Hull` — optional per-deck hull sublayer (pods, nacelles, detached modules); adds to,
     never replaces, the top-level hull
   - `Vents` — optional vent routes within this deck
+  - Details — optional per-deck sublayer for decorative linework (consoles, beds, hull
+    greebles); each item becomes interior (room-gated reveal) or exterior (always visible)
+    based on geometric containment against the deck's rooms
 
 Multi-deck is triggered automatically when any top-level layer contains `Rooms` or `Corridors`
 sublayers. The deck layer label becomes the deck `id` (snake-cased) and `name`. All decks are

@@ -1124,6 +1124,26 @@ def _write_deckplan_yaml(
                     f.write(f"  - id: {vent['id']}{label_str}\n")
                     f.write(f"    points: [{pts}]\n")
 
+            details = d.get("details", [])
+            if details:
+                f.write("  details:\n")
+                for item in details:
+                    f.write(f"  - id: {item['id']}\n")
+                    if item.get("room"):
+                        f.write(f"    room: {item['room']}\n")
+                    if "points" in item:
+                        pts = ", ".join(f"[{fv(x)}, {fv(y)}]" for x, y in item["points"])
+                        f.write(f"    points: [{pts}]\n")
+                        if item.get("closed"):
+                            f.write("    closed: true\n")
+                            f.write("    filled: true\n")
+                    elif "circle" in item:
+                        c = item["circle"]
+                        f.write(
+                            f"    circle: {{cx: {fv(c['cx'])}, cy: {fv(c['cy'])}, "
+                            f"r: {fv(c['r'])}}}\n"
+                        )
+
     print(f"Written: {deckplan_path}")
 
 
