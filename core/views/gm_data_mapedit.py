@@ -36,6 +36,15 @@ def _slugify(text) -> str:
     return re.sub(r'[^a-z0-9]+', '_', str(text).lower()).strip('_')
 
 
+def _slugify_glob(text) -> str:
+    """Like `_slugify`, but preserves glob metacharacters ('*', '?', '[', ']')
+    instead of collapsing them away, so a wildcard label query (e.g.
+    'coolant tanks*') can still be used as an fnmatch pattern against a
+    slugified label instead of degenerating to an exact-match slug.
+    """
+    return re.sub(r'[^a-z0-9*?\[\]]+', '_', str(text).lower()).strip('_')
+
+
 def _derive_door_id(door: dict, index: int) -> str:
     """Replicate the frontend doorNormalizer.deriveId so map-edit addresses a
     door by the SAME id used for rendering and door-status persistence.
@@ -119,9 +128,10 @@ def _resolve_map_element(data: dict, query: str) -> dict:
 
     # 3. glob (only when the query looks like a pattern)
     if not matches and any(c in q for c in '*?['):
+        label_glob = _slugify_glob(q)
         matches = [e for e in elements
                    if fnmatch.fnmatch(e['id'], q)
-                   or label_matches(e, lambda s: fnmatch.fnmatch(s, qslug))]
+                   or label_matches(e, lambda s: fnmatch.fnmatch(s, label_glob))]
         strategy = 'glob'
 
     # 4. prefix on id or slugified label
