@@ -28,14 +28,18 @@ SVG layer convention — single-deck (backwards compatible):
     Corridors  — corridor polygons (name="" in output)
     Doors      — optional manual door lines (see below)
     Vents      — optional ventilation paths (see below)
+    Rooms/Corridors also accept <circle>, true <ellipse> (rx == ry), or
+    sodipodi:type="arc" shapes in addition to <path> polygons.
 
 SVG layer convention — multi-deck:
     Hull           — ship outer hull polygon (optional, single path)
     <Deck label>   — one layer per deck (e.g. "Main Deck", "Engineering Deck")
+      Hull         — optional per-deck hull polygon (see below)
       Rooms        — room polygons within this deck
       Corridors    — corridor polygons within this deck
       Doors        — optional manual door lines within this deck
       Vents        — optional ventilation paths within this deck
+      Details      — optional decorative linework/markers (see below)
     <Deck label 2>
       Rooms
       Corridors
@@ -44,6 +48,13 @@ SVG layer convention — multi-deck:
     Corridors sublayers, multi-deck mode is used; otherwise single-deck mode.
     Deck IDs in output are derived from the layer label (snake_cased).
     Decks are ordered by their document order; the first deck is the default.
+    Rooms/Corridors also accept <circle>, true <ellipse> (rx == ry), or
+    sodipodi:type="arc" shapes in addition to <path> polygons.
+
+Hull layer (per-deck, optional):
+    A "Hull" sublayer inside a deck layer works exactly like the top-level
+    Hull layer (same outer-polygon/holes handling) but describes that deck's
+    own outer boundary instead of (or in addition to) the ship-wide hull.
 
 Vents layer (optional):
     Each path is a ventilation route polyline (open or closed). Vertices are
@@ -52,6 +63,18 @@ Vents layer (optional):
     If no label, id is auto-generated as vent_1, vent_2, etc.
     Output: `vents: [{id, points: [[x,y],...], label?}, ...]` on the deck.
     Vent visibility is controlled at runtime by the GM (hidden by default).
+
+Details layer (multi-deck only, optional):
+    Decorative linework/markers not otherwise represented as a room,
+    corridor, door, or vent (e.g. consoles, crates, signage). Each <path>
+    becomes a polyline detail entry (open → stroke-only, closed →
+    closed+filled); each <circle>/<ellipse>/sodipodi:arc element becomes a
+    circle detail entry.
+    inkscape:label on the element → detail id (snake_cased) and optional
+    label. If no label, id is auto-generated as detail_1, detail_2, etc.
+    Each detail's authored position (first vertex for polylines, center for
+    circles) is probed against Rooms/Corridors — a match sets `room:`
+    (interior); no match means exterior (no `room:` key).
 
 Doors layer (optional — overrides --detect-doors when present):
     Each path in the Doors layer is a single line segment (2 vertices).
