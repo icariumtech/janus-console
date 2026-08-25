@@ -108,9 +108,9 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
     3. Running `svg_to_map.py` on an SVG containing `<circle>`/`<ellipse>` elements in a room layer produces `circle` room entries in the output, renderable by the existing renderer
     4. Converted output remains valid per `docs/schemas/schema-encounters.md`, updated in the same commit as the format change
   - **Plans:** 3 plans
-    - [ ] 32-01-PLAN.md — Circular rooms: get_layer_shapes generalization, literal/sodipodi-arc circle+ellipse detection in Rooms/Corridors, non-circular rejection (D-06), schema doc (Wave 1)
-    - [ ] 32-02-PLAN.md — Per-deck hulls: shared _extract_hull_layer/_write_hull_block, root-Hull multi-path/holes refactor, per-deck Hull sublayer, schema doc (Wave 2)
-    - [ ] 32-03-PLAN.md — Details layer: _extract_details_layer (closed/open, room association, circle details), details: emission, schema doc, phase-gate regression (Wave 3)
+    - [x] 32-01-PLAN.md — Circular rooms: get_layer_shapes generalization, literal/sodipodi-arc circle+ellipse detection in Rooms/Corridors, non-circular rejection (D-06), schema doc (Wave 1)
+    - [x] 32-02-PLAN.md — Per-deck hulls: shared _extract_hull_layer/_write_hull_block, root-Hull multi-path/holes refactor, per-deck Hull sublayer, schema doc (Wave 2)
+    - [x] 32-03-PLAN.md — Details layer: _extract_details_layer (closed/open, room association, circle details), details: emission, schema doc, phase-gate regression (Wave 3)
   - Context: `.planning/phases/32-svg-converter-details-per-deck-hulls-circular-rooms/32-CONTEXT.md`
 
 - [ ] Phase 33: Isometric View
@@ -141,5 +141,5 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 29. Deckplan Map Editor | v3.0 | 4/4 | ✓ Complete | 2026-06-30 |
 | 30. AI Map Editing MCP Tools | (ad-interim) | 3/3 | Complete    | 2026-06-06 |
 | 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | Complete    | 2026-08-04 |
-| 32. SVG Converter — Details/Hulls/Circles | v3.0 | 0/3 | Not started | - |
+| 32. SVG Converter — Details/Hulls/Circles | v3.0 | 3/3 | In Progress|  |
 | 33. Isometric View | v3.0 | 0/? | Not started | - |
