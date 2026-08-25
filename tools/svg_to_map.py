@@ -680,7 +680,7 @@ def _extract_areas(
     tx, ty = _parse_translate(parent)
     seen_ids: dict[str, int] = {}
     rooms: list[dict] = []
-    for path in get_layer_paths(parent, "Rooms"):
+    for i, path in enumerate(get_layer_paths(parent, "Rooms")):
         if path.get(f"{{{SODIPODI}}}type") == "arc":
             # Handled by the circle/ellipse shape loop below — skip here to
             # avoid a spurious "unsupported curve command" warning from
@@ -690,10 +690,10 @@ def _extract_areas(
         # Label "-" means: no display name; use SVG element id for the room id.
         if label == "-":
             display_name = ""
-            base_id = to_snake(path.get("id", "") or "room")
+            base_id = to_snake(path.get("id", "")) or f"room_{i + 1}"
         else:
             display_name = label.upper()
-            base_id = to_snake(label)
+            base_id = to_snake(label) or to_snake(path.get("id", "")) or f"room_{i + 1}"
         subpaths = parse_path_d(path.get("d", ""), label=label)
         if not subpaths:
             continue
@@ -723,10 +723,14 @@ def _extract_areas(
         label = get_ink_label(elem)
         if label == "-":
             display_name = ""
-            base_id = to_snake(elem.get("id", "") or "circle_room")
+            base_id = to_snake(elem.get("id", "")) or f"circle_room_{i + 1}"
         else:
             display_name = label.upper() if label else ""
-            base_id = to_snake(label) if label else f"circle_room_{i + 1}"
+            base_id = (
+                (to_snake(label) if label else "")
+                or to_snake(elem.get("id", ""))
+                or f"circle_room_{i + 1}"
+            )
         circle_data = _extract_circle_shape(
             elem, unit, tx, ty, ctx=f"circle/ellipse in Rooms (label: {label!r})"
         )
@@ -748,7 +752,11 @@ def _extract_areas(
             # parse_path_d on a shape that converts successfully as a circle.
             continue
         label = get_ink_label(path)
-        base_id = to_snake(label) if label else f"corridor_{i + 1}"
+        base_id = (
+            (to_snake(label) if label else "")
+            or to_snake(path.get("id", ""))
+            or f"corridor_{i + 1}"
+        )
         cid = _unique_id(base_id, seen_ids)
         subpaths = parse_path_d(path.get("d", ""), label=cid)
         if not subpaths:
@@ -759,7 +767,11 @@ def _extract_areas(
 
     for i, elem in enumerate(_get_circle_shape_elements(parent, "Corridors")):
         label = get_ink_label(elem)
-        base_id = to_snake(label) if label else f"circle_corridor_{i + 1}"
+        base_id = (
+            (to_snake(label) if label else "")
+            or to_snake(elem.get("id", ""))
+            or f"circle_corridor_{i + 1}"
+        )
         cid = _unique_id(base_id, seen_ids)
         circle_data = _extract_circle_shape(
             elem, unit, tx, ty, ctx=f"circle/ellipse in Corridors (label: {label!r})"
@@ -936,7 +948,7 @@ def _extract_vents_layer(
     vents: list[dict] = []
     for i, path in enumerate(paths):
         label = get_ink_label(path) or ""
-        vent_id = to_snake(label) if label else f"vent_{i + 1}"
+        vent_id = to_snake(label) or to_snake(path.get("id", "")) or f"vent_{i + 1}"
         subpaths = parse_path_d(path.get("d", ""), label=f"vent {vent_id}")
         if not subpaths or len(subpaths[0]) < 2:
             print(
@@ -997,7 +1009,7 @@ def _extract_details_layer(
 
     for i, path in enumerate(paths):
         label = get_ink_label(path) or ""
-        detail_id = to_snake(label) if label else f"detail_{i + 1}"
+        detail_id = to_snake(label) or to_snake(path.get("id", "")) or f"detail_{i + 1}"
         detail_id = _unique_id(detail_id, seen_ids)
         d = path.get("d", "")
         subpaths = parse_path_d(d, label=f"detail {detail_id}")
@@ -1035,7 +1047,11 @@ def _extract_details_layer(
 
     for j, elem in enumerate(_get_circle_shape_elements(parent, "Details")):
         label = get_ink_label(elem)
-        detail_id = to_snake(label) if label else f"detail_{len(paths) + j + 1}"
+        detail_id = (
+            (to_snake(label) if label else "")
+            or to_snake(elem.get("id", ""))
+            or f"detail_{len(paths) + j + 1}"
+        )
         detail_id = _unique_id(detail_id, seen_ids)
         circle_data = _extract_circle_shape(
             elem, unit, tx, ty, ctx=f"circle detail in Details (id: {detail_id!r})"
@@ -1239,8 +1255,13 @@ def convert(
         print(f"\nMulti-deck mode: {len(deck_groups)} decks found.\n")
         decks_data = []
         seen_deck_ids: dict[str, int] = {}
-        for deck_label, deck_elem in deck_groups:
-            deck_id_local = _unique_id(to_snake(deck_label), seen_deck_ids)
+        for deck_idx, (deck_label, deck_elem) in enumerate(deck_groups):
+            base_deck_id = (
+                to_snake(deck_label)
+                or to_snake(deck_elem.get("id", ""))
+                or f"deck_{deck_idx + 1}"
+            )
+            deck_id_local = _unique_id(base_deck_id, seen_deck_ids)
             print(f"[{deck_label}]")
             rooms, corridors = _extract_areas(deck_elem, unit)
             all_areas = {
