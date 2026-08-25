@@ -254,6 +254,12 @@ def api_gm_data_map_edit(request, filepath):
         patch = body['set']
         if not isinstance(patch, dict):
             return JsonResponse({'error': "'set' must be a JSON object"}, status=400)
+        if 'id' in patch:
+            return JsonResponse(
+                {'error': "'set' cannot modify 'id' — this would break door/POI "
+                          "cross-references (doors reference rooms by id, and door ids "
+                          "are derived from room ids). Renaming elements is not supported."},
+                status=400)
         merged = _deep_merge(obj, patch)
         obj.clear()
         obj.update(merged)
