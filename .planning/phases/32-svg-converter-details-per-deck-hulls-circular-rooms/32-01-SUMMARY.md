@@ -193,3 +193,16 @@ None - no external service configuration required.
 ---
 *Phase: 32-svg-converter-details-per-deck-hulls-circular-rooms*
 *Completed: 2026-08-24*
+
+## Self-Check: PASSED
+
+All created/modified files verified present on disk:
+- `tools/svg_to_map.py` — FOUND
+- `tools/test_svg_to_map.py` — FOUND
+- `docs/schemas/schema-encounters.md` — FOUND
+- `.planning/phases/32-svg-converter-details-per-deck-hulls-circular-rooms/32-01-SUMMARY.md` — FOUND
+
+All commits verified present in `git log --oneline --all`:
+- `48265d8` (Task 1) — FOUND
+- `ae492f1` (Task 2) — FOUND
+- `ba43ad9` (Summary) — FOUND
