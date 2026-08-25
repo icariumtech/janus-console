@@ -231,9 +231,10 @@ async def edit_map_element(
             f"{DJANGO_BASE_URL}/api/gm/data-map-edit/{deckplan}",
             json=body,
         )
-        # Ambiguous (409) / not-found (404): return the body so the caller can ask the GM
-        # which element they mean, rather than raising.
-        if r.status_code in (404, 409):
+        # Any 4xx (ambiguous, not-found, validation errors, etc.): return the parsed
+        # body so the caller sees the specific, actionable error text the backend
+        # crafted rather than a generic "400 Bad Request" from raise_for_status().
+        if 400 <= r.status_code < 500:
             return r.json()
         r.raise_for_status()
         return r.json()
