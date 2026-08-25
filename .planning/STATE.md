@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Better Deckplans
-current_phase: 32
-current_phase_name: svg-converter-details-per-deck-hulls-circular-rooms
-status: executing
-stopped_at: Completed 32-03-PLAN.md
-last_updated: "2026-08-25T04:12:51.602Z"
-last_activity: 2026-08-24
-last_activity_desc: Phase 32 plan 03 (Details layer) executed — DET-02 satisfied, Phase 32 gate closed
-state_head: ca4463468f51ed6ca7a8826f66e91eed72e66318
+current_phase: 33
+current_phase_name: isometric view
+status: planning
+stopped_at: Phase 32 complete, ready to plan Phase 33
+last_updated: "2026-08-25T15:39:18.533Z"
+last_activity: 2026-08-25
+last_activity_desc: Phase 32 complete, transitioned to Phase 33
+state_head: b78af78a17d5624c56fa8b803f1aa2469fe06980
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 13
   completed_plans: 13
-  percent: 75
+  percent: 100
 ---
 
 # Project State
@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 
 ## Current Position
 
-Phase: 32 (svg-converter-details-per-deck-hulls-circular-rooms) — EXECUTING
-Status: Executing Phase 32
-Last activity: 2026-08-24 — Phase 32 plan 03 (Details layer) executed — DET-02 satisfied, Phase 32 gate closed
+Phase: 33 — isometric view
+Status: Ready to plan
+Last activity: 2026-08-25 — Phase 32 complete, transitioned to Phase 33
 
 ## v1.0 Milestone Archive
 
@@ -84,7 +84,7 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 **Resume file:** None
 
 Last session: 2026-08-25T04:12:51.518Z
-Stopped at: Completed 32-03-PLAN.md
+Stopped at: Phase 32 complete, ready to plan Phase 33
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics

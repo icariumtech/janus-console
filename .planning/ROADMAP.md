@@ -98,7 +98,7 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
   - **UI hint**: yes
   - Context: `.planning/phases/31-deckplan-format-per-deck-hulls-detail-linework/31-CONTEXT.md`
 
-- [ ] Phase 32: SVG Converter — Details, Per-Deck Hulls, Circular Rooms
+- [x] Phase 32: SVG Converter — Details, Per-Deck Hulls, Circular Rooms (completed 2026-08-25)
   - **Goal:** Extend `tools/svg_to_map.py` to emit the new Phase 31 schema fields and circular rooms, so Inkscape-authored decks convert directly into richer `deckplan.yaml` output.
   - **Depends on:** Phase 31 (emits the format Phase 31 defines)
   - **Requirements**: DET-02, HULL-03, CIRC-01
@@ -141,5 +141,5 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 29. Deckplan Map Editor | v3.0 | 4/4 | ✓ Complete | 2026-06-30 |
 | 30. AI Map Editing MCP Tools | (ad-interim) | 3/3 | Complete    | 2026-06-06 |
 | 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | Complete    | 2026-08-04 |
-| 32. SVG Converter — Details/Hulls/Circles | v3.0 | 3/3 | In Progress|  |
+| 32. SVG Converter — Details/Hulls/Circles | v3.0 | 3/3 | Complete    | 2026-08-25 |
 | 33. Isometric View | v3.0 | 0/? | Not started | - |
