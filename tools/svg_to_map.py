@@ -577,6 +577,88 @@ def _get_circle_shape_elements(
     return circles_and_ellipses + arc_paths
 
 
+def _extract_hull_layer(parent: ET.Element, unit: float) -> dict | None:
+    """Extract a 'Hull' sublayer (direct child of parent) into grid-space
+    polygons + holes.
+
+    Collects ALL <path> elements in the layer (not just the first) — each
+    path's largest-area subpath becomes one outer polygon (Inkscape may place
+    inner holes first); any remaining subpaths in that same path become
+    holes, flattened into one combined holes list across every path in the
+    layer (not paired to any specific outer polygon), matching
+    schema-encounters.md's existing hull holes semantics.
+
+    Used identically for both the top-level Hull layer (parent=root) and a
+    per-deck Hull sublayer (parent=deck_elem) — one shared implementation.
+
+    Returns None if no 'Hull' <g> direct child exists, or if it exists but
+    contains no usable <path> geometry.
+    """
+    hull_group = next(
+        (g for g in parent if g.get(f"{{{INK}}}label") == "Hull"), None
+    )
+    if hull_group is None:
+        return None
+    tx, ty = _parse_translate(hull_group)
+    hull_paths = list(hull_group.iter(f"{{{SVG}}}path"))
+    if not hull_paths:
+        return None
+
+    polygons: list[list[tuple[float, float]]] = []
+    holes: list[list[tuple[float, float]]] = []
+    for path in hull_paths:
+        subpaths = parse_path_d(path.get("d", ""), label="Hull")
+        if not subpaths:
+            continue
+        outer_idx = max(range(len(subpaths)), key=lambda i: _polygon_area(subpaths[i]))
+        outer_sp = subpaths[outer_idx]
+        hole_sps = [sp for i, sp in enumerate(subpaths) if i != outer_idx]
+        polygons.append(
+            remove_collinear(verts_to_grid(_apply_translate(outer_sp, tx, ty), unit))
+        )
+        holes.extend(
+            remove_collinear(verts_to_grid(_apply_translate(sp, tx, ty), unit))
+            for sp in hole_sps
+        )
+
+    if not polygons:
+        return None
+    return {"polygons": polygons, "holes": holes}
+
+
+def _write_hull_block(f, hull_data: dict, indent: str = "") -> None:
+    """Write a hull mapping's polygon(s)/holes fields, shared by both the
+    top-level `hull:` key and every deck's nested `hull:` key.
+
+    Single polygon, no holes: compact `polygon:` flat list — byte-identical
+    to the pre-refactor single-polygon inline form. Otherwise: `polygons:`
+    (plural) nested-list form, with a `holes:` nested list if any holes.
+    """
+    polygons = hull_data["polygons"]
+    holes = hull_data["holes"]
+    if len(polygons) == 1 and not holes:
+        f.write(f"{indent}polygon:\n")
+        for x, y in polygons[0]:
+            f.write(f"{indent}- [{fv(x)}, {fv(y)}]\n")
+        return
+
+    f.write(f"{indent}polygons:\n")
+    for poly in polygons:
+        for j, (x, y) in enumerate(poly):
+            if j == 0:
+                f.write(f"{indent}- - [{fv(x)}, {fv(y)}]\n")
+            else:
+                f.write(f"{indent}  - [{fv(x)}, {fv(y)}]\n")
+    if holes:
+        f.write(f"{indent}holes:\n")
+        for hole in holes:
+            for j, (x, y) in enumerate(hole):
+                if j == 0:
+                    f.write(f"{indent}- - [{fv(x)}, {fv(y)}]\n")
+                else:
+                    f.write(f"{indent}  - [{fv(x)}, {fv(y)}]\n")
+
+
 def _extract_areas(
     parent: ET.Element, unit: float
 ) -> tuple[list[dict], list[dict]]:
@@ -870,7 +952,7 @@ def _write_deckplan_yaml(
     map_name: str,
     location_type: str,
     unit_size: int,
-    hull_poly: list[tuple[float, float]] | None,
+    hull_data: dict | None,
     decks_data: list[dict],
     detect_doors: bool,
 ) -> None:
@@ -881,10 +963,9 @@ def _write_deckplan_yaml(
         f.write(f"total_decks: {len(decks_data)}\n")
         f.write(f"unit_size: {unit_size}\n")
 
-        if hull_poly:
-            f.write("hull:\n  polygon:\n")
-            for x, y in hull_poly:
-                f.write(f"  - [{fv(x)}, {fv(y)}]\n")
+        if hull_data:
+            f.write("hull:\n")
+            _write_hull_block(f, hull_data, indent="  ")
 
         f.write("decks:\n")
         for level, d in enumerate(decks_data, start=1):
@@ -1006,20 +1087,15 @@ def convert(
         print(f"Grid unit: {raw_unit:.7f} px/cell  ×  grid-scale {grid_scale}  =  {unit:.7f} px/output-cell")
 
     # Hull
-    hull_poly: list[tuple[float, float]] | None = None
-    hull_paths = get_layer_paths(root, "Hull")
-    if hull_paths:
-        hull_layer = next(
-            (g for g in root if g.get(f"{{{INK}}}label") == "Hull"), None
+    hull_data = _extract_hull_layer(root, unit)
+    if hull_data:
+        msg = (
+            f"Hull: {sum(len(p) for p in hull_data['polygons'])} vertices across "
+            f"{len(hull_data['polygons'])} polygon(s)"
         )
-        htx, hty = _parse_translate(hull_layer) if hull_layer is not None else (0.0, 0.0)
-        hull_subpaths = parse_path_d(hull_paths[0].get("d", ""), label="Hull")
-        if hull_subpaths:
-            hull_poly = remove_collinear(
-                verts_to_grid(_apply_translate(hull_subpaths[0], htx, hty), unit)
-            )
-        if hull_poly:
-            print(f"Hull: {len(hull_poly)} vertices")
+        if hull_data["holes"]:
+            msg += f", {len(hull_data['holes'])} hole(s)"
+        print(msg)
     else:
         print("Hull: (none)")
 
@@ -1093,7 +1169,7 @@ def convert(
     ensure_location_yaml(location_dir, map_name, location_type)
 
     _write_deckplan_yaml(
-        location_dir, map_name, location_type, unit_size, hull_poly, decks_data, detect_doors
+        location_dir, map_name, location_type, unit_size, hull_data, decks_data, detect_doors
     )
 
 

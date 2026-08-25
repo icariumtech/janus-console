@@ -158,5 +158,144 @@ class CircleRoomTests(unittest.TestCase):
         self.assertEqual(corridors[0]["circle"], {"cx": 3, "cy": 2, "r": 1.0})
 
 
+class HullTests(unittest.TestCase):
+    def test_root_hull_multi_path_with_hole(self):
+        # Path A: compound path — outer subpath + one hole subpath.
+        # Path B: simple single-subpath outer shape.
+        svg = _svg(
+            """
+  <g inkscape:label="Hull">
+    <path d="M 0,0 L 300,0 L 300,300 L 0,300 Z
+             M 100,100 L 200,100 L 200,200 L 100,200 Z"/>
+    <path d="M 400,0 L 600,0 L 600,150 L 400,150 Z"/>
+  </g>
+"""
+        )
+        root = ET.fromstring(svg)
+        result = svg_to_map._extract_hull_layer(root, unit=30.0)
+        self.assertIsNotNone(result)
+        self.assertEqual(len(result["polygons"]), 2)
+        self.assertEqual(len(result["holes"]), 1)
+
+    def test_root_hull_no_layer_returns_none(self):
+        svg = _svg(
+            """
+  <g inkscape:label="Rooms">
+    <path inkscape:label="Bridge" d="M 0,0 L 300,0 L 300,300 L 0,300 Z"/>
+  </g>
+"""
+        )
+        root = ET.fromstring(svg)
+        result = svg_to_map._extract_hull_layer(root, unit=30.0)
+        self.assertIsNone(result)
+
+    def test_root_hull_regression_ship_template(self):
+        # NOTE: both real fixture SVGs ship a placeholder "DELETE ME" <rect>
+        # (not a <path>) in their Hull layer — get_layer_paths only matches
+        # <path> tags, so hull_paths is empty and pre-refactor behavior emits
+        # NO hull: key at all ("Hull: (none)" on stdout). This is the true
+        # pre-refactor output (verified against the unmodified code before
+        # this task's edits) — the byte-identical regression bar for these
+        # two specific files is "still no hull: key, never a polygons: key",
+        # not "compact polygon: form" as originally assumed.
+        tools_dir = os.path.dirname(os.path.abspath(__file__))
+        for fixture in ("ship_template.svg", "ship_template_multideck.svg"):
+            svg_path = os.path.join(tools_dir, fixture)
+            with tempfile.TemporaryDirectory() as tmp:
+                out_dir = os.path.join(tmp, "out")
+                svg_to_map.convert(
+                    svg_path, out_dir, "main_deck", "Fixture", "ship", 30, 1, True
+                )
+                with open(os.path.join(out_dir, "deckplan.yaml")) as f:
+                    written_text = f.read()
+            self.assertNotIn("hull:", written_text, msg=f"fixture: {fixture}")
+            self.assertNotIn("polygons:", written_text, msg=f"fixture: {fixture}")
+
+    def test_root_hull_single_path_compact_form(self):
+        # Controlled fixture (real repo fixtures have no actual Hull <path>,
+        # see test_root_hull_regression_ship_template) proving the
+        # single-path/no-holes case still emits the pre-refactor compact
+        # `polygon:` list form, byte-identical to the old inline
+        # `if hull_poly: f.write("hull:\n  polygon:\n")` code.
+        svg = _svg(
+            """
+  <g inkscape:label="Hull">
+    <path d="M 0,0 L 300,0 L 300,300 L 0,300 Z"/>
+  </g>
+  <g inkscape:label="Rooms">
+    <path inkscape:label="Bridge" d="M 30,30 L 90,30 L 90,90 L 30,90 Z"/>
+  </g>
+"""
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            svg_path = os.path.join(tmp, "fixture.svg")
+            with open(svg_path, "w") as f:
+                f.write(svg)
+            out_dir = os.path.join(tmp, "out")
+            svg_to_map.convert(
+                svg_path, out_dir, "main_deck", "Fixture", "ship", 30, 1, True
+            )
+            with open(os.path.join(out_dir, "deckplan.yaml")) as f:
+                written_text = f.read()
+        self.assertIn("hull:\n  polygon:\n", written_text)
+        self.assertNotIn("polygons:", written_text)
+        self.assertNotIn("holes:", written_text.split("decks:")[0])
+
+    def test_per_deck_hull_multi_polygon(self):
+        svg = _svg(
+            """
+  <g inkscape:label="Main Deck">
+    <g inkscape:label="Rooms">
+      <path inkscape:label="Bridge" d="M 0,0 L 300,0 L 300,300 L 0,300 Z"/>
+    </g>
+    <g inkscape:label="Hull">
+      <path d="M 0,0 L 90,0 L 90,90 L 0,90 Z"/>
+      <path d="M 200,0 L 290,0 L 290,90 L 200,90 Z"/>
+    </g>
+  </g>
+"""
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            svg_path = os.path.join(tmp, "fixture.svg")
+            with open(svg_path, "w") as f:
+                f.write(svg)
+            out_dir = os.path.join(tmp, "out")
+            svg_to_map.convert(
+                svg_path, out_dir, "main_deck", "Fixture", "ship", 30, 1, True
+            )
+            with open(os.path.join(out_dir, "deckplan.yaml")) as f:
+                written_text = f.read()
+
+        # Per-deck hull block should be nested under the deck (indented under
+        # decks:, not at document top-level) and contain polygons: (plural).
+        self.assertIn("  hull:\n", written_text)
+        deck_hull_idx = written_text.index("  hull:\n")
+        after = written_text[deck_hull_idx:]
+        self.assertIn("polygons:", after.split("\n\n")[0] if "\n\n" in after else after)
+
+    def test_single_deck_mode_no_per_deck_hull(self):
+        svg = _svg(
+            """
+  <g inkscape:label="Rooms">
+    <path inkscape:label="Bridge" d="M 0,0 L 300,0 L 300,300 L 0,300 Z"/>
+  </g>
+"""
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            svg_path = os.path.join(tmp, "fixture.svg")
+            with open(svg_path, "w") as f:
+                f.write(svg)
+            out_dir = os.path.join(tmp, "out")
+            svg_to_map.convert(
+                svg_path, out_dir, "main_deck", "Fixture", "ship", 30, 1, True
+            )
+            with open(os.path.join(out_dir, "deckplan.yaml")) as f:
+                written_text = f.read()
+
+        # No per-deck hull key anywhere under decks: (no root Hull layer in
+        # this fixture, so no hull: at all should be present).
+        self.assertNotIn("hull:", written_text)
+
+
 if __name__ == "__main__":
     unittest.main()
