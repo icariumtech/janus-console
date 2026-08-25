@@ -506,12 +506,21 @@ def ensure_location_yaml(location_dir: str, map_name: str, location_type: str) -
 # ── Processing helpers ───────────────────────────────────────────────────────
 
 def _unique_id(base_id: str, seen: dict[str, int]) -> str:
-    """Return a unique id by appending _2, _3, … on collision."""
-    if base_id not in seen:
-        seen[base_id] = 1
-        return base_id
-    seen[base_id] += 1
-    return f"{base_id}_{seen[base_id]}"
+    """Return a unique id by appending _2, _3, … on collision.
+
+    Tracks both base labels requested so far AND ids actually emitted, so a
+    suffixed id derived from one base label (e.g. "coolant_tanks_2") can
+    never collide with an id independently emitted from a different base
+    label (e.g. a room literally labeled "Coolant Tanks 2").
+    """
+    n = seen.get(base_id, 0) + 1
+    candidate = base_id if n == 1 else f"{base_id}_{n}"
+    while candidate in seen:
+        n += 1
+        candidate = f"{base_id}_{n}"
+    seen[base_id] = n
+    seen[candidate] = 1
+    return candidate
 
 
 def _extract_circle_shape(
