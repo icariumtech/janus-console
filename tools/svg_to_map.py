@@ -1387,6 +1387,9 @@ def main() -> None:
     )
     args = ap.parse_args()
 
+    if args.grid_scale < 1:
+        sys.exit(f"ERROR: --grid-scale must be >= 1 (got {args.grid_scale}).")
+
     svg_path = os.path.abspath(args.svg)
     if not os.path.exists(svg_path):
         sys.exit(f"ERROR: File not found: {svg_path}")
