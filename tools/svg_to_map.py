@@ -956,6 +956,24 @@ def _extract_vents_layer(
     return vents
 
 
+def _first_subpath_closed(d: str) -> bool:
+    """Whether the FIRST M...(Z) subpath of a (possibly compound) path 'd'
+    attribute explicitly closes with Z/z.
+
+    Unlike naively checking `d.rstrip().endswith(("Z", "z"))` — which
+    reflects only the LAST subpath of a compound "M...Z M...L" path — this
+    looks at just the first subpath's own source text, matching what
+    _extract_details_layer actually emits (subpaths[0]) when a Details path
+    is compound.
+    """
+    stripped = d.strip()
+    if not stripped:
+        return False
+    next_move = re.search(r"[Mm]", stripped[1:])
+    first_segment = stripped[: next_move.start() + 1] if next_move else stripped
+    return first_segment.rstrip().endswith(("Z", "z"))
+
+
 def _extract_details_layer(
     parent: ET.Element,
     unit: float,
@@ -979,14 +997,22 @@ def _extract_details_layer(
     for i, path in enumerate(paths):
         label = get_ink_label(path) or ""
         detail_id = to_snake(label) if label else f"detail_{i + 1}"
-        closed = path.get("d", "").rstrip().endswith(("Z", "z"))
-        subpaths = parse_path_d(path.get("d", ""), label=f"detail {detail_id}")
+        d = path.get("d", "")
+        subpaths = parse_path_d(d, label=f"detail {detail_id}")
         if not subpaths or len(subpaths[0]) < 2:
             print(
                 f"  WARNING: detail path '{detail_id}' has <2 vertices — skipping.",
                 file=sys.stderr,
             )
             continue
+        if len(subpaths) > 1:
+            print(
+                f"  WARNING: detail path '{detail_id}' has {len(subpaths)} disconnected "
+                "subpaths — only the first is used. Split into separate paths in "
+                "Inkscape.",
+                file=sys.stderr,
+            )
+        closed = _first_subpath_closed(d)
         grid_pts = verts_to_grid(_apply_translate(subpaths[0], tx, ty), unit)
         points = [[round(x * 4) / 4, round(y * 4) / 4] for x, y in grid_pts]
 
