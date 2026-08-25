@@ -23,6 +23,11 @@ from core.views.gm_data_files import _deep_merge, _announce_data_changed, safe_w
 
 logger = logging.getLogger(__name__)
 
+# Enums from docs/schemas/schema-encounters.md — kept in sync with that doc.
+_DOOR_STATUS_ENUM = {'OPEN', 'CLOSED', 'LOCKED', 'SEALED', 'DAMAGED', 'BROKEN'}
+_DOOR_TYPE_ENUM = {'standard', 'blast_door', 'airlock', 'emergency', 'open'}
+_POI_TYPE_ENUM = {'item', 'objective', 'hazard', 'npc', 'player'}
+
 
 # ---------------------------------------------------------------------------
 # Map element resolution (deckplan.yaml)
@@ -270,6 +275,13 @@ def api_gm_data_map_edit(request, filepath):
                           "cross-references (doors reference rooms by id, and door ids "
                           "are derived from room ids). Renaming elements is not supported."},
                 status=400)
+        if kind == 'door':
+            if 'status' in patch and patch['status'] not in _DOOR_STATUS_ENUM:
+                return JsonResponse(
+                    {'error': f"'status' must be one of {sorted(_DOOR_STATUS_ENUM)}"}, status=400)
+            if 'type' in patch and patch['type'] not in _DOOR_TYPE_ENUM:
+                return JsonResponse(
+                    {'error': f"'type' must be one of {sorted(_DOOR_TYPE_ENUM)}"}, status=400)
         merged = _deep_merge(obj, patch)
         obj.clear()
         obj.update(merged)
@@ -280,6 +292,14 @@ def api_gm_data_map_edit(request, filepath):
         poi = body['add_poi']
         if not isinstance(poi, dict):
             return JsonResponse({'error': "'add_poi' must be a JSON object"}, status=400)
+        icon = poi.get('icon')
+        if not isinstance(icon, str) or not icon.strip():
+            return JsonResponse(
+                {'error': "'add_poi.icon' is required and must be a non-empty string"}, status=400)
+        poi_type = poi.get('type')
+        if poi_type is not None and poi_type not in _POI_TYPE_ENUM:
+            return JsonResponse(
+                {'error': f"'add_poi.type' must be one of {sorted(_POI_TYPE_ENUM)}"}, status=400)
         existing = obj.setdefault('poi', [])
         if not isinstance(existing, list):
             return JsonResponse({'error': "element 'poi' exists but is not a list"}, status=400)
