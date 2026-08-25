@@ -947,6 +947,78 @@ def _extract_vents_layer(
     return vents
 
 
+def _extract_details_layer(
+    parent: ET.Element,
+    unit: float,
+    tx: float,
+    ty: float,
+    all_areas: dict[str, list[tuple[float, float]]],
+) -> list[dict]:
+    """Parse decorative detail linework from a 'Details' sublayer.
+
+    Each <path> becomes a polyline detail entry (open → stroke-only, closed →
+    closed+filled per D-04); each <circle>/<ellipse>/sodipodi:arc element
+    becomes a circle detail entry. Every entry's authored position (first
+    vertex for polylines, center for circles) is probed against all_areas via
+    _find_room_at — the containing room's id becomes `room:` (interior); no
+    match means exterior (no `room:` key). Mirrors _extract_vents_layer's
+    id-derivation, warn-and-skip, and print conventions.
+    """
+    paths = get_layer_paths(parent, "Details")
+    details: list[dict] = []
+
+    for i, path in enumerate(paths):
+        label = get_ink_label(path) or ""
+        detail_id = to_snake(label) if label else f"detail_{i + 1}"
+        closed = path.get("d", "").rstrip().endswith(("Z", "z"))
+        subpaths = parse_path_d(path.get("d", ""), label=f"detail {detail_id}")
+        if not subpaths or len(subpaths[0]) < 2:
+            print(
+                f"  WARNING: detail path '{detail_id}' has <2 vertices — skipping.",
+                file=sys.stderr,
+            )
+            continue
+        grid_pts = verts_to_grid(_apply_translate(subpaths[0], tx, ty), unit)
+        points = [[round(x * 4) / 4, round(y * 4) / 4] for x, y in grid_pts]
+
+        room_id = _find_room_at(tuple(points[0]), all_areas)
+
+        detail: dict = {"id": detail_id, "points": points}
+        if room_id is not None:
+            detail["room"] = room_id
+        if closed:
+            detail["closed"] = True
+            detail["filled"] = True
+        details.append(detail)
+        print(
+            f"  Detail '{detail_id}': {len(points)} points"
+            f"{'  (closed, filled)' if closed else ''}"
+            f"{f'  → room {room_id}' if room_id else '  (exterior)'}"
+        )
+
+    for j, elem in enumerate(_get_circle_shape_elements(parent, "Details")):
+        label = get_ink_label(elem)
+        detail_id = to_snake(label) if label else f"detail_{len(paths) + j + 1}"
+        circle_data = _extract_circle_shape(
+            elem, unit, tx, ty, ctx=f"circle detail in Details (id: {detail_id!r})"
+        )
+        if circle_data is None:
+            continue
+        room_id = _find_room_at((circle_data["cx"], circle_data["cy"]), all_areas)
+        detail = {"id": detail_id, "circle": circle_data}
+        if room_id is not None:
+            detail["room"] = room_id
+        details.append(detail)
+        print(
+            f"  Detail '{detail_id}' (circle): cx={fv(circle_data['cx'])} "
+            f"cy={fv(circle_data['cy'])} r={fv(circle_data['r'])}"
+            f"{f'  → room {room_id}' if room_id else '  (exterior)'}"
+        )
+
+    print(f"  Details layer: {len(details)} items.")
+    return details
+
+
 def _write_deckplan_yaml(
     location_dir: str,
     map_name: str,
@@ -1126,6 +1198,7 @@ def convert(
             else:
                 doors = []
             vents = _extract_vents_layer(deck_elem, unit, dtx, dty)
+            details = _extract_details_layer(deck_elem, unit, dtx, dty, all_areas)
             deck_hull_data = _extract_hull_layer(deck_elem, unit)
             if deck_hull_data:
                 print(
@@ -1141,6 +1214,7 @@ def convert(
                     "doors": doors,
                     "doors_from_layer": doors_from_layer,
                     "vents": vents,
+                    "details": details,
                     "hull": deck_hull_data,
                 }
             )
