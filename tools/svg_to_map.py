@@ -1209,8 +1209,9 @@ def convert(
     if deck_groups:
         print(f"\nMulti-deck mode: {len(deck_groups)} decks found.\n")
         decks_data = []
+        seen_deck_ids: dict[str, int] = {}
         for deck_label, deck_elem in deck_groups:
-            deck_id_local = to_snake(deck_label)
+            deck_id_local = _unique_id(to_snake(deck_label), seen_deck_ids)
             print(f"[{deck_label}]")
             rooms, corridors = _extract_areas(deck_elem, unit)
             all_areas = {
