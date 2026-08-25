@@ -5,16 +5,16 @@ milestone_name: Better Deckplans
 current_phase: 32
 current_phase_name: svg-converter-details-per-deck-hulls-circular-rooms
 status: executing
-stopped_at: Completed 32-02-PLAN.md
-last_updated: "2026-08-25T04:07:13.000Z"
+stopped_at: Completed 32-03-PLAN.md
+last_updated: "2026-08-25T04:12:51.602Z"
 last_activity: 2026-08-24
-last_activity_desc: Phase 32 plan 02 (per-deck hulls) executed
-state_head: 8c480d87d4c6468def08c20c0dadd26513812e5b
+last_activity_desc: Phase 32 plan 03 (Details layer) executed — DET-02 satisfied, Phase 32 gate closed
+state_head: ca4463468f51ed6ca7a8826f66e91eed72e66318
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 13
-  completed_plans: 12
+  completed_plans: 13
   percent: 75
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 
 Phase: 32 (svg-converter-details-per-deck-hulls-circular-rooms) — EXECUTING
 Status: Executing Phase 32
-Last activity: 2026-08-24 — Phase 32 plan 02 (per-deck hulls) executed
+Last activity: 2026-08-24 — Phase 32 plan 03 (Details layer) executed — DET-02 satisfied, Phase 32 gate closed
 
 ## v1.0 Milestone Archive
 
@@ -83,8 +83,8 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 **Resume file:** None
 
-Last session: 2026-08-25T04:07:13.000Z
-Stopped at: Completed 32-02-PLAN.md
+Last session: 2026-08-25T04:12:51.518Z
+Stopped at: Completed 32-03-PLAN.md
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
@@ -106,6 +106,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 | Phase 31 P03 | ~60min (Task 1) + human verification | 2 tasks | 1 files |
 | Phase 32 P01 | 12min | 2 tasks | 3 files |
 | Phase 32 P02 | ~7min | 2 tasks | 3 files |
+| Phase 32 P03 | ~15min | 2 tasks | 3 files |
 
 ## Operator Next Steps
 
@@ -119,6 +120,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 - [Phase 31]: Task 2 checkpoint approved via iterative screenshot review (3 of 8 how-to-verify sub-items directly confirmed: HULL-02, DET-01, DET-03) followed by a final unqualified "approved" covering the remaining sub-items on trust. See 31-03-SUMMARY.md Checkpoint Status for full traceability.
 - [Phase 32]: 32-01: D-05/D-06 circle detection implemented; non-circular ellipses rejected (never approximated); all_areas ordered_ids also needed the polygon-key guard beyond what the plan named
 - [Phase 32]: 32-02: HULL-03 satisfied via shared `_extract_hull_layer()`/`_write_hull_block()` for both root and per-deck Hull sublayers (multi-deck-only scoping, Pitfall 4); the plan's assumed regression-test fixture content did not match reality (both ship_template*.svg Hull layers hold only a placeholder `<rect>`, no `<path>`) — corrected via source-grounding, test adjusted to true pre-refactor behavior plus an added controlled-fixture test proving the compact-form case
+- [Phase 32]: 32-03: DET-02 satisfied via `_extract_details_layer()` — closed/open read from the raw d string directly (never `parse_path_d()`'s return value, per Pattern 4/Pitfall 3); room association reuses `_find_room_at()` unchanged; circle details reuse Plan 01's circle-shape helpers. Phase-gate: full 19-test suite green, both fixture SVGs re-converted with zero output drift — Phase 32 (all 3 plans) complete.
 
 ### Blockers
 
