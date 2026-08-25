@@ -3,18 +3,19 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Better Deckplans
 current_phase: 32
-current_phase_name: svg converter — details, per deck hulls, circular rooms
-status: planning
+current_phase_name: svg-converter-details-per-deck-hulls-circular-rooms
+status: executing
 stopped_at: Phase 32 context gathered
-last_updated: "2026-08-25T03:06:48.057Z"
+last_updated: "2026-08-25T03:46:53.836Z"
 last_activity: 2026-08-24
 last_activity_desc: Phase 30 (ad-interim, out-of-order) verification gap closed — code review, regression gate, VERIFICATION.md; current position remains Phase 32
+state_head: 73ead26c01cad28532b3386fd472e0e7ec283eeb
 progress:
-  total_phases: 23
+  total_phases: 4
   completed_phases: 21
-  total_plans: 59
+  total_plans: 13
   completed_plans: 58
-  percent: 91
+  percent: 75
 ---
 
 # Project State
@@ -28,8 +29,8 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 
 ## Current Position
 
-Phase: 32 — svg converter — details, per deck hulls, circular rooms
-Status: Ready to plan
+Phase: 32 (svg-converter-details-per-deck-hulls-circular-rooms) — READY TO EXECUTE
+Status: Ready to execute
 Last activity: 2026-08-24 — Phase 30 (ad-interim) verification gap closed; current position remains Phase 32
 
 ## v1.0 Milestone Archive
