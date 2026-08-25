@@ -993,10 +993,12 @@ def _extract_details_layer(
     """
     paths = get_layer_paths(parent, "Details")
     details: list[dict] = []
+    seen_ids: dict[str, int] = {}
 
     for i, path in enumerate(paths):
         label = get_ink_label(path) or ""
         detail_id = to_snake(label) if label else f"detail_{i + 1}"
+        detail_id = _unique_id(detail_id, seen_ids)
         d = path.get("d", "")
         subpaths = parse_path_d(d, label=f"detail {detail_id}")
         if not subpaths or len(subpaths[0]) < 2:
@@ -1034,6 +1036,7 @@ def _extract_details_layer(
     for j, elem in enumerate(_get_circle_shape_elements(parent, "Details")):
         label = get_ink_label(elem)
         detail_id = to_snake(label) if label else f"detail_{len(paths) + j + 1}"
+        detail_id = _unique_id(detail_id, seen_ids)
         circle_data = _extract_circle_shape(
             elem, unit, tx, ty, ctx=f"circle detail in Details (id: {detail_id!r})"
         )
