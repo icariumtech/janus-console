@@ -423,12 +423,22 @@ def _apply_translate(
     return [(x + tx, y + ty) for x, y in verts]
 
 
-def get_layer_paths(parent: ET.Element, layer_label: str) -> list[ET.Element]:
-    """Return all <path> elements from the named layer within parent."""
+def get_layer_shapes(
+    parent: ET.Element, layer_label: str, *tag_names: str
+) -> list[ET.Element]:
+    """Return all elements matching any of tag_names from the named layer within parent."""
     for g in parent.iter(f"{{{SVG}}}g"):
         if g.get(f"{{{INK}}}label") == layer_label:
-            return list(g.iter(f"{{{SVG}}}path"))
+            out: list[ET.Element] = []
+            for tag in tag_names:
+                out.extend(g.iter(f"{{{SVG}}}{tag}"))
+            return out
     return []
+
+
+def get_layer_paths(parent: ET.Element, layer_label: str) -> list[ET.Element]:
+    """Return all <path> elements from the named layer within parent."""
+    return get_layer_shapes(parent, layer_label, "path")
 
 
 def get_ink_label(elem: ET.Element) -> str:
@@ -503,6 +513,35 @@ def _unique_id(base_id: str, seen: dict[str, int]) -> str:
     return f"{base_id}_{seen[base_id]}"
 
 
+def _extract_circle_shape(
+    elem: ET.Element, unit: float, tx: float, ty: float, *, ctx: str
+) -> dict | None:
+    """Extract a circle/ellipse shape element into grid-space {cx, cy, r}.
+
+    Handles literal <circle> elements. A non-circular <ellipse> (rx != ry) or a
+    non-circular sodipodi:type="arc" path is rejected — warn to stderr and
+    return None, never approximated (D-06).
+    """
+    if elem.tag == f"{{{SVG}}}circle":
+        cx = float(elem.get("cx", "0"))
+        cy = float(elem.get("cy", "0"))
+        r = float(elem.get("r", "0"))
+    else:
+        return None
+
+    (gcx, gcy), = verts_to_grid(_apply_translate([(cx, cy)], tx, ty), unit)
+    gr = to_grid(r, unit) - to_grid(0.0, unit)
+    return {"cx": gcx, "cy": gcy, "r": gr}
+
+
+def _get_circle_shape_elements(
+    parent: ET.Element, layer_label: str
+) -> list[ET.Element]:
+    """Collect literal <circle> (and, later, <ellipse>/sodipodi-arc) elements
+    from the named layer."""
+    return get_layer_shapes(parent, layer_label, "circle")
+
+
 def _extract_areas(
     parent: ET.Element, unit: float
 ) -> tuple[list[dict], list[dict]]:
@@ -549,6 +588,27 @@ def _extract_areas(
         holes_note = f"  ({len(room['holes'])} hole(s))" if room.get("holes") else ""
         print(f"  Room '{label}': {len(poly)} vertices  ({w:.1f}×{h:.1f} cells){suffix}{no_label}{holes_note}")
 
+    for i, elem in enumerate(_get_circle_shape_elements(parent, "Rooms")):
+        label = get_ink_label(elem)
+        if label == "-":
+            display_name = ""
+            base_id = to_snake(elem.get("id", "") or "circle_room")
+        else:
+            display_name = label.upper() if label else ""
+            base_id = to_snake(label) if label else f"circle_room_{i + 1}"
+        circle_data = _extract_circle_shape(
+            elem, unit, tx, ty, ctx=f"circle/ellipse in Rooms (label: {label!r})"
+        )
+        if circle_data is None:
+            continue
+        rid = _unique_id(base_id, seen_ids)
+        room = {"id": rid, "name": display_name, "circle": circle_data}
+        rooms.append(room)
+        print(
+            f"  Room '{label or rid}' (circle): cx={fv(circle_data['cx'])} "
+            f"cy={fv(circle_data['cy'])} r={fv(circle_data['r'])}"
+        )
+
     corridors: list[dict] = []
     for i, path in enumerate(get_layer_paths(parent, "Corridors")):
         label = get_ink_label(path)
@@ -566,9 +626,14 @@ def _extract_areas(
 
 def _build_doors(rooms: list[dict], corridors: list[dict]) -> list[dict]:
     """Run door detection for a set of rooms and corridors."""
-    all_areas = {r["id"]: r["polygon"] for r in rooms + corridors}
+    # Circle rooms/corridors have no "polygon" key and are excluded from
+    # polygon-based door adjacency — they cannot be edge-tested for shared
+    # walls with the existing geometry.
+    all_areas = {r["id"]: r["polygon"] for r in rooms + corridors if "polygon" in r}
     seen_pairs: set[tuple[str, str]] = set()
-    ordered_ids = [r["id"] for r in rooms] + [c["id"] for c in corridors]
+    ordered_ids = [r["id"] for r in rooms if "polygon" in r] + [
+        c["id"] for c in corridors if "polygon" in c
+    ]
     doors: list[dict] = []
 
     for a_id in ordered_ids:
@@ -773,17 +838,24 @@ def _write_deckplan_yaml(
             for room in d["rooms"]:
                 f.write(f"  - id: {room['id']}\n")
                 f.write(f"    name: {room['name']}\n")
-                f.write("    polygon:\n")
-                for x, y in room["polygon"]:
-                    f.write(f"    - [{fv(x)}, {fv(y)}]\n")
-                if room.get("holes"):
-                    f.write("    holes:\n")
-                    for hole in room["holes"]:
-                        for j, (x, y) in enumerate(hole):
-                            if j == 0:
-                                f.write(f"    - - [{fv(x)}, {fv(y)}]\n")
-                            else:
-                                f.write(f"      - [{fv(x)}, {fv(y)}]\n")
+                if room.get("circle"):
+                    c = room["circle"]
+                    f.write(
+                        f"    circle: {{cx: {fv(c['cx'])}, cy: {fv(c['cy'])}, "
+                        f"r: {fv(c['r'])}}}\n"
+                    )
+                else:
+                    f.write("    polygon:\n")
+                    for x, y in room["polygon"]:
+                        f.write(f"    - [{fv(x)}, {fv(y)}]\n")
+                    if room.get("holes"):
+                        f.write("    holes:\n")
+                        for hole in room["holes"]:
+                            for j, (x, y) in enumerate(hole):
+                                if j == 0:
+                                    f.write(f"    - - [{fv(x)}, {fv(y)}]\n")
+                                else:
+                                    f.write(f"      - [{fv(x)}, {fv(y)}]\n")
                 f.write('    # description: ""\n')
                 f.write('    # type: ""\n')
 
@@ -894,7 +966,9 @@ def convert(
             deck_id_local = to_snake(deck_label)
             print(f"[{deck_label}]")
             rooms, corridors = _extract_areas(deck_elem, unit)
-            all_areas = {r["id"]: r["polygon"] for r in rooms + corridors}
+            all_areas = {
+                r["id"]: r["polygon"] for r in rooms + corridors if "polygon" in r
+            }
             dtx, dty = _parse_translate(deck_elem)
             manual_doors = _extract_doors_layer(deck_elem, unit, dtx, dty, all_areas)
             doors_from_layer = bool(manual_doors)
@@ -921,7 +995,9 @@ def convert(
     else:
         print("\nSingle-deck mode.")
         rooms, corridors = _extract_areas(root, unit)
-        all_areas = {r["id"]: r["polygon"] for r in rooms + corridors}
+        all_areas = {
+            r["id"]: r["polygon"] for r in rooms + corridors if "polygon" in r
+        }
         manual_doors = _extract_doors_layer(root, unit, 0.0, 0.0, all_areas)
         doors_from_layer = bool(manual_doors)
         if manual_doors:
