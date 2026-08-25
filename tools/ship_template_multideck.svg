@@ -12,12 +12,35 @@
       Rooms               - sublayer: room polygons with inkscape:label = room name
       Corridors           - sublayer: corridor polygons, no label
       Doors               - sublayer: optional 2-point door lines (replaces auto-detect)
+      Hull                - sublayer (optional): this deck's own outer polygon,
+                            in addition to the shared top-level Hull above
+      Details             - sublayer (optional): decorative linework/markers not
+                            otherwise a room/corridor/door/vent
     Deck Name 2
       Rooms
       Corridors
 
   Deck IDs in output are derived from the deck layer label (snake_cased).
   First deck listed is the default deck shown on load.
+
+  CIRCULAR ROOMS: draw a literal <circle> (or a true <ellipse> with rx==ry,
+                  or Inkscape's un-flattened ellipse tool output,
+                  sodipodi:type="arc") inside a deck's Rooms or Corridors
+                  instead of a <path>. inkscape:label works the same as on
+                  a path. A non-circular ellipse (rx != ry) is rejected.
+
+  DETAILS LAYER:  each <path> becomes a polyline (open = stroke-only, closed
+                  = closed+filled); each <circle>/<ellipse>/sodipodi:arc
+                  becomes a circle detail. inkscape:label sets the id
+                  (auto-generated detail_N if absent). Each detail's authored
+                  position is tested against Rooms/Corridors: inside a room
+                  sets room: (revealed only when that room is revealed);
+                  outside every room = exterior (always visible, no room:).
+
+  PER-DECK HULL:  a "Hull" sublayer inside a deck layer works exactly like
+                  the top-level Hull layer (same outer-polygon + holes
+                  handling) but describes that deck's own boundary. Collects
+                  ALL <path> elements in the layer, not just the first.
 
   SINGLE-DECK: see ship_template.svg
 
@@ -78,7 +101,7 @@
      sodipodi:insensitive="true"
      style="display:inline">
 
-    <rect x="8" y="8" width="600" height="238"
+    <rect x="8" y="8" width="600" height="298"
           style="fill:#0d0d1a;fill-opacity:0.92;stroke:#334466;stroke-width:1" />
 
     <text x="20" y="32"
@@ -131,16 +154,40 @@
     <text x="118" y="170"
           style="fill:#445566;font-size:10px;font-family:monospace">sublayer (optional) — 2-point lines; label = type [status]; omit to auto-detect</text>
 
+    <!-- Hull (per-deck) -->
+    <rect x="30" y="186" width="16" height="16"
+          style="fill:#3a3a3a;stroke:#7a7a7a;stroke-width:1;stroke-dasharray:2,1" />
+    <text x="52" y="198"
+          style="fill:#aabbdd;font-size:11px;font-family:monospace">  Hull</text>
+    <text x="102" y="198"
+          style="fill:#445566;font-size:10px;font-family:monospace">sublayer (optional) — this deck's own outer polygon (adds to shared Hull)</text>
+
+    <!-- Details -->
+    <line x1="30" y1="216" x2="46" y2="212"
+          style="stroke:#aa88cc;stroke-width:2;stroke-linecap:round" />
+    <text x="52" y="218"
+          style="fill:#aabbdd;font-size:11px;font-family:monospace">  Details</text>
+    <text x="120" y="218"
+          style="fill:#445566;font-size:10px;font-family:monospace">sublayer (optional) — decorative linework; room: set by containment</text>
+
+    <!-- Circular rooms -->
+    <circle cx="38" cy="234" r="8"
+            style="fill:#1e3d80;fill-opacity:0.85;stroke:none" />
+    <text x="52" y="238"
+          style="fill:#aabbdd;font-size:11px;font-family:monospace">  (circle)</text>
+    <text x="128" y="238"
+          style="fill:#445566;font-size:10px;font-family:monospace">&lt;circle&gt; in Rooms/Corridors → circular room, same label rule</text>
+
     <!-- Deck order note -->
-    <text x="20" y="196"
+    <text x="20" y="256"
           style="fill:#445566;font-size:10px;font-family:monospace">
       Deck order in output = document order. First deck is the default.
     </text>
-    <text x="20" y="210"
+    <text x="20" y="270"
           style="fill:#445566;font-size:10px;font-family:monospace">
       Rename "Main Deck" / "Engineering Deck" — deck IDs are snake_cased from the label.
     </text>
-    <text x="20" y="224"
+    <text x="20" y="284"
           style="fill:#445566;font-size:10px;font-family:monospace">
       Shapes must be &lt;path&gt; elements. Use the Pen tool, or Path &gt; Object to Path (Shift+Ctrl+C) on rectangles.
     </text>
@@ -184,15 +231,17 @@
        inkscape:label="Rooms"
        inkscape:color="#4488cc"
        style="display:inline">
-      <!-- DELETE ME — replace with real room polygons, label each one -->
-      <rect
+      <!-- DELETE ME — replace with real room polygons, label each one.
+           Shapes must be <path> elements — these are drawn as <path>
+           so they convert as working examples out of the box. -->
+      <path
          id="main_room_bridge"
-         x="250" y="280" width="200" height="180"
+         d="M 250,280 L 450,280 L 450,460 L 250,460 Z"
          style="fill:#1e3d80;fill-opacity:0.85;stroke:none"
          inkscape:label="Bridge" />
-      <rect
+      <path
          id="main_room_mess"
-         x="800" y="350" width="250" height="200"
+         d="M 800,350 L 1050,350 L 1050,550 L 800,550 Z"
          style="fill:#1e3d80;fill-opacity:0.85;stroke:none"
          inkscape:label="Mess Hall" />
     </g>
@@ -205,10 +254,10 @@
        inkscape:label="Corridors"
        inkscape:color="#44aaaa"
        style="display:inline">
-      <!-- DELETE ME — replace with corridor polygons -->
-      <rect
+      <!-- DELETE ME — replace with corridor polygons (must be <path> elements) -->
+      <path
          id="main_corridor_1"
-         x="450" y="340" width="350" height="60"
+         d="M 450,340 L 800,340 L 800,400 L 450,400 Z"
          style="fill:#0d3d3d;fill-opacity:0.85;stroke:none" />
     </g>
 
@@ -226,6 +275,52 @@
          d="M 450,340 L 450,400"
          style="fill:none;stroke:#cc6600;stroke-width:2;stroke-linecap:round"
          inkscape:label="standard" />
+    </g>
+
+    <!-- ── Hull (optional, per-deck) ─────────────────────
+         This deck's own outer polygon — adds to the shared
+         top-level Hull above, per-deck output. Shapes here
+         must be <path> elements (Object to Path on rectangles). -->
+    <g
+       inkscape:groupmode="layer"
+       id="layer_main_hull"
+       inkscape:label="Hull"
+       inkscape:color="#888888"
+       style="display:inline">
+      <!-- DELETE ME — draw this deck's own hull outline here -->
+      <rect
+         id="main_hull_example"
+         x="220" y="260" width="1060" height="300"
+         style="fill:none;stroke:#7a7a7a;stroke-width:2;stroke-dasharray:6,3"
+         inkscape:label="DELETE ME" />
+    </g>
+
+    <!-- ── Details (optional) ────────────────────────────
+         Decorative linework not otherwise a room/corridor/
+         door/vent. Each <path> = polyline (open=stroke-only,
+         closed=closed+filled). <circle>/<ellipse> also allowed.
+         room: is set automatically by containment against
+         Rooms/Corridors — no manual tagging needed. -->
+    <g
+       inkscape:groupmode="layer"
+       id="layer_main_details"
+       inkscape:label="Details"
+       inkscape:color="#aa88cc"
+       style="display:inline">
+      <!-- DELETE ME — example open polyline inside the Bridge room
+           (interior detail — room: is set automatically) -->
+      <path
+         id="main_detail_console"
+         d="M 280,320 L 280,360 L 340,360"
+         style="fill:none;stroke:#aa88cc;stroke-width:2;stroke-linecap:round"
+         inkscape:label="Console" />
+      <!-- DELETE ME — example circle detail in open space between rooms
+           (exterior detail — no room polygon contains it, so no room: key) -->
+      <circle
+         id="main_detail_grate"
+         cx="650" cy="280" r="12"
+         style="fill:none;stroke:#aa88cc;stroke-width:2"
+         inkscape:label="Floor Grate" />
     </g>
 
   </g>
@@ -247,17 +342,23 @@
        inkscape:label="Rooms"
        inkscape:color="#4488cc"
        style="display:inline">
-      <!-- DELETE ME — replace with engine deck rooms -->
-      <rect
+      <!-- DELETE ME — replace with engine deck rooms (must be <path> elements) -->
+      <path
          id="eng_room_engines"
-         x="250" y="700" width="350" height="360"
+         d="M 250,700 L 600,700 L 600,1060 L 250,1060 Z"
          style="fill:#1e3d80;fill-opacity:0.85;stroke:none"
          inkscape:label="Engine Room" />
-      <rect
+      <path
          id="eng_room_storage"
-         x="800" y="780" width="250" height="200"
+         d="M 800,780 L 1050,780 L 1050,980 L 800,980 Z"
          style="fill:#1e3d80;fill-opacity:0.85;stroke:none"
          inkscape:label="Storage" />
+      <!-- DELETE ME — example circular room: draw a literal <circle>, label it -->
+      <circle
+         id="eng_room_reactor"
+         cx="1180" cy="820" r="70"
+         style="fill:#1e3d80;fill-opacity:0.85;stroke:none"
+         inkscape:label="Reactor Core" />
     </g>
 
     <!-- ── Corridors ──────────────────────────────────── -->
@@ -267,10 +368,10 @@
        inkscape:label="Corridors"
        inkscape:color="#44aaaa"
        style="display:inline">
-      <!-- DELETE ME — replace with engine deck corridors -->
-      <rect
+      <!-- DELETE ME — replace with engine deck corridors (must be <path> elements) -->
+      <path
          id="eng_corridor_1"
-         x="600" y="780" width="200" height="60"
+         d="M 600,780 L 800,780 L 800,840 L 600,840 Z"
          style="fill:#0d3d3d;fill-opacity:0.85;stroke:none" />
     </g>
 

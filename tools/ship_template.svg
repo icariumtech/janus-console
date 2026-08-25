@@ -15,6 +15,13 @@
                   If this layer exists it REPLACES auto-detected doors.
                   Delete this layer to use auto door detection (the default).
 
+  CIRCULAR ROOMS: draw a literal <circle> (or a true <ellipse> with rx==ry,
+                  or use Inkscape's ellipse tool and leave it un-flattened —
+                  sodipodi:type="arc" is also detected) inside Rooms or
+                  Corridors instead of a <path>. inkscape:label works the
+                  same as on a path. A non-circular ellipse (rx != ry) is
+                  rejected — fix it in Inkscape rather than approximating it.
+
   MULTI-DECK: see ship_template_multideck.svg
 -->
 <svg
@@ -69,7 +76,7 @@
      sodipodi:insensitive="true"
      style="display:inline">
 
-    <rect x="8" y="8" width="570" height="202"
+    <rect x="8" y="8" width="570" height="232"
           style="fill:#0d0d1a;fill-opacity:0.92;stroke:#334466;stroke-width:1" />
 
     <text x="20" y="32"
@@ -101,22 +108,30 @@
     <text x="122" y="122"
           style="fill:#556688;font-size:11px;font-family:monospace">no label — auto-named corridor_N in output</text>
 
+    <!-- Circular rooms -->
+    <circle cx="29" cy="147" r="11"
+            style="fill:#1e3d80;fill-opacity:0.85;stroke:none" />
+    <text x="46" y="152"
+          style="fill:#cccccc;font-size:12px;font-family:monospace;font-weight:bold">(circle)</text>
+    <text x="122" y="152"
+          style="fill:#556688;font-size:11px;font-family:monospace">&lt;circle&gt; in Rooms/Corridors → circular room, same label rule</text>
+
     <!-- Doors -->
-    <line x1="18" y1="140" x2="40" y2="140"
+    <line x1="18" y1="170" x2="40" y2="170"
           style="stroke:#cc6600;stroke-width:3;stroke-linecap:round" />
-    <text x="46" y="144"
+    <text x="46" y="174"
           style="fill:#cccccc;font-size:12px;font-family:monospace;font-weight:bold">Doors</text>
-    <text x="108" y="144"
+    <text x="108" y="174"
           style="fill:#556688;font-size:11px;font-family:monospace">2-point lines; label = type [status]  e.g. "airlock locked"</text>
-    <text x="108" y="158"
+    <text x="108" y="188"
           style="fill:#445566;font-size:10px;font-family:monospace">If layer absent → svg_to_map.py auto-detects doors from shared room edges</text>
 
     <!-- Tips -->
-    <text x="20" y="174"
+    <text x="20" y="204"
           style="fill:#445566;font-size:10px;font-family:monospace">
       Shapes must be &lt;path&gt; elements — use the Pen/Bezier tool, or Path &gt; Object to Path (Shift+Ctrl+C) on rectangles.
     </text>
-    <text x="20" y="188"
+    <text x="20" y="218"
           style="fill:#445566;font-size:10px;font-family:monospace">
       Delete example shapes, draw on the correct layer. Use the grid-scale flag if rooms have too many cells after conversion.
     </text>
@@ -152,17 +167,26 @@
      inkscape:label="Rooms"
      inkscape:color="#4488cc"
      style="display:inline">
-    <!-- DELETE ME — replace with real room polygons, label each one -->
-    <rect
+    <!-- DELETE ME — replace with real room polygons, label each one.
+         Shapes must be <path> elements (Pen tool, or Path > Object to
+         Path / Shift+Ctrl+C on a rectangle) — these are drawn as <path>
+         so they convert as working examples out of the box. -->
+    <path
        id="room_bridge"
-       x="250" y="230" width="200" height="200"
+       d="M 250,230 L 450,230 L 450,430 L 250,430 Z"
        style="fill:#1e3d80;fill-opacity:0.85;stroke:none"
        inkscape:label="Bridge" />
-    <rect
+    <path
        id="room_cargo"
-       x="800" y="450" width="300" height="250"
+       d="M 800,450 L 1100,450 L 1100,700 L 800,700 Z"
        style="fill:#1e3d80;fill-opacity:0.85;stroke:none"
        inkscape:label="Cargo Bay" />
+    <!-- DELETE ME — example circular room: draw a literal <circle>, label it -->
+    <circle
+       id="room_escape_pod"
+       cx="620" cy="250" r="60"
+       style="fill:#1e3d80;fill-opacity:0.85;stroke:none"
+       inkscape:label="Escape Pod Bay" />
   </g>
 
   <!-- ════════════════════════════════════════════════════════════════
@@ -176,10 +200,10 @@
      inkscape:label="Corridors"
      inkscape:color="#44aaaa"
      style="display:inline">
-    <!-- DELETE ME — replace with corridor polygons -->
-    <rect
+    <!-- DELETE ME — replace with corridor polygons (must be <path> elements) -->
+    <path
        id="corridor_example"
-       x="450" y="300" width="350" height="60"
+       d="M 450,300 L 800,300 L 800,360 L 450,360 Z"
        style="fill:#0d3d3d;fill-opacity:0.85;stroke:none" />
   </g>
 
