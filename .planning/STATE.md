@@ -5,16 +5,16 @@ milestone_name: Better Deckplans
 current_phase: 32
 current_phase_name: svg-converter-details-per-deck-hulls-circular-rooms
 status: executing
-stopped_at: Completed 32-01-PLAN.md
-last_updated: "2026-08-25T04:00:52.061Z"
+stopped_at: Completed 32-02-PLAN.md
+last_updated: "2026-08-25T04:07:13.000Z"
 last_activity: 2026-08-24
-last_activity_desc: Phase 32 execution started
-state_head: 7baf8395e36fee3133fc2da0afccabf4e5579804
+last_activity_desc: Phase 32 plan 02 (per-deck hulls) executed
+state_head: 8c480d87d4c6468def08c20c0dadd26513812e5b
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
   percent: 75
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 
 Phase: 32 (svg-converter-details-per-deck-hulls-circular-rooms) — EXECUTING
 Status: Executing Phase 32
-Last activity: 2026-08-24 — Phase 32 execution started
+Last activity: 2026-08-24 — Phase 32 plan 02 (per-deck hulls) executed
 
 ## v1.0 Milestone Archive
 
@@ -83,8 +83,8 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 **Resume file:** None
 
-Last session: 2026-08-25T04:00:51.984Z
-Stopped at: Completed 32-01-PLAN.md
+Last session: 2026-08-25T04:07:13.000Z
+Stopped at: Completed 32-02-PLAN.md
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
@@ -105,6 +105,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 | Phase 31 P02 | ~20min | 3 tasks | 11 files |
 | Phase 31 P03 | ~60min (Task 1) + human verification | 2 tasks | 1 files |
 | Phase 32 P01 | 12min | 2 tasks | 3 files |
+| Phase 32 P02 | ~7min | 2 tasks | 3 files |
 
 ## Operator Next Steps
 
@@ -117,6 +118,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 - [Phase ?]: Phase 31 plan 03 Task 1 confirmed the backend thin-passthrough assumption with zero source changes (Django regression suite, 6 tests); Task 2's human-verify checkpoint was approved 2026-08-04, closing Phase 31
 - [Phase 31]: Task 2 checkpoint approved via iterative screenshot review (3 of 8 how-to-verify sub-items directly confirmed: HULL-02, DET-01, DET-03) followed by a final unqualified "approved" covering the remaining sub-items on trust. See 31-03-SUMMARY.md Checkpoint Status for full traceability.
 - [Phase 32]: 32-01: D-05/D-06 circle detection implemented; non-circular ellipses rejected (never approximated); all_areas ordered_ids also needed the polygon-key guard beyond what the plan named
+- [Phase 32]: 32-02: HULL-03 satisfied via shared `_extract_hull_layer()`/`_write_hull_block()` for both root and per-deck Hull sublayers (multi-deck-only scoping, Pitfall 4); the plan's assumed regression-test fixture content did not match reality (both ship_template*.svg Hull layers hold only a placeholder `<rect>`, no `<path>`) — corrected via source-grounding, test adjusted to true pre-refactor behavior plus an added controlled-fixture test proving the compact-form case
 
 ### Blockers
 
