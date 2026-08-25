@@ -30,7 +30,7 @@
 
 ### Circular Rooms (CIRC)
 
-- [ ] **CIRC-01**: `svg_to_map.py` detects SVG `<circle>`/`<ellipse>` elements in room layers and emits `circle` rooms (renderer support already exists)
+- [x] **CIRC-01**: `svg_to_map.py` detects SVG `<circle>`/`<ellipse>` elements in room layers and emits `circle` rooms (renderer support already exists)
 
 ### Isometric View (ISO)
 
@@ -70,7 +70,7 @@
 | DET-03 | Phase 31 | Complete |
 | DET-02 | Phase 32 | Pending |
 | HULL-03 | Phase 32 | Pending |
-| CIRC-01 | Phase 32 | Pending |
+| CIRC-01 | Phase 32 | Complete |
 | ISO-01 | Phase 33 | Pending |
 | ISO-02 | Phase 33 | Pending |
 | ISO-03 | Phase 33 | Pending |

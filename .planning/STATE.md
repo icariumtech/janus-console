@@ -5,16 +5,16 @@ milestone_name: Better Deckplans
 current_phase: 32
 current_phase_name: svg-converter-details-per-deck-hulls-circular-rooms
 status: executing
-stopped_at: Phase 32 context gathered
-last_updated: "2026-08-25T03:46:53.836Z"
+stopped_at: Completed 32-01-PLAN.md
+last_updated: "2026-08-25T04:00:52.061Z"
 last_activity: 2026-08-24
-last_activity_desc: Phase 30 (ad-interim, out-of-order) verification gap closed — code review, regression gate, VERIFICATION.md; current position remains Phase 32
-state_head: 73ead26c01cad28532b3386fd472e0e7ec283eeb
+last_activity_desc: Phase 32 execution started
+state_head: 7baf8395e36fee3133fc2da0afccabf4e5579804
 progress:
   total_phases: 4
-  completed_phases: 21
+  completed_phases: 3
   total_plans: 13
-  completed_plans: 58
+  completed_plans: 11
   percent: 75
 ---
 
@@ -25,13 +25,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-12)
 
 **Core value:** Give the GM a single tool that enhances the tabletop experience with atmospheric digital interfaces without interrupting gameplay flow.
-**Current focus:** Phase 31 — deckplan-format-per-deck-hulls-detail-linework
+**Current focus:** Phase 32 — svg-converter-details-per-deck-hulls-circular-rooms
 
 ## Current Position
 
-Phase: 32 (svg-converter-details-per-deck-hulls-circular-rooms) — READY TO EXECUTE
-Status: Ready to execute
-Last activity: 2026-08-24 — Phase 30 (ad-interim) verification gap closed; current position remains Phase 32
+Phase: 32 (svg-converter-details-per-deck-hulls-circular-rooms) — EXECUTING
+Status: Executing Phase 32
+Last activity: 2026-08-24 — Phase 32 execution started
 
 ## v1.0 Milestone Archive
 
@@ -81,10 +81,10 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 ## Session Continuity
 
-**Resume file:** /home/gjohnson/src/janus-console/.planning/phases/32-svg-converter-details-per-deck-hulls-circular-rooms/32-CONTEXT.md
+**Resume file:** None
 
-Last session: 2026-08-07T17:10:54.497Z
-Stopped at: Phase 32 context gathered
+Last session: 2026-08-25T04:00:51.984Z
+Stopped at: Completed 32-01-PLAN.md
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
@@ -104,6 +104,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 | Phase 31 P01 | ~15min | 2 tasks | 10 files |
 | Phase 31 P02 | ~20min | 3 tasks | 11 files |
 | Phase 31 P03 | ~60min (Task 1) + human verification | 2 tasks | 1 files |
+| Phase 32 P01 | 12min | 2 tasks | 3 files |
 
 ## Operator Next Steps
 
@@ -115,6 +116,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 - [Phase ?]: detailNormalizer is deliberately not reveal-aware; interior details gain reveal gating structurally by mounting inside the room's existing SVG reveal group (D-12/D-13)
 - [Phase ?]: Phase 31 plan 03 Task 1 confirmed the backend thin-passthrough assumption with zero source changes (Django regression suite, 6 tests); Task 2's human-verify checkpoint was approved 2026-08-04, closing Phase 31
 - [Phase 31]: Task 2 checkpoint approved via iterative screenshot review (3 of 8 how-to-verify sub-items directly confirmed: HULL-02, DET-01, DET-03) followed by a final unqualified "approved" covering the remaining sub-items on trust. See 31-03-SUMMARY.md Checkpoint Status for full traceability.
+- [Phase 32]: 32-01: D-05/D-06 circle detection implemented; non-circular ellipses rejected (never approximated); all_areas ordered_ids also needed the polygon-key guard beyond what the plan named
 
 ### Blockers
 
