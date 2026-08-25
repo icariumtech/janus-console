@@ -71,7 +71,7 @@ Doors layer (optional — overrides --detect-doors when present):
 Grid unit:
     Read from inkscape:grid spacingx attribute (px per cell).
     All SVG px coordinates are divided by this unit (then by --grid-scale).
-    Output values are rounded to the nearest 0.5 grid cell.
+    Output values are rounded to the nearest 0.25 grid cell.
 
 Output files:
     location.yaml         Created once if missing; never overwritten
