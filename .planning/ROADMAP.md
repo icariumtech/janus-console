@@ -135,7 +135,7 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 28. GM Console File Editor | v2.0 | 3/3 | ✓ Complete | 2026-06-01 |
 | 28.1. Audit Gap Closure (INSERTED) | v2.0 | 3/3 | ✓ Complete | 2026-06-05 |
 | 29. Deckplan Map Editor | v3.0 | 4/4 | ✓ Complete | 2026-06-30 |
-| 30. AI Map Editing MCP Tools | (ad-interim) | 3/3 | ✓ Complete | 2026-06-06 |
+| 30. AI Map Editing MCP Tools | (ad-interim) | 3/3 | Complete    | 2026-06-06 |
 | 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | Complete    | 2026-08-04 |
 | 32. SVG Converter — Details/Hulls/Circles | v3.0 | 0/? | Not started | - |
 | 33. Isometric View | v3.0 | 0/? | Not started | - |
