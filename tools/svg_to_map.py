@@ -591,7 +591,7 @@ def _extract_circle_shape(
         return None
 
     (gcx, gcy), = verts_to_grid(_apply_translate([(cx, cy)], tx, ty), unit)
-    gr = to_grid(r, unit) - to_grid(0.0, unit)
+    gr = to_grid(r, unit)
     return {"cx": gcx, "cy": gcy, "r": gr}
 
 
