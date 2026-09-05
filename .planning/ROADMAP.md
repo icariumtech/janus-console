@@ -113,16 +113,19 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
     - [x] 32-03-PLAN.md — Details layer: _extract_details_layer (closed/open, room association, circle details), details: emission, schema doc, phase-gate regression (Wave 3)
   - Context: `.planning/phases/32-svg-converter-details-per-deck-hulls-circular-rooms/32-CONTEXT.md`
 
-- [ ] **Phase 33: Isometric View**
-  - **Goal:** Add an isometric projection alongside the existing top-down view, with a live toggle on both the player encounter view and the GM console map.
-  - **Depends on:** Phase 31 (details/hulls must project correctly in iso)
-  - **Requirements**: ISO-01, ISO-02, ISO-03
-  - **Success Criteria** (what must be TRUE):
-    1. Any deckplan can render in an isometric projection via the existing `gridProjection`/`mapView` seam — rooms, doors, vents, POIs, tokens, and detail linework all appear correctly positioned
-    2. Players can toggle the encounter view between top-down and isometric, with the change applying live (a cut, not an animated transition)
-    3. The GM can independently toggle the GM console map between top-down and isometric, live
-  - **Plans:** 0 plans (run `/gsd:plan-phase 33` to break down)
-  - **UI hint**: yes
+#### Phase 33: Isometric View
+
+- **Status:** Not started
+- **Goal:** Add an isometric projection alongside the existing top-down view, with a live toggle on both the player encounter view and the GM console map.
+- **Depends on:** Phase 31 (details/hulls must project correctly in iso)
+- **Requirements**: ISO-01, ISO-02, ISO-03
+- **Success Criteria** (what must be TRUE):
+  1. Any deckplan can render in an isometric projection via the existing `gridProjection`/`mapView` seam — rooms, doors, vents, POIs, tokens, and detail linework all appear correctly positioned
+  2. Players can toggle the encounter view between top-down and isometric, with the change applying live (a cut, not an animated transition)
+  3. The GM can independently toggle the GM console map between top-down and isometric, live
+- **Plans:** 0 plans (run `/gsd:plan-phase 33` to break down)
+- **UI hint**: yes
+- Context: `.planning/phases/33-isometric-view/33-CONTEXT.md`
 
 ## Progress
 
