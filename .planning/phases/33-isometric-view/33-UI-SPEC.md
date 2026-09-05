@@ -25,6 +25,8 @@ created: 2026-09-05
 
 This phase is overwhelmingly a **geometry** change (the `isoProjection` function), not a visual-surface change. The only new pixels on screen are one toggle button. All styling below is scoped to that button plus the invariants that keep existing map elements legible when re-projected.
 
+**Focal point / visual hierarchy:** No new focal point — the existing map/SVG remains the visual anchor of the screen. The toggle is a secondary overlay control, matching `RESET VIEW`'s visual weight (same chrome, same size, same overlay-grid tier) — it must not compete with the map itself for attention.
+
 ---
 
 ## Spacing Scale
@@ -49,9 +51,8 @@ Exceptions:
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Label (toggle button) | 11px | 400 (normal — matches `RESET VIEW`'s unset `fontWeight`) | 1.2 (single-line button text, no explicit line-height needed) |
-| Body | 16px | 400 | 1.5 (existing system default — reserved, not introduced by this phase) |
-| Heading | 13px | 600 | 1.2 (existing system default — reserved, not introduced by this phase) |
-| Display | 24px | 700 | 1.2 (existing `LevelIndicator` current-deck number — reserved, not introduced by this phase) |
+
+This phase introduces exactly one new text role (Label, weight 400) — the toggle button is the only new pixel this contract governs. `Body` (16px/400), `Heading` (13px/600), and `Display` (24px/700) are unchanged system values used elsewhere in the app (e.g. `LevelIndicator`'s current-deck number) — they are not part of this phase's typography contract and are not touched by any change in this phase.
 
 Source: the toggle button must byte-for-byte match `RESET VIEW`'s inline style block (`fontFamily`, `fontSize: '11px'`, `letterSpacing: '2px'`, no explicit `fontWeight`) per CONTEXT.md D-03 ("Reuses the same button styling as RESET VIEW"). Do not adopt the *other* Label convention used by `DeckTab` (11px/600/1px letter-spacing) — that is a different component family (tab strip) and D-03 names `RESET VIEW` specifically, not `DeckSelector`.
 
