@@ -5,11 +5,11 @@ milestone_name: Better Deckplans
 current_phase: 33
 current_phase_name: isometric view
 status: planning
-stopped_at: Phase 33 context gathered
-last_updated: "2026-09-05T19:57:29.477Z"
+stopped_at: Phase 33 UI-SPEC approved
+last_updated: "2026-09-05T20:56:59.152Z"
 last_activity: 2026-08-25
 last_activity_desc: Phase 32 complete, transitioned to Phase 33
-state_head: dac889562e80f0364afd043a8171e4c2b10d11b9
+state_head: 3a190d5c844d5375704343c9a19104567fe8b48c
 progress:
   total_phases: 5
   completed_phases: 4
@@ -81,10 +81,10 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/33-isometric-view/33-CONTEXT.md
+**Resume file:** .planning/phases/33-isometric-view/33-UI-SPEC.md
 
-Last session: 2026-09-05T19:57:29.273Z
-Stopped at: Phase 33 context gathered
+Last session: 2026-09-05T20:56:58.955Z
+Stopped at: Phase 33 UI-SPEC approved
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
