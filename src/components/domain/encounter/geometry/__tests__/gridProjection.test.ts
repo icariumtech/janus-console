@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isoProjection,
   topDownProjection,
   type GridPoint,
   type Projection,
@@ -88,5 +89,27 @@ describe('topDownProjection', () => {
   it('throws on non-finite unitSize', () => {
     expect(() => topDownProjection({ unitSize: NaN })).toThrow();
     expect(() => topDownProjection({ unitSize: Infinity })).toThrow();
+  });
+});
+
+describe('isoProjection', () => {
+  it('produces a true-isometric 30-degree axis angle (not the 26.565-degree dimetric convention)', () => {
+    const proj = isoProjection({ unitSize: 40, tilt: 30, rotation: 45 });
+    const p = proj.project({ gx: 1, gy: 0 });
+    const angleDeg = (Math.atan2(p.y, p.x) * 180) / Math.PI;
+    expect(angleDeg).toBeCloseTo(30, 6);
+  });
+
+  it('unproject inverts project within 1e-9 for a non-trivial point', () => {
+    const proj = isoProjection({ unitSize: 40, tilt: 30, rotation: 45 });
+    const p: GridPoint = { gx: 12.34, gy: -5.6 };
+    const round = proj.unproject(proj.project(p));
+    expect(Math.abs(round.gx - p.gx)).toBeLessThan(1e-9);
+    expect(Math.abs(round.gy - p.gy)).toBeLessThan(1e-9);
+  });
+
+  it('throws on degenerate tilt (0 or 90 degrees)', () => {
+    expect(() => isoProjection({ unitSize: 40, tilt: 0, rotation: 45 })).toThrow();
+    expect(() => isoProjection({ unitSize: 40, tilt: 90, rotation: 45 })).toThrow();
   });
 });
