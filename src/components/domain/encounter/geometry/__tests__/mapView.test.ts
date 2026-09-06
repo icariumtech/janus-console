@@ -55,3 +55,32 @@ describe('makeMapView + isoProjection wiring', () => {
     expect(view.unitSize).toBe(40);
   });
 });
+
+describe('MapView.circleTransform', () => {
+  it('reduces to a pure scale for topDownProjection, byte-identical to the r * unitSize approach', () => {
+    const view = makeMapView(topDownProjection({ unitSize: 40 }));
+    const t = view.circleTransform(2, 3, 1);
+    expect(t).toEqual({ cx: 80, cy: 120, m11: 40, m21: 0, m12: 0, m22: 40 });
+  });
+
+  it('applies correctly under isoProjection: transformed local axis points match view.project() of the corresponding grid points', () => {
+    const proj = isoProjection({ unitSize: 40, tilt: 30, rotation: 45 });
+    const view = makeMapView(proj);
+    const gcx = 3;
+    const gcy = 2;
+    const r = 1.5;
+    const t = view.circleTransform(gcx, gcy, r);
+
+    const expectedX = view.project({ gx: gcx + r, gy: gcy });
+    const px = t.cx + t.m11;
+    const py = t.cy + t.m21;
+    expect(Math.abs(px - expectedX.x)).toBeLessThan(1e-9);
+    expect(Math.abs(py - expectedX.y)).toBeLessThan(1e-9);
+
+    const expectedY = view.project({ gx: gcx, gy: gcy + r });
+    const qx = t.cx + t.m12;
+    const qy = t.cy + t.m22;
+    expect(Math.abs(qx - expectedY.x)).toBeLessThan(1e-9);
+    expect(Math.abs(qy - expectedY.y)).toBeLessThan(1e-9);
+  });
+});
