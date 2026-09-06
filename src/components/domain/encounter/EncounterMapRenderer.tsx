@@ -15,7 +15,7 @@ import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { usePanZoom } from '../../../hooks/usePanZoom';
 import { useExclusivePopover } from '../../../hooks/useExclusivePopover';
 import { useTokenPlacement } from '../../../hooks/useTokenPlacement';
-import { screenToSVG, inverseRotatePoint, snapToGrid } from '../../../utils/svgCoordinates';
+import { screenToSVG, inverseRotatePoint, getGridCellViaView } from '../../../utils/svgCoordinates';
 import {
   Door,
   GridEncounterMapData,
@@ -383,13 +383,13 @@ export function EncounterMapRenderer({
       if (svg) {
         const svgCoords = screenToSVG(svg, e.clientX, e.clientY);
         const unrotated = inverseRotatePoint(svgCoords.x, svgCoords.y, mapRotation, mapCenterX, mapCenterY);
-        const snapped = snapToGrid(unrotated.x, unrotated.y, unitSize);
+        const snapped = getGridCellViaView(view, unrotated.x, unrotated.y);
         payload.gridX = snapped.gridX;
         payload.gridY = snapped.gridY;
       }
     }
     openPopover({ type: 'room', payload });
-  }, [isGM, editable, onEmptyCellClick, mapRotation, mapCenterX, mapCenterY, unitSize, openPopover]);
+  }, [isGM, editable, onEmptyCellClick, mapRotation, mapCenterX, mapCenterY, view, openPopover]);
 
   // -------------------------------------------------------------------
   // Room tap handler — shows info popup (player terminal only)
@@ -422,7 +422,7 @@ export function EncounterMapRenderer({
 
   const { handleDragOver, handleDrop } = useTokenPlacement({
     svgRef,
-    unitSize,
+    view,
     isGM,
     onTokenPlace,
     isCellOccupied,
@@ -640,7 +640,6 @@ export function EncounterMapRenderer({
           mapRotation={mapRotation}
           mapCenterX={mapCenterX}
           mapCenterY={mapCenterY}
-          unitSize={unitSize}
           onPoiMove={onPoiMove}
           onPoiClick={onPoiClick}
           onPoiHover={(poi, x, y) => openPopover({ type: 'poi', payload: { poi, x, y } })}

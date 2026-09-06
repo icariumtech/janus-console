@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { PoiData } from '../../../../types/encounterMap';
 import { MapView } from '../geometry/mapView';
 import { ENCOUNTER_ICONS, iconSymbolId } from '../EncounterIcons';
-import { screenToSVG, inverseRotatePoint, snapToGrid } from '../../../../utils/svgCoordinates';
+import { screenToSVG, inverseRotatePoint, getGridCellViaView } from '../../../../utils/svgCoordinates';
 import { COLORS } from './mapColors';
 
 const POI_DRAG_THRESHOLD = 5;
@@ -25,7 +25,6 @@ interface PoiLayerProps {
   mapRotation: number;
   mapCenterX: number;
   mapCenterY: number;
-  unitSize: number;
   onPoiMove?: (poiId: string, x: number, y: number) => void;
   onPoiClick?: (poiId: string) => void;
   /** Non-editor mode: hover/click opens the POI info popup (parent-controlled). */
@@ -44,7 +43,6 @@ export function PoiLayer({
   mapRotation,
   mapCenterX,
   mapCenterY,
-  unitSize,
   onPoiMove,
   onPoiClick,
   onPoiHover,
@@ -74,11 +72,9 @@ export function PoiLayer({
   const mapRotationRef = useRef(mapRotation);
   const mapCenterXRef = useRef(mapCenterX);
   const mapCenterYRef = useRef(mapCenterY);
-  const unitSizeRef = useRef(unitSize);
   useEffect(() => { mapRotationRef.current = mapRotation; }, [mapRotation]);
   useEffect(() => { mapCenterXRef.current = mapCenterX; }, [mapCenterX]);
   useEffect(() => { mapCenterYRef.current = mapCenterY; }, [mapCenterY]);
-  useEffect(() => { unitSizeRef.current = unitSize; }, [unitSize]);
 
   // Document-level POI drag handlers (attached only when editable)
   useEffect(() => {
@@ -102,7 +98,7 @@ export function PoiLayer({
         svgCoords.x, svgCoords.y,
         mapRotationRef.current, mapCenterXRef.current, mapCenterYRef.current,
       );
-      const snapped = snapToGrid(unrotated.x, unrotated.y, unitSizeRef.current);
+      const snapped = getGridCellViaView(view, unrotated.x, unrotated.y);
       const pending = poiPendingDrag.current;
       if (pending) {
         setPoiDragState({ id: pending.id, ghostX: snapped.gridX, ghostY: snapped.gridY });
@@ -123,7 +119,7 @@ export function PoiLayer({
             svgCoords.x, svgCoords.y,
             mapRotationRef.current, mapCenterXRef.current, mapCenterYRef.current,
           );
-          const snapped = snapToGrid(unrotated.x, unrotated.y, unitSizeRef.current);
+          const snapped = getGridCellViaView(view, unrotated.x, unrotated.y);
           // Record drop position before clearing ghost — holds the position visible
           // until DeckplanPreviewPane's debounced re-parse updates mapData.
           poiCommittedPos.current = { id: pending.id, x: snapped.gridX, y: snapped.gridY };
@@ -142,7 +138,7 @@ export function PoiLayer({
       document.removeEventListener('pointermove', onPointerMove);
       document.removeEventListener('pointerup', onPointerUp);
     };
-  }, [editable]); // stable — reads all geometry from refs
+  }, [editable, view]); // stable — reads rotation/center geometry from refs; view is a per-mount projection choice, cheap to re-close-over
 
   const handlePoiPointerDown = useCallback((e: React.PointerEvent, poiId: string) => {
     if (!editable) return;
