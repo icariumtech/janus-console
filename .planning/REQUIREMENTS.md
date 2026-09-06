@@ -34,9 +34,9 @@
 
 ### Isometric View (ISO)
 
-- [ ] **ISO-01**: An isometric projection renders any deckplan via the existing `gridProjection`/`mapView` seam — rooms, doors, vents, POIs, tokens, and details all project correctly
-- [ ] **ISO-02**: Players can toggle the encounter view between top-down and isometric live
-- [ ] **ISO-03**: GM can toggle the GM console map between top-down and isometric live
+- [x] **ISO-01**: An isometric projection renders any deckplan via the existing `gridProjection`/`mapView` seam — rooms, doors, vents, POIs, tokens, and details all project correctly
+- [x] **ISO-02**: Players can toggle the encounter view between top-down and isometric live
+- [x] **ISO-03**: GM can toggle the GM console map between top-down and isometric live
 
 ## Future Requirements (deferred)
 
@@ -71,6 +71,6 @@
 | DET-02 | Phase 32 | Complete |
 | HULL-03 | Phase 32 | Complete |
 | CIRC-01 | Phase 32 | Complete |
-| ISO-01 | Phase 33 | Pending |
-| ISO-02 | Phase 33 | Pending |
-| ISO-03 | Phase 33 | Pending |
+| ISO-01 | Phase 33 | Complete |
+| ISO-02 | Phase 33 | Complete |
+| ISO-03 | Phase 33 | Complete |
