@@ -4,6 +4,7 @@
  * Provides functions for converting between screen coordinates (mouse/touch events)
  * and SVG coordinate space, accounting for viewBox scaling, pan, and zoom.
  */
+import type { MapView } from '../components/domain/encounter/geometry/mapView';
 
 /**
  * Convert screen coordinates (clientX, clientY) to SVG coordinate space.
@@ -147,4 +148,30 @@ export function getGridCell(
   const svgCoords = screenToSVG(svgElement, screenX, screenY);
   const unrotated = inverseRotatePoint(svgCoords.x, svgCoords.y, mapRotation, mapCenterX, mapCenterY);
   return snapToGrid(unrotated.x, unrotated.y, unitSize);
+}
+
+/**
+ * Projection-aware sibling of `snapToGrid`/`getGridCell`. Given a `MapView`
+ * and ALREADY unrotated SVG coordinates (same contract `snapToGrid` has
+ * today — callers still run `screenToSVG` + `inverseRotatePoint` first),
+ * resolves the SVG point back to its source grid cell via
+ * `view.unproject()`.
+ *
+ * For a `topDownProjection`-backed view this is byte-identical to
+ * `snapToGrid(svgX, svgY, unitSize)`. For a non-orthogonal projection (e.g.
+ * `isoProjection`) this correctly inverts the projection instead of naively
+ * dividing by `unitSize`, which would resolve to the wrong grid cell.
+ *
+ * @param view - The MapView whose projection produced svgX/svgY
+ * @param svgX - SVG X coordinate (continuous, already unrotated)
+ * @param svgY - SVG Y coordinate (continuous, already unrotated)
+ * @returns Grid cell indices { gridX, gridY }
+ */
+export function getGridCellViaView(
+  view: MapView,
+  svgX: number,
+  svgY: number
+): { gridX: number; gridY: number } {
+  const { gx, gy } = view.unproject({ x: svgX, y: svgY });
+  return { gridX: Math.floor(gx), gridY: Math.floor(gy) };
 }
