@@ -27,6 +27,8 @@ import { TokenPopup } from '@/components/domain/encounter/TokenPopup';
 import { EncounterMapRenderer } from '@/components/domain/encounter/EncounterMapRenderer';
 import { mergeHulls } from '@/components/domain/encounter/hull/hullNormalizer';
 import { getGridCell } from '@/utils/svgCoordinates';
+import { makeMapView } from '@/components/domain/encounter/geometry/mapView';
+import { topDownProjection } from '@/components/domain/encounter/geometry/gridProjection';
 import { message } from 'antd';
 
 // Pan and zoom state
@@ -249,6 +251,11 @@ export function MapPreview({
   const unitSize = grid.unit_size || 40;
   const svgWidth = grid.width * unitSize;
   const svgHeight = grid.height * unitSize;
+  // Legacy (non-grid) EncounterMapData renderer: constructs a topDownProjection-backed
+  // MapView solely to satisfy TokenLayer's `view` prop contract. This screen's own
+  // room/connection/drag-drop math stays independent unitSize-based arithmetic below —
+  // untouched by this migration and correctly gaining no iso capability.
+  const legacyView = useMemo(() => makeMapView(topDownProjection({ unitSize })), [unitSize]);
 
   // Pan and zoom state
   const [viewState, setViewState] = useState<ViewState>({
@@ -798,7 +805,7 @@ export function MapPreview({
         {tokens && (
           <TokenLayer
             tokens={tokens}
-            unitSize={unitSize}
+            view={legacyView}
             roomVisibility={roomVisibility}
             isGM={isGM}
             onTokenMove={onTokenMove}

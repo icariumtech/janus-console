@@ -651,7 +651,7 @@ export function EncounterMapRenderer({
         {tokens && Object.keys(tokens).length > 0 && (
           <TokenLayer
             tokens={tokens}
-            unitSize={unitSize}
+            view={view}
             roomVisibility={roomVisibility}
             isGM={isGM}
             onTokenMove={onTokenMove}

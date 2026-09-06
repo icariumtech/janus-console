@@ -8,11 +8,12 @@
 import React from 'react';
 import { TokenData } from '../../../types/encounterMap';
 import { TokenStatusOverlay } from './TokenStatusOverlay';
+import type { MapView } from './geometry/mapView';
 
 interface TokenProps {
   id: string;
   data: TokenData;
-  unitSize: number;
+  view: MapView;
   draggable?: boolean;
   selected?: boolean;
   onSelect?: (id: string, e?: React.MouseEvent) => void;
@@ -31,23 +32,25 @@ const GLOW_COLORS = {
 export function Token({
   id,
   data,
-  unitSize,
+  view,
   draggable = false,
   onSelect,
   onPointerDragStart,
   mapRotation = 0,
 }: TokenProps) {
-  // Calculate center position
-  const centerX = data.x * unitSize + unitSize / 2;
-  const centerY = data.y * unitSize + unitSize / 2;
+  // Calculate center position via the view's projection (Pitfall 1 fix —
+  // renders correctly under iso, not just top-down raw unitSize arithmetic).
+  const center = view.project({ gx: data.x + 0.5, gy: data.y + 0.5 });
+  const centerX = center.x;
+  const centerY = center.y;
 
   // Token radius: 90% of cell diameter
-  const tokenRadius = unitSize * 0.45;
+  const tokenRadius = view.unitSize * 0.45;
 
   // Glow and stroke sizes proportional to unitSize
   const glowRadius = tokenRadius * 1.4;
-  const strokeWidth = Math.max(0.5, unitSize * 0.06);
-  const glowBlur = Math.max(1, unitSize * 0.12);
+  const strokeWidth = Math.max(0.5, view.unitSize * 0.06);
+  const glowBlur = Math.max(1, view.unitSize * 0.12);
 
   const handlePointerDown = (e: React.PointerEvent<Element>) => {
     if (draggable && onPointerDragStart) {

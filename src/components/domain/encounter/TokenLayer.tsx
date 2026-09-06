@@ -8,8 +8,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { TokenState, TokenData, RoomData, GridRoom } from '../../../types/encounterMap';
 import { Token } from './Token';
-import { screenToSVG, snapToGrid, inverseRotatePoint } from '@/utils/svgCoordinates';
+import { screenToSVG, getGridCellViaView, inverseRotatePoint } from '@/utils/svgCoordinates';
 import { pointInPolygon } from '@/utils/polygon2d';
+import type { MapView } from './geometry/mapView';
 
 interface RoomVisibilityState {
   [roomId: string]: boolean;
@@ -21,7 +22,7 @@ export let tokenTouchActive = false;
 
 interface TokenLayerProps {
   tokens: TokenState;
-  unitSize: number;
+  view: MapView;
   roomVisibility?: RoomVisibilityState;
   isGM?: boolean;
   onTokenMove?: (id: string, x: number, y: number, roomId: string) => void;
@@ -35,7 +36,7 @@ interface TokenLayerProps {
 
 export function TokenLayer({
   tokens,
-  unitSize,
+  view,
   roomVisibility,
   isGM = false,
   onTokenMove,
@@ -69,7 +70,7 @@ export function TokenLayer({
   const mapRoomsRef = useRef(mapRooms);
   const roomVisibilityRef = useRef(roomVisibility);
   const isGMRef = useRef(isGM);
-  const unitSizeRef = useRef(unitSize);
+  const viewRef = useRef(view);
   const mapRotationRef = useRef(mapRotation);
   const mapCenterXRef = useRef(mapCenterX);
   const mapCenterYRef = useRef(mapCenterY);
@@ -84,7 +85,7 @@ export function TokenLayer({
   useEffect(() => { mapCenterXRef.current = mapCenterX; }, [mapCenterX]);
   useEffect(() => { mapCenterYRef.current = mapCenterY; }, [mapCenterY]);
   useEffect(() => { isGMRef.current = isGM; }, [isGM]);
-  useEffect(() => { unitSizeRef.current = unitSize; }, [unitSize]);
+  useEffect(() => { viewRef.current = view; }, [view]);
 
   const svgElementRef = useRef<SVGSVGElement | null>(null);
   const pendingDrag = useRef<{ id: string; startX: number; startY: number } | null>(null);
@@ -212,7 +213,7 @@ export function TokenLayer({
     if (!isDraggingRef.current || !dragTokenIdRef.current || !svgElementRef.current) return;
     const svgCoords = screenToSVG(svgElementRef.current, clientX, clientY);
     const unrotated = inverseRotatePoint(svgCoords.x, svgCoords.y, mapRotationRef.current, mapCenterXRef.current, mapCenterYRef.current);
-    const snapped = snapToGrid(unrotated.x, unrotated.y, unitSizeRef.current);
+    const snapped = getGridCellViaView(viewRef.current, unrotated.x, unrotated.y);
     ghostPositionRef.current = snapped;
     setGhostPosition(snapped);
   }, []); // stable — reads all values from refs
@@ -341,7 +342,7 @@ export function TokenLayer({
             <Token
               id={id}
               data={tokenData}
-              unitSize={unitSize}
+              view={view}
               draggable={tokenDraggable}
               selected={!isActiveDrag && selectedTokenId === id}
               onSelect={isActiveDrag ? undefined : handleTokenSelect}
@@ -361,7 +362,7 @@ export function TokenLayer({
             x: ghostPosition.gridX,
             y: ghostPosition.gridY,
           }}
-          unitSize={unitSize}
+          view={view}
           draggable={false}
           selected={false}
           onSelect={() => {}}
