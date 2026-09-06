@@ -1,10 +1,11 @@
 import { useCallback, type RefObject } from 'react';
-import { getGridCell } from '@/utils/svgCoordinates';
+import { screenToSVG, inverseRotatePoint, getGridCellViaView } from '@/utils/svgCoordinates';
+import type { MapView } from '@/components/domain/encounter/geometry/mapView';
 import type { TokenType, GridRoom } from '@/types/encounterMap';
 
 export interface UseTokenPlacementOpts {
   svgRef: RefObject<SVGSVGElement | null>;
-  unitSize: number;
+  view: MapView;
   isGM: boolean;
   onTokenPlace?: (type: TokenType, name: string, gridX: number, gridY: number, imageUrl: string, roomId: string) => void;
   isCellOccupied: (gridX: number, gridY: number) => boolean;
@@ -23,7 +24,7 @@ export interface UseTokenPlacementOpts {
  */
 export function useTokenPlacement({
   svgRef,
-  unitSize,
+  view,
   isGM,
   onTokenPlace,
   isCellOccupied,
@@ -51,7 +52,9 @@ export function useTokenPlacement({
       return;
     }
 
-    const { gridX, gridY } = getGridCell(svgRef.current, e.clientX, e.clientY, unitSize, mapRotation, mapCenterX, mapCenterY);
+    const svgCoords = screenToSVG(svgRef.current, e.clientX, e.clientY);
+    const unrotated = inverseRotatePoint(svgCoords.x, svgCoords.y, mapRotation, mapCenterX, mapCenterY);
+    const { gridX, gridY } = getGridCellViaView(view, unrotated.x, unrotated.y);
 
     if (isCellOccupied(gridX, gridY)) return;
 
@@ -61,7 +64,7 @@ export function useTokenPlacement({
     // Only preventDefault on success — failed drops snap back via browser default
     e.preventDefault();
     onTokenPlace(template.type, template.name, gridX, gridY, template.imageUrl || '', room.id);
-  }, [isGM, onTokenPlace, unitSize, isCellOccupied, findRoomAtCell, svgRef]);
+  }, [isGM, onTokenPlace, view, isCellOccupied, findRoomAtCell, svgRef]);
 
   return { handleDragOver, handleDrop };
 }
