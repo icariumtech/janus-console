@@ -78,3 +78,52 @@ export function topDownProjection(opts: TopDownProjectionOptions): Projection {
     },
   };
 }
+
+// ---- isoProjection -------------------------------------------------
+
+/** Options for the true-isometric projection (degrees, not radians). */
+export interface IsoProjectionOptions {
+  /** Pixels per grid cell (pre-foreshortening scale). Must be > 0. */
+  unitSize: number;
+  /** Foreshortening angle from horizontal, in degrees. Must be in (0, 90). */
+  tilt: number;
+  /** Rotation of the grid axes in the SVG plane, in degrees. */
+  rotation: number;
+}
+
+/**
+ * Build a true-isometric projection: both grid axes are foreshortened by
+ * `tilt` degrees from horizontal (unlike the 26.565-degree "2:1" dimetric
+ * convention common in pixel-art games) and rotated by `rotation` degrees.
+ *
+ * @example
+ *   const proj = isoProjection({ unitSize: 40, tilt: 30, rotation: 45 });
+ */
+export function isoProjection(opts: IsoProjectionOptions): Projection {
+  const us = opts.unitSize;
+  const tilt = opts.tilt;
+  if (!(us > 0) || !Number.isFinite(us)) {
+    throw new Error(`isoProjection: unitSize must be a positive finite number, got ${us}`);
+  }
+  if (!(tilt > 0 && tilt < 90) || !Number.isFinite(tilt)) {
+    throw new Error(`isoProjection: tilt must be a finite number strictly between 0 and 90, got ${tilt}`);
+  }
+
+  const t = (tilt * Math.PI) / 180;
+  const r = (opts.rotation * Math.PI) / 180;
+
+  const a = us * Math.cos(t) * Math.cos(r);
+  const b = -us * Math.cos(t) * Math.sin(r);
+  const c = us * Math.sin(t) * Math.sin(r);
+  const d = us * Math.sin(t) * Math.cos(r);
+  const det = a * d - b * c;
+
+  return {
+    project({ gx, gy }) {
+      return { x: a * gx + b * gy, y: c * gx + d * gy };
+    },
+    unproject({ x, y }) {
+      return { gx: (d * x - b * y) / det, gy: (-c * x + a * y) / det };
+    },
+  };
+}
