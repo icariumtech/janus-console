@@ -11,7 +11,7 @@
  * structure, and the handlers those layers need.
  */
 
-import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { usePanZoom } from '../../../hooks/usePanZoom';
 import { useExclusivePopover } from '../../../hooks/useExclusivePopover';
 import { useTokenPlacement } from '../../../hooks/useTokenPlacement';
@@ -37,7 +37,7 @@ import { TokenLayer } from './TokenLayer';
 import { TokenPopup } from './TokenPopup';
 import { RoomContextMenu } from './RoomContextMenu';
 import { DoorStatusPopup } from '../../gm/DoorStatusPopup';
-import { topDownProjection } from './geometry/gridProjection';
+import { isoProjection, topDownProjection } from './geometry/gridProjection';
 import { makeMapView } from './geometry/mapView';
 import { normalizeDoor, normalizeDoors } from './doors/doorNormalizer';
 import { hullPathD, mergeHulls } from './hull/hullNormalizer';
@@ -181,13 +181,19 @@ export function EncounterMapRenderer({
   // unit_size — pixels per grid cell (default 40 if YAML omits it)
   const unitSize = mapData.unit_size ?? 40;
 
+  // Top-down/iso projection toggle (D-03/D-04) — local to this mount, no
+  // shared/global store, so player and GM views toggle independently.
+  const [projectionMode, setProjectionMode] = useState<'top-down' | 'iso'>('top-down');
+
   // Projection + mapView — the renderer's seam to all SVG-space queries.
   // After plan 21-03 the renderer never multiplies by unitSize directly;
-  // everything goes through `view`. Switching to an iso projection later
-  // is a one-line constructor change here.
+  // everything goes through `view`. Phase 33 adds the isometric alternative.
   const projection = useMemo(
-    () => topDownProjection({ unitSize }),
-    [unitSize]
+    () =>
+      projectionMode === 'iso'
+        ? isoProjection({ unitSize, tilt: 30, rotation: 45 })
+        : topDownProjection({ unitSize }),
+    [unitSize, projectionMode]
   );
   const view = useMemo(() => makeMapView(projection), [projection]);
 
@@ -564,14 +570,19 @@ export function EncounterMapRenderer({
         {mapData.vents && mapData.vents.length > 0 && (isGM || ventsVisible) && (
           <g className="encounter-map__vents">
             {mapData.vents.map((vent) => {
-              const pts = vent.points.map(([x, y]) => `${x * unitSize},${y * unitSize}`).join(' ');
+              const pts = vent.points
+                .map(([gx, gy]) => {
+                  const p = view.project({ gx, gy });
+                  return `${p.x},${p.y}`;
+                })
+                .join(' ');
               return (
                 <g key={vent.id}>
                   <polyline
                     points={pts}
                     fill="none"
                     stroke="transparent"
-                    strokeWidth={unitSize * 0.6}
+                    strokeWidth={view.unitSize * 0.6}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     style={{ cursor: isGM ? 'context-menu' : 'default', pointerEvents: isGM ? 'stroke' : 'none' }}
@@ -586,10 +597,10 @@ export function EncounterMapRenderer({
                     points={pts}
                     fill="none"
                     stroke={ventsVisible ? COLORS.vent : COLORS.ventHidden}
-                    strokeWidth={unitSize * 0.18}
+                    strokeWidth={view.unitSize * 0.18}
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeDasharray={`${unitSize * 0.3} ${unitSize * 0.15}`}
+                    strokeDasharray={`${view.unitSize * 0.3} ${view.unitSize * 0.15}`}
                     opacity={isGM && !ventsVisible ? 0.4 : 1}
                     pointerEvents="none"
                   />
@@ -655,8 +666,9 @@ export function EncounterMapRenderer({
                 const svg = svgRef.current;
                 if (token && container && svg) {
                   // Token top-center in original grid-space SVG coordinates
-                  let tokenTopSvgX = token.x * unitSize + unitSize / 2;
-                  let tokenTopSvgY = token.y * unitSize + unitSize / 2 - unitSize * 0.4;
+                  const center = view.project({ gx: token.x + 0.5, gy: token.y + 0.5 });
+                  let tokenTopSvgX = center.x;
+                  let tokenTopSvgY = center.y - view.unitSize * 0.4;
                   // Apply map rotation so the point is in viewBox space (the <g> rotates it visually)
                   if (mapRotation !== 0) {
                     const rad = (mapRotation * Math.PI) / 180;
@@ -739,6 +751,32 @@ export function EncounterMapRenderer({
             RESET VIEW
           </button>
         )}
+
+        {/* Projection toggle - bottom left (D-03/D-04). Renders
+            unconditionally, unlike RESET VIEW's pan/zoom gate. */}
+        <button
+          className="encounter-map__projection-toggle"
+          onClick={() => setProjectionMode((m) => (m === 'iso' ? 'top-down' : 'iso'))}
+          title={projectionMode === 'iso' ? 'Switch to top-down view' : 'Switch to isometric view'}
+          aria-label="Toggle map projection between top-down and isometric"
+          aria-pressed={projectionMode === 'iso'}
+          style={{
+            gridArea: 'bottom-left',
+            alignSelf: 'end',
+            justifySelf: 'start',
+            pointerEvents: 'auto',
+            background: 'rgba(15, 21, 21, 0.95)',
+            border: projectionMode === 'iso' ? '1px solid #c9a050' : '1px solid #4a6b6b',
+            color: projectionMode === 'iso' ? '#c9a050' : '#7ab8b8',
+            fontFamily: "'Cascadia Code', 'Courier New', monospace",
+            fontSize: '11px',
+            letterSpacing: '2px',
+            padding: '8px 16px',
+            cursor: 'pointer',
+          }}
+        >
+          {projectionMode === 'iso' ? 'TOP DOWN' : 'ISO VIEW'}
+        </button>
 
         {/* Level indicator - top right */}
         <div
