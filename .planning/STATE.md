@@ -5,16 +5,16 @@ milestone_name: Better Deckplans
 current_phase: 33
 current_phase_name: Isometric View
 status: executing
-stopped_at: Phase 33 UI-SPEC approved
-last_updated: "2026-09-06T19:47:42.883Z"
-last_activity: 2026-08-25
-last_activity_desc: Phase 32 complete, transitioned to Phase 33
-state_head: fb9b6bd193eb12ea9713fc6dcbc1df6ce2866ca3
+stopped_at: Completed 33-01-PLAN.md
+last_updated: "2026-09-06T19:58:55.797Z"
+last_activity: 2026-09-06
+last_activity_desc: Phase 33 execution started
+state_head: 0cf1b7698b4fc7e290ef9b71eaa5a7f601de102f
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 16
-  completed_plans: 13
+  completed_plans: 14
   percent: 80
 ---
 
@@ -25,13 +25,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-12)
 
 **Core value:** Give the GM a single tool that enhances the tabletop experience with atmospheric digital interfaces without interrupting gameplay flow.
-**Current focus:** Phase 32 — svg-converter-details-per-deck-hulls-circular-rooms
+**Current focus:** Phase 33 — Isometric View
 
 ## Current Position
 
-Phase: 33 (Isometric View) — READY TO EXECUTE
-Status: Ready to execute
-Last activity: 2026-08-25 — Phase 32 complete, transitioned to Phase 33
+Phase: 33 (Isometric View) — EXECUTING
+Status: Executing Phase 33
+Last activity: 2026-09-06 — Phase 33 execution started
 
 ## v1.0 Milestone Archive
 
@@ -81,10 +81,10 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/33-isometric-view/33-UI-SPEC.md
+**Resume file:** None
 
-Last session: 2026-09-05T20:56:58.955Z
-Stopped at: Phase 33 UI-SPEC approved
+Last session: 2026-09-06T19:58:39.591Z
+Stopped at: Completed 33-01-PLAN.md
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
@@ -107,6 +107,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 | Phase 32 P01 | 12min | 2 tasks | 3 files |
 | Phase 32 P02 | ~7min | 2 tasks | 3 files |
 | Phase 32 P03 | ~15min | 2 tasks | 3 files |
+| Phase 33 P01 | ~15min | 2 tasks | 7 files |
 
 ## Operator Next Steps
 
@@ -121,6 +122,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 - [Phase 32]: 32-01: D-05/D-06 circle detection implemented; non-circular ellipses rejected (never approximated); all_areas ordered_ids also needed the polygon-key guard beyond what the plan named
 - [Phase 32]: 32-02: HULL-03 satisfied via shared `_extract_hull_layer()`/`_write_hull_block()` for both root and per-deck Hull sublayers (multi-deck-only scoping, Pitfall 4); the plan's assumed regression-test fixture content did not match reality (both ship_template*.svg Hull layers hold only a placeholder `<rect>`, no `<path>`) — corrected via source-grounding, test adjusted to true pre-refactor behavior plus an added controlled-fixture test proving the compact-form case
 - [Phase 32]: 32-03: DET-02 satisfied via `_extract_details_layer()` — closed/open read from the raw d string directly (never `parse_path_d()`'s return value, per Pattern 4/Pitfall 3); room association reuses `_find_room_at()` unchanged; circle details reuse Plan 01's circle-shape helpers. Phase-gate: full 19-test suite green, both fixture SVGs re-converted with zero output drift — Phase 32 (all 3 plans) complete.
+- [Phase 33]: 33-01: isoProjection uses fixed tilt:30/rotation:45 constants (true 30-degree isometric, not 26.565-degree dimetric); circleTransform's matrix field names mirror SVG matrix(a,b,c,d,e,f) order; added vectorEffect=non-scaling-stroke on circle-as-ellipse strokes to prevent stroke-width inflation from the scaling transform
 
 ### Blockers
 
