@@ -123,10 +123,10 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
   1. Any deckplan can render in an isometric projection via the existing `gridProjection`/`mapView` seam — rooms, doors, vents, POIs, tokens, and detail linework all appear correctly positioned
   2. Players can toggle the encounter view between top-down and isometric, with the change applying live (a cut, not an animated transition)
   3. The GM can independently toggle the GM console map between top-down and isometric, live
-- **Plans:** 2/3 plans executed
+- **Plans:** 3/3 plans executed
   - [x] 33-01-PLAN.md — isoProjection + toggle wiring (tracer) + circle-room/detail ellipse fix via view.circleTransform() (Wave 1)
   - [x] 33-02-PLAN.md — Token/TokenLayer render migration + getGridCellViaView mouse-inversion fix across all 4 drag/drop call sites (Wave 2)
-  - [ ] 33-03-PLAN.md — Full regression + structural bypass audit + phase-closing human-check (Wave 3)
+  - [x] 33-03-PLAN.md — Full regression + structural bypass audit + phase-closing human-check (Wave 3)
 - **UI hint**: yes
 - Context: `.planning/phases/33-isometric-view/33-CONTEXT.md`
 
@@ -148,4 +148,4 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 30. AI Map Editing MCP Tools | (ad-interim) | 3/3 | Complete    | 2026-06-06 |
 | 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | Complete    | 2026-08-04 |
 | 32. SVG Converter — Details/Hulls/Circles | v3.0 | 3/3 | Complete    | 2026-08-25 |
-| 33. Isometric View | v3.0 | 2/3 | In Progress|  |
+| 33. Isometric View | v3.0 | 3/3 | In Progress|  |
