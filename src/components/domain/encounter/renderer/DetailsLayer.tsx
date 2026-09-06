@@ -37,17 +37,18 @@ export function DetailShape({ detail, view }: DetailShapeProps) {
   const fillOpacity = detail.filled && isClosedShape ? DETAIL_FILL_OPACITY : undefined;
 
   if (detail.circle) {
-    const center = view.project({ gx: detail.circle.cx, gy: detail.circle.cy });
-    const r = detail.circle.r * view.unitSize;
+    const t = view.circleTransform(detail.circle.cx, detail.circle.cy, detail.circle.r);
     return (
       <circle
-        cx={center.x}
-        cy={center.y}
-        r={r}
+        cx={0}
+        cy={0}
+        r={1}
+        transform={`translate(${t.cx},${t.cy}) matrix(${t.m11},${t.m21},${t.m12},${t.m22},0,0)`}
         fill={fill}
         fillOpacity={fillOpacity}
         stroke={COLORS.detail}
         strokeWidth={DETAIL_STROKE_WIDTH}
+        vectorEffect="non-scaling-stroke"
         strokeLinecap="round"
         strokeLinejoin="round"
         pointerEvents="none"

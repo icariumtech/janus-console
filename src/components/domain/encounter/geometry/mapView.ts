@@ -62,6 +62,22 @@ export interface SvgBBox {
 }
 
 /**
+ * Affine transform for rendering a grid-space circle as an SVG shape.
+ * Field names match the SVG `matrix(a,b,c,d,e,f)` parameter ORDER exactly
+ * (m11=a, m21=b, m12=c, m22=d) — call sites emit
+ * `matrix(${t.m11},${t.m21},${t.m12},${t.m22},0,0)` verbatim; do not reorder.
+ * Apply to a unit circle at the origin: `translate(cx,cy) matrix(...)`.
+ */
+export interface CircleTransform {
+  cx: number;
+  cy: number;
+  m11: number;
+  m21: number;
+  m12: number;
+  m22: number;
+}
+
+/**
  * The renderer-facing facade. Closure-captured projection means there is
  * exactly one source of pixel-scale truth per render pass.
  */
@@ -103,6 +119,15 @@ export interface MapView {
 
   /** Pass-through: unproject an SVG point to grid. */
   unproject(p: SvgPoint): GridPoint;
+
+  /**
+   * Affine transform for rendering a grid-space circle of radius `r`
+   * centered at grid `(gcx, gcy)` as an SVG shape. For `topDownProjection`
+   * this reduces to a pure scale (byte-identical to `r * view.unitSize`).
+   * For a non-orthogonal projection (e.g. iso) it produces the matrix that
+   * renders the circle as a true ellipse.
+   */
+  circleTransform(gcx: number, gcy: number, r: number): CircleTransform;
 
   /**
    * Pixel-scale of one grid cell along an axis. Exposed for door slot
@@ -211,6 +236,20 @@ export function makeMapView(projection: Projection): MapView {
 
     unproject(p: SvgPoint): GridPoint {
       return projection.unproject(p);
+    },
+
+    circleTransform(gcx: number, gcy: number, r: number): CircleTransform {
+      const origin = projection.project({ gx: gcx, gy: gcy });
+      const ux = projection.project({ gx: gcx + 1, gy: gcy });
+      const uy = projection.project({ gx: gcx, gy: gcy + 1 });
+      return {
+        cx: origin.x,
+        cy: origin.y,
+        m11: (ux.x - origin.x) * r,
+        m21: (ux.y - origin.y) * r,
+        m12: (uy.x - origin.x) * r,
+        m22: (uy.y - origin.y) * r,
+      };
     },
 
     unitSize,

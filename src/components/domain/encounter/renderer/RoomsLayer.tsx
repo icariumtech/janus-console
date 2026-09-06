@@ -22,7 +22,6 @@ interface RoomsLayerProps {
   roomAnimState: Map<string, RoomAnimEntry>;
   isGM: boolean;
   view: MapView;
-  unitSize: number;
   mapRotation: number;
   /** Interior detail entries (DET-03), keyed by room id — mounted INSIDE
    *  each room's own reveal `<g>` so they inherit that room's gating and
@@ -39,7 +38,6 @@ export function RoomsLayer({
   roomAnimState,
   isGM,
   view,
-  unitSize,
   mapRotation,
   detailsByRoom,
   onRoomContextMenu,
@@ -72,8 +70,8 @@ export function RoomsLayer({
     const label = room.name ? view.labelPosition(room) : null;
     const labelEl = label && (isGM || visible) ? (() => {
       const [odx, ody] = room.label_offset ?? [0, 0];
-      const lx = label.x + odx * unitSize;
-      const ly = label.y + ody * unitSize;
+      const lx = label.x + odx * view.unitSize;
+      const ly = label.y + ody * view.unitSize;
       // Counter-rotate so label stays upright on maps with a fixed rotation
       const transform = mapRotation !== 0
         ? `rotate(${-mapRotation}, ${lx}, ${ly})`
@@ -118,12 +116,10 @@ export function RoomsLayer({
 
     // === Circular room ===
     if (room.circle) {
-      const center = view.project({ gx: room.circle.cx, gy: room.circle.cy });
-      // Circle radius scales with horizontal unit size (top-down projection;
-      // for iso projections circles would render as ellipses — out of scope).
-      const svgCx = center.x;
-      const svgCy = center.y;
-      const svgR = room.circle.r * view.unitSize;
+      // circleTransform renders as a true ellipse under non-orthogonal
+      // (iso) projections and reduces to a pure scale under top-down.
+      const t = view.circleTransform(room.circle.cx, room.circle.cy, room.circle.r);
+      const circleTransformAttr = `translate(${t.cx},${t.cy}) matrix(${t.m11},${t.m21},${t.m12},${t.m22},0,0)`;
       return (
         <g
           key={room.id}
@@ -131,11 +127,11 @@ export function RoomsLayer({
           opacity={svgOpacity}
           style={animState ? { animationDelay: `${staggerDelay}ms` } : undefined}
         >
-          <circle cx={svgCx} cy={svgCy} r={svgR} fill={COLORS.bgRoom} className="encounter-map__floor" />
-          <circle cx={svgCx} cy={svgCy} r={svgR} fill="none" stroke={COLORS.hullFill} strokeWidth={WALL_THICKNESS} className="encounter-map__wall" />
+          <circle cx={0} cy={0} r={1} transform={circleTransformAttr} fill={COLORS.bgRoom} className="encounter-map__floor" />
+          <circle cx={0} cy={0} r={1} transform={circleTransformAttr} fill="none" stroke={COLORS.hullFill} strokeWidth={WALL_THICKNESS} vectorEffect="non-scaling-stroke" className="encounter-map__wall" />
           {isGM ? (
             <circle
-              cx={svgCx} cy={svgCy} r={svgR}
+              cx={0} cy={0} r={1} transform={circleTransformAttr}
               fill="transparent"
               style={{ cursor: 'context-menu' }}
               onContextMenu={(e) => onRoomContextMenu(e, room)}
@@ -145,7 +141,7 @@ export function RoomsLayer({
             />
           ) : room.name && (
             <circle
-              cx={svgCx} cy={svgCy} r={svgR}
+              cx={0} cy={0} r={1} transform={circleTransformAttr}
               fill="transparent"
               pointerEvents="all"
               style={{ cursor: 'pointer' }}

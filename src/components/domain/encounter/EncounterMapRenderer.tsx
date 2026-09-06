@@ -558,7 +558,6 @@ export function EncounterMapRenderer({
           roomAnimState={roomAnimState}
           isGM={isGM}
           view={view}
-          unitSize={unitSize}
           mapRotation={mapRotation}
           detailsByRoom={detailsByRoom}
           onRoomContextMenu={handleRoomContextMenu}
