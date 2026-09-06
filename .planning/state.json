@@ -1,0 +1,88 @@
+{
+  "contract": "1.0.0",
+  "flavor": "core",
+  "milestone": "v3.0 — Better Deckplans",
+  "phases": [
+    {
+      "number": "1",
+      "name": "20 (see v1.0 archive)",
+      "status": "pending"
+    },
+    {
+      "number": "21",
+      "name": "Encounter Geometry Deepening",
+      "status": "pending"
+    },
+    {
+      "number": "22",
+      "name": "Renderer Interaction Seams",
+      "status": "pending"
+    },
+    {
+      "number": "23",
+      "name": "Containerization",
+      "status": "pending"
+    },
+    {
+      "number": "24",
+      "name": "JANUS Skills",
+      "status": "pending"
+    },
+    {
+      "number": "25",
+      "name": "Map Rotation Controls",
+      "status": "pending"
+    },
+    {
+      "number": "26",
+      "name": "Map Polish (ad-hoc)",
+      "status": "pending"
+    },
+    {
+      "number": "27",
+      "name": "MCP Image Upload",
+      "status": "pending"
+    },
+    {
+      "number": "28",
+      "name": "GM Console File Editor",
+      "status": "pending"
+    },
+    {
+      "number": "28.1",
+      "name": "Audit Gap Closure (INSERTED)",
+      "status": "pending"
+    },
+    {
+      "number": "29",
+      "name": "Deckplan Map Editor",
+      "status": "pending"
+    },
+    {
+      "number": "30",
+      "name": "AI Map Editing MCP Tools",
+      "status": "complete"
+    },
+    {
+      "number": "31",
+      "name": "Deckplan Format — Hulls & Details",
+      "status": "complete"
+    },
+    {
+      "number": "32",
+      "name": "SVG Converter — Details/Hulls/Circles",
+      "status": "complete"
+    },
+    {
+      "number": "33",
+      "name": "Isometric View",
+      "status": "pending"
+    }
+  ],
+  "next": {
+    "command": "/gsd:progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 33 of 5 · 80% · executing"
+  },
+  "updated_at": "2026-09-06T19:47:42.894Z"
+}
