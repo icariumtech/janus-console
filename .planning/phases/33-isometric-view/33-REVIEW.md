@@ -209,6 +209,20 @@ per-axis projection instead of the single scalar `unitSize`.
 
 ---
 
+## Resolution
+
+- **CR-01 (blocker):** Fixed — `MapView.bbox()` now samples all four projected
+  corners of the grid bounding rect and takes min/max across them, instead of
+  only the top-left/bottom-right pair. Regression test added to
+  `mapView.test.ts` (`bbox() does not collapse to near-zero width for a
+  square grid under isoProjection`), verified to fail against the pre-fix
+  code (computed width ~1.4e-14) and pass against the fix (~195.96). Commit
+  `ffb4470`.
+- **WR-01, WR-02, IN-01:** Not fixed in this pass — non-blocking, left for a
+  future phase or ad-hoc follow-up.
+
+---
+
 _Reviewed: 2026-09-07T00:00:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: quick_
