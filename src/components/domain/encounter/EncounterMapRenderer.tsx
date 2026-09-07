@@ -39,6 +39,7 @@ import { RoomContextMenu } from './RoomContextMenu';
 import { DoorStatusPopup } from '../../gm/DoorStatusPopup';
 import { isoProjection, topDownProjection } from './geometry/gridProjection';
 import { makeMapView } from './geometry/mapView';
+import { roomBBoxGrid } from './geometry/roomGeometry';
 import { normalizeDoor, normalizeDoors } from './doors/doorNormalizer';
 import { hullPathD, mergeHulls } from './hull/hullNormalizer';
 import { partitionDetails } from './details/detailNormalizer';
@@ -237,6 +238,33 @@ export function EncounterMapRenderer({
       svgWidth: bb.width,
       svgHeight: bb.height,
     };
+  }, [view, mapData.rooms, effectiveHull, viewPadding]);
+
+  // Background grid lines — drawn as individually projected line segments
+  // (not a flat SVG <pattern> tile) so the grid follows the active
+  // projection: axis-aligned under topDownProjection, skewed into
+  // parallelograms under isoProjection. A projection is linear, so a
+  // straight grid line in grid space is still a straight line once
+  // projected — no polyline approximation needed, just project both
+  // endpoints.
+  const bgGridLines = useMemo(() => {
+    const grid = roomBBoxGrid(mapData.rooms, effectiveHull ?? undefined, viewPadding);
+    const gx0 = Math.floor(grid.gx);
+    const gy0 = Math.floor(grid.gy);
+    const gx1 = Math.ceil(grid.gx + grid.gw);
+    const gy1 = Math.ceil(grid.gy + grid.gh);
+    const lines: { x1: number; y1: number; x2: number; y2: number }[] = [];
+    for (let gx = gx0; gx <= gx1; gx++) {
+      const p1 = view.project({ gx, gy: gy0 });
+      const p2 = view.project({ gx, gy: gy1 });
+      lines.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
+    }
+    for (let gy = gy0; gy <= gy1; gy++) {
+      const p1 = view.project({ gx: gx0, gy });
+      const p2 = view.project({ gx: gx1, gy });
+      lines.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
+    }
+    return lines;
   }, [view, mapData.rooms, effectiveHull, viewPadding]);
 
   // Fixed map rotation (YAML-authored, not user-controlled)
@@ -479,35 +507,29 @@ export function EncounterMapRenderer({
             />
           ))}
 
-          {/* Background grid pattern for void areas */}
-          <pattern
-            id="map-bg-grid"
-            width={unitSize} height={unitSize}
-            patternUnits="userSpaceOnUse"
-            x={originX} y={originY}
-          >
-            <path
-              d={`M ${unitSize} 0 L 0 0 0 ${unitSize}`}
-              fill="none" stroke="#141e1e" strokeWidth={0.5}
-            />
-          </pattern>
         </defs>
 
         {/* Fixed rotation wrapper — rotates all map content around its center.
             mapRotation is YAML-authored (e.g. 90 for a horizontally-oriented ship). */}
         <g transform={mapRotation !== 0 ? `rotate(${mapRotation}, ${mapCenterX}, ${mapCenterY})` : undefined}>
 
-        {/* Background — fill entire viewBox with faint grid */}
+        {/* Background — fill entire viewBox with faint grid.
+            Grid lines are individually projected (not a flat <pattern> tile)
+            so they follow the active projection — see bgGridLines above. */}
         <rect
           x={originX} y={originY}
           width={svgWidth} height={svgHeight}
           fill={COLORS.bgPrimary}
         />
-        <rect
-          x={originX} y={originY}
-          width={svgWidth} height={svgHeight}
-          fill="url(#map-bg-grid)"
-        />
+        <g className="encounter-map__bg-grid">
+          {bgGridLines.map((l, i) => (
+            <line
+              key={i}
+              x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2}
+              stroke="#141e1e" strokeWidth={0.5}
+            />
+          ))}
+        </g>
 
         {/* Hull polygon — ship/structure outer frame.
             Filled with hull-interior color so the space between rooms
