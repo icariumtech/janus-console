@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isoProjection, topDownProjection } from '../gridProjection';
 import { makeMapView } from '../mapView';
-import type { GridRect } from '../../../../../types/encounterMap';
+import type { GridRect, GridRoom } from '../../../../../types/encounterMap';
 
 const ISO_EPS = 1e-9;
 
@@ -53,6 +53,29 @@ describe('makeMapView + isoProjection wiring', () => {
   it('top-down projection unitSize is unaffected (regression guard)', () => {
     const view = makeMapView(topDownProjection({ unitSize: 40 }));
     expect(view.unitSize).toBe(40);
+  });
+
+  it('bbox() does not collapse to near-zero width for a square grid under isoProjection (CR-01 regression)', () => {
+    // The default iso config (tilt: 30, rotation: 45) makes the projection
+    // matrix's a+b coefficients sum to ~0 (floating-point noise, ~1.4e-14),
+    // so a two-corner bbox sample (top-left/bottom-right only) computes a
+    // width on the order of 1e-14 for any square grid bounding box — visually
+    // zero once it reaches an SVG viewBox. Sampling all four corners fixes
+    // this; the correct width for this 4x4 grid box is ~196px, not ~0.
+    const proj = isoProjection(isoOpts);
+    const view = makeMapView(proj);
+    const squareRoom: GridRoom = {
+      id: 'square-room',
+      name: 'Square Room',
+      rects: [{ x: 0, y: 0, w: 4, h: 4 }],
+    };
+
+    const box = view.bbox([squareRoom]);
+
+    expect(box.width).toBeGreaterThan(1);
+    expect(box.height).toBeGreaterThan(1);
+    expect(box.width).toBeCloseTo(195.959, 2);
+    expect(box.height).toBeCloseTo(113.137, 2);
   });
 });
 

@@ -219,14 +219,23 @@ export function makeMapView(projection: Projection): MapView {
 
     bbox(rooms: GridRoom[], hull?: HullDef, padding = 0): SvgBBox {
       const grid: GridRectArea = roomBBoxGrid(rooms, hull, padding);
-      const tl = projection.project({ gx: grid.gx, gy: grid.gy });
-      const br = projection.project({ gx: grid.gx + grid.gw, gy: grid.gy + grid.gh });
-      // For top-down projection tl < br on both axes; for general
-      // projections we normalize so width/height are non-negative.
-      const originX = Math.min(tl.x, br.x);
-      const originY = Math.min(tl.y, br.y);
-      const width   = Math.abs(br.x - tl.x);
-      const height  = Math.abs(br.y - tl.y);
+      // Project all four corners, not just two opposite ones: a non-orthogonal
+      // projection (e.g. isoProjection) can skew the grid rect so that its
+      // diagonal corners no longer bound the projected shape — sampling only
+      // (gx,gy) and (gx+gw,gy+gh) can under-measure width/height, in the worst
+      // case (a+b == 0 for the projection matrix) collapsing it to exactly 0.
+      const corners = [
+        projection.project({ gx: grid.gx, gy: grid.gy }),
+        projection.project({ gx: grid.gx + grid.gw, gy: grid.gy }),
+        projection.project({ gx: grid.gx, gy: grid.gy + grid.gh }),
+        projection.project({ gx: grid.gx + grid.gw, gy: grid.gy + grid.gh }),
+      ];
+      const xs = corners.map((c) => c.x);
+      const ys = corners.map((c) => c.y);
+      const originX = Math.min(...xs);
+      const originY = Math.min(...ys);
+      const width   = Math.max(...xs) - originX;
+      const height  = Math.max(...ys) - originY;
       return { originX, originY, width, height };
     },
 
