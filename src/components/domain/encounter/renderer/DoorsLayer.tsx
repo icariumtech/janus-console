@@ -86,6 +86,7 @@ export function DoorsLayer({
             doorStatus={getEffectiveDoorStatus(door)}
             style={styleEntry}
             orientation={orientation}
+            angle={view.doorBounds(door).angle}
             onContextMenuHandler={contextMenuHandler}
             widthCells={door.width ?? 1}
             onClickHandler={clickHandler}

@@ -157,7 +157,24 @@ export function makeMapView(projection: Projection): MapView {
   // Projected length of the unit grid vector along x.
   const origin = projection.project({ gx: 0, gy: 0 });
   const unitX = projection.project({ gx: 1, gy: 0 });
+  const unitY = projection.project({ gx: 0, gy: 1 });
   const unitSize = Math.hypot(unitX.x - origin.x, unitX.y - origin.y);
+
+  // Map a grid-space direction angle (degrees, standard math convention:
+  // 0 = +gx axis, 90 = +gy axis) to the SVG-space angle of that same
+  // direction after projection. Identity under topDownProjection (grid axes
+  // are already SVG-aligned); under isoProjection the grid axes themselves
+  // are skewed/rotated in SVG space, so a raw passthrough of the grid angle
+  // (e.g. a door's wall-slot angle) no longer matches the visual wall
+  // orientation — this basis-vector transform is what keeps it aligned.
+  const projectedAngle = (gridAngleDeg: number): number => {
+    const rad = (gridAngleDeg * Math.PI) / 180;
+    const dx = Math.cos(rad);
+    const dy = Math.sin(rad);
+    const svgX = (unitX.x - origin.x) * dx + (unitY.x - origin.x) * dy;
+    const svgY = (unitX.y - origin.y) * dx + (unitY.y - origin.y) * dy;
+    return (Math.atan2(svgY, svgX) * 180) / Math.PI;
+  };
 
   const polygonToPointsString = (poly: Polygon): string => {
     return poly
@@ -186,7 +203,7 @@ export function makeMapView(projection: Projection): MapView {
         center,
         width: slotLength,
         height: slotThickness,
-        angle: door.angle,
+        angle: projectedAngle(door.angle),
       };
     },
 

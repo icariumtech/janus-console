@@ -13,6 +13,17 @@ interface DoorSymbolProps {
   doorStatus: string | undefined;
   style: { stroke: string; doorFill: string };
   orientation: 'horizontal' | 'vertical';
+  /**
+   * SVG-space angle (degrees) of the door's wall-slot direction, already
+   * projection-aware (see MapView.doorBounds / projectedAngle). Under
+   * topDownProjection this always equals 0 (horizontal) or 90 (vertical),
+   * matching `orientation`, so the extra rotation applied below is a no-op.
+   * Under isoProjection it generally differs — the glyph is drawn in its
+   * axis-aligned local shape (per `orientation`) and then rotated by the
+   * delta, rather than reworking every x/y branch below for an arbitrary
+   * angle.
+   */
+  angle: number;
   onContextMenuHandler?: (e: React.MouseEvent) => void;
   widthCells?: number;
   onClickHandler?: (e: React.MouseEvent) => void;
@@ -25,6 +36,7 @@ export function DoorSymbol({
   doorStatus,
   style,
   orientation,
+  angle,
   onContextMenuHandler,
   widthCells = 1,
   onClickHandler,
@@ -37,6 +49,8 @@ export function DoorSymbol({
   const isSealed = doorStatus === 'SEALED';
 
   const statusClass = doorStatus ? `encounter-map__door--${doorStatus.toLowerCase()}` : '';
+  const baseAngle = orientation === 'horizontal' ? 0 : 90;
+  const rotationDelta = angle - baseAngle;
 
   const splitOffset = orientation === 'horizontal' ? doorWidth * 0.55 : doorHeight * 0.55;
 
@@ -56,6 +70,7 @@ export function DoorSymbol({
       className={`encounter-map__door encounter-map__door--${doorType} ${statusClass}`}
       onContextMenu={onContextMenuHandler}
       onClick={onClickHandler}
+      transform={rotationDelta !== 0 ? `rotate(${rotationDelta}, ${x}, ${y})` : undefined}
       style={{ cursor: onClickHandler ? 'pointer' : onContextMenuHandler ? 'context-menu' : 'default' }}
     >
       {/* Opaque background to cover wall lines behind door */}
