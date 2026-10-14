@@ -2,9 +2,9 @@
 phase: "34"
 slug: "gm-controlled-projection-and-iso-rotation"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: validated
+nyquist_compliant: true
+wave_0_complete: true
 created: "2026-10-14"
 ---
 
@@ -41,17 +41,17 @@ Filled in by the planner/executor against task IDs. Requirement → test map (fr
 
 | Requirement | Behavior | Test Type | Automated Command | File Exists | Status |
 |-------------|----------|-----------|-------------------|-------------|--------|
-| ISO-04 | `set_projection` validates, persists, broadcasts | unit (Django) | `.venv/bin/python manage.py test core.tests.test_encounter_state` | ❌ W0 (extend) | ⬜ pending |
-| ISO-04 | New keys present in SSE payload | unit (Django) | `.venv/bin/python manage.py test core.tests.test_payload_builder` | ❌ W0 (extend) | ⬜ pending |
-| ISO-04 | Defaults merge over old `active_view.json` (D-12) | unit (Django) | `.venv/bin/python manage.py test core.tests.test_active_view_store` | ❌ W0 (extend) | ⬜ pending |
-| ISO-05 | `rotate_view(±90)` wraps 0..270, rejects other deltas | unit (Django) | `.venv/bin/python manage.py test core.tests.test_encounter_state` | ❌ W0 | ⬜ pending |
-| ISO-05 | top-down rotation identity at 0, round-trip at 90/180/270 | unit (vitest) | `pnpm exec vitest run src/components/domain/encounter/geometry/__tests__/gridProjection.test.ts` | ❌ W0 (extend) | ⬜ pending |
-| ISO-05/07 | Iso axes on 30° lattice, constant length at all offsets incl. authored rotation folded in (D-15) | unit (vitest) | same | ❌ W0 | ⬜ pending |
-| ISO-06 | `load_deckplan` normalizes `default_view` | unit (Django) | `.venv/bin/python manage.py test core.tests.test_data_loader` | ❌ W0 (extend) | ⬜ pending |
-| ISO-06 | Location change applies `default_view`; same-location re-entry keeps view (D-16); no-deckplan resets | integration (Django) | `.venv/bin/python manage.py test core.tests.test_encounter_view_state` | ❌ W0 (new) | ⬜ pending |
-| ISO-06 | Deck switch keeps projection/offset (D-10) | unit (Django) | `.venv/bin/python manage.py test core.tests.test_encounter_state` | ❌ W0 | ⬜ pending |
-| ISO-07 | Pointer→cell correct at all offsets under iso | unit (vitest) | `pnpm exec vitest run src/utils/__tests__/svgCoordinates.test.ts` | ❌ W0 (extend) | ⬜ pending |
-| ISO-07 | `classifyChange`: projection → cut, offset → fade, identical → none | unit (vitest) | `pnpm exec vitest run src/components/domain/encounter/__tests__/viewTransition.test.ts` | ❌ W0 (new) | ⬜ pending |
+| ISO-04 | `set_projection` validates, persists, broadcasts | unit (Django) | `.venv/bin/python manage.py test core.tests.test_encounter_state` | ✅ | ✅ green |
+| ISO-04 | New keys present in SSE payload | unit (Django) | `.venv/bin/python manage.py test core.tests.test_payload_builder` | ✅ | ✅ green |
+| ISO-04 | Defaults merge over old `active_view.json` (D-12) | unit (Django) | `.venv/bin/python manage.py test core.tests.test_active_view_store` | ✅ | ✅ green |
+| ISO-05 | `rotate_view(±90)` wraps 0..270, rejects other deltas | unit (Django) | `.venv/bin/python manage.py test core.tests.test_encounter_state` | ✅ | ✅ green |
+| ISO-05 | top-down rotation identity at 0, round-trip at 90/180/270 | unit (vitest) | `pnpm exec vitest run src/components/domain/encounter/geometry/__tests__/gridProjection.test.ts` | ✅ | ✅ green |
+| ISO-05/07 | Iso axes on 30° lattice, constant length at all offsets incl. authored rotation folded in (D-15) | unit (vitest) | same | ✅ | ✅ green |
+| ISO-06 | `load_deckplan` normalizes `default_view` | unit (Django) | `.venv/bin/python manage.py test core.tests.test_data_loader` | ✅ | ✅ green |
+| ISO-06 | Location change applies `default_view`; same-location re-entry keeps view (D-16); no-deckplan resets | integration (Django) | `.venv/bin/python manage.py test core.tests.test_encounter_view_state` | ✅ | ✅ green |
+| ISO-06 | Deck switch keeps projection/offset (D-10) | unit (Django) | `.venv/bin/python manage.py test core.tests.test_encounter_state` | ✅ | ✅ green |
+| ISO-07 | Pointer→cell correct at all offsets under iso | unit (vitest) | `pnpm exec vitest run src/utils/__tests__/svgCoordinates.test.ts` | ✅ | ✅ green |
+| ISO-07 | `classifyChange`: projection → cut, offset → fade, identical → none | unit (vitest) | `pnpm exec vitest run src/components/domain/encounter/__tests__/viewTransition.test.ts` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -78,15 +78,15 @@ Wave 0 test files are created INSIDE the owning task's RED step (tdd="true" / tr
 
 ## Wave 0 Requirements
 
-- [ ] `src/components/domain/encounter/geometry/__tests__/gridProjection.test.ts` — top-down rotation + iso four-azimuth block
-- [ ] `src/components/domain/encounter/geometry/__tests__/viewOrientation.test.ts` — offset normalization, offset-0 identity
-- [ ] `src/components/domain/encounter/__tests__/viewTransition.test.ts` — `classifyChange`
-- [ ] `src/utils/__tests__/svgCoordinates.test.ts` — projection-aware cell resolution per offset
-- [ ] `core/tests/test_encounter_state.py` — `set_projection`, `rotate_view`, deck-switch retention
-- [ ] `core/tests/test_active_view_store.py` — defaults merge for new keys
-- [ ] `core/tests/test_payload_builder.py` — new keys present
-- [ ] `core/tests/test_data_loader.py` — `default_view` normalization
-- [ ] `core/tests/test_encounter_view_state.py` (new) — location-change reset semantics
+- [x] `src/components/domain/encounter/geometry/__tests__/gridProjection.test.ts` — top-down rotation + iso four-azimuth block
+- [x] `src/components/domain/encounter/geometry/__tests__/viewOrientation.test.ts` — offset normalization, offset-0 identity
+- [x] `src/components/domain/encounter/__tests__/viewTransition.test.ts` — `classifyChange`
+- [x] `src/utils/__tests__/svgCoordinates.test.ts` — projection-aware cell resolution per offset
+- [x] `core/tests/test_encounter_state.py` — `set_projection`, `rotate_view`, deck-switch retention
+- [x] `core/tests/test_active_view_store.py` — defaults merge for new keys
+- [x] `core/tests/test_payload_builder.py` — new keys present
+- [x] `core/tests/test_data_loader.py` — `default_view` normalization
+- [x] `core/tests/test_encounter_view_state.py` (new) — location-change reset semantics
 
 ---
 
@@ -102,11 +102,19 @@ Wave 0 test files are created INSIDE the owning task's RED step (tdd="true" / tr
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 60s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** validated 2026-10-14 — all automated rows green (vitest 413/413, Django `core` 175 OK); manual-only rows deferred to end-of-phase UAT (34-05 Task 3 human checks).
+
+## Validation Audit 2026-10-14
+
+| Metric | Count |
+|---|---|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
