@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1–20 (shipped 2026-05-07)
 - ✅ **v2.0 AI Tooling** — Phases 21–28 + 28.1 (shipped 2026-06-12)
-- 🚧 **v3.0 Better Deckplans** — Phase 29, 31–33 (in progress)
+- 🚧 **v3.0 Better Deckplans** — Phase 29, 31–35 (in progress)
 
 ## Phases
 
@@ -53,7 +53,7 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 
 </details>
 
-### 🚧 v3.0 Better Deckplans (Phase 31–33)
+### 🚧 v3.0 Better Deckplans (Phase 31–35)
 
 - [x] **Phase 29: Interactive deckplan map editor with live preview, YAML sync, and POI placement** — completed 2026-06-30
   - **Goal:** Give the GM a visual way to author deckplan maps — consolidate on `deckplan.yaml` as the sole format, then extend the GM Console file editor with a live map preview, deck selector, click-to-jump, and POI placement/move via surgical text edits.
@@ -115,7 +115,7 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 
 #### Phase 33: Isometric View
 
-- **Status:** Not started
+- **Status:** Complete (2026-09-07)
 - **Goal:** Add an isometric projection alongside the existing top-down view, with a live toggle on both the player encounter view and the GM console map.
 - **Depends on:** Phase 31 (details/hulls must project correctly in iso)
 - **Requirements**: ISO-01, ISO-02, ISO-03
@@ -129,6 +129,35 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
   - [x] 33-03-PLAN.md — Full regression + structural bypass audit + phase-closing human-check (Wave 3)
 - **UI hint**: yes
 - Context: `.planning/phases/33-isometric-view/33-CONTEXT.md`
+
+#### Phase 34: GM-Controlled Projection and Iso Rotation
+
+- **Status:** Not started
+- **Goal:** Make the map view (top-down vs. isometric, and iso rotation) a GM-owned setting broadcast to players, and let the GM rotate the iso view in 90° steps.
+- **Depends on:** Phase 33
+- **Requirements**: TBD
+- **Success Criteria** (what must be TRUE):
+  1. The player terminal no longer has a projection toggle; it renders whatever projection the GM console has selected, updating live
+  2. The GM can rotate the iso view left/right in 90° steps (iso rotation 45 → 135 → 225 → 315), e.g. bringing the bridge to the lower-left corner, and players follow
+  3. At every rotation, rooms, doors, POIs, tokens, details and the background grid render correctly, and clicks/drags hit the correct grid cell
+- **Plans:** 0 plans
+  - [ ] TBD (run /gsd-plan-phase 34 to break down)
+- **UI hint**: yes
+
+#### Phase 35: Stacked Deck View with Animated Transitions
+
+- **Status:** Not started
+- **Goal:** In iso view, show the location's other decks stacked above and below the selected deck as semi-transparent layers, and animate deck switches.
+- **Depends on:** Phase 34
+- **Requirements**: TBD
+- **Success Criteria** (what must be TRUE):
+  1. In iso view, decks above and below the active deck render stacked in vertical order, semi-transparent
+  2. Selecting a different deck animates the stack: the current deck slides up/down and fades to semi-transparent while the new deck fades to opaque
+  3. Only the active deck receives pointer interaction; top-down view shows the active deck only
+- **Open questions (for discuss-phase):** cross-deck coordinate alignment (may need per-deck offset/elevation schema field), deck spacing, fog-of-war on ghost decks for players, mobile performance
+- **Plans:** 0 plans
+  - [ ] TBD (run /gsd-plan-phase 35 to break down)
+- **UI hint**: yes
 
 ## Progress
 
@@ -149,3 +178,5 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | Complete    | 2026-08-04 |
 | 32. SVG Converter — Details/Hulls/Circles | v3.0 | 3/3 | Complete    | 2026-08-25 |
 | 33. Isometric View | v3.0 | 3/3 | Complete    | 2026-09-07 |
+| 34. GM-Controlled Projection & Iso Rotation | v3.0 | 0/? | Not started | — |
+| 35. Stacked Deck View | v3.0 | 0/? | Not started | — |

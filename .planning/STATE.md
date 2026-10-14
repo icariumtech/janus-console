@@ -53,6 +53,8 @@ See `.planning/milestones/v1.0-ROADMAP.md` for full v1.0 decision log.
 - Phase 28.1 inserted (URGENT) after 28: Close gap: D-10 — data-changed SSE consumer + Phase 28 UAT + VERIFICATION.md for phases 25/27/28
 - Phase 29 added: Interactive deckplan map editor with live preview, YAML sync, and POI placement
 - Phase 30 added + executed (2026-06-06, out of order before 29): AI map editing — element resolver + find_map_element/edit_map_element MCP tools
+- Phase 34 added (2026-10-14): GM-Controlled Projection and Iso Rotation — GM-broadcast top-down/iso mode, 90° iso rotation
+- Phase 35 added (2026-10-14): Stacked Deck View with Animated Transitions — semi-transparent stacked decks in iso, GSAP deck-switch animation
 
 ## Deferred Items
 
