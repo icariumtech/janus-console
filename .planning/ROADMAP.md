@@ -138,8 +138,9 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 - **Requirements**: TBD
 - **Success Criteria** (what must be TRUE):
   1. The player terminal no longer has a projection toggle; it renders whatever projection the GM console has selected, updating live
-  2. The GM can rotate the iso view left/right in 90° steps (iso rotation 45 → 135 → 225 → 315), e.g. bringing the bridge to the lower-left corner, and players follow
+  2. The GM can rotate the view left/right in 90° steps (offset on top of the deck's authored `rotation`, in both top-down and iso), e.g. bringing the bridge to the lower-left corner, and players follow
   3. At every rotation, rooms, doors, POIs, tokens, details and the background grid render correctly, and clicks/drags hit the correct grid cell
+  4. A `deckplan.yaml` can author its default view (projection + rotation); loading a location applies it, and the broadcast view persists across reloads
 - **Plans:** 0 plans
   - [ ] TBD (run /gsd-plan-phase 34 to break down)
 - **UI hint**: yes
