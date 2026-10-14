@@ -5,16 +5,16 @@ milestone_name: Better Deckplans
 current_phase: 34
 current_phase_name: GM-Controlled Projection and Iso Rotation
 status: executing
-stopped_at: Completed 34-03-PLAN.md
-last_updated: "2026-10-14T20:45:25.425Z"
+stopped_at: Completed 34-04-PLAN.md
+last_updated: "2026-10-14T20:50:00.210Z"
 last_activity: 2026-10-14
 last_activity_desc: Phase 34 execution started
-state_head: 0c4d9300a279ed36cdf357ab0513e09fd837034b
+state_head: ab345274ce177deb057f317a34d5966939bab4c1
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 21
-  completed_plans: 19
+  completed_plans: 20
   percent: 71
 ---
 
@@ -85,8 +85,8 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 **Resume file:** None
 
-Last session: 2026-10-14T20:45:25.271Z
-Stopped at: Completed 34-03-PLAN.md
+Last session: 2026-10-14T20:50:00.048Z
+Stopped at: Completed 34-04-PLAN.md
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
@@ -112,6 +112,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 | Phase 33 P01 | ~15min | 2 tasks | 7 files |
 | Phase 34 P02 | 15 min | 3 tasks | 14 files |
 | Phase 34 P03 | 6 min | 2 tasks | 6 files |
+| Phase 34 P04 | 8 min | 2 tasks | 8 files |
 
 ## Operator Next Steps
 
@@ -131,6 +132,8 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 - [Phase 34]: 34-02: authored default view applies only when encounter_view_location_slug differs from the requested slug (BRIDGE/STANDBY clear location_slug, so it cannot detect a return)
 - [Phase 34]: 34-03: authored deck rotation folded into iso azimuth (45 + offset + authored); screenRotationFor('iso') is 0; top-down keeps authored rotation as outer screen rotate
 - [Phase 34]: 34-03: offset-only changes fade, projection/location changes (alone or with offset) cut; planTransition returns restore (fadeIn only, no snap/reset) when displayed orientation already equals the latest request
+- [Phase 34]: 34-04: mapRotation now holds the residual screen rotation (screenRotationFor), keeping rotViewBox math and inverse-rotate call sites unchanged
+- [Phase 34]: 34-04: renderer local mode is structurally server-free (private useState, explicit branch, no service import); GM EncounterView passes broadcast mode with onRotate only until 34-05
 
 ### Blockers
 
