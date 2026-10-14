@@ -72,6 +72,24 @@ top-down ↔ iso toggle; any new height/extrusion rendering.
   fit** (same as RESET VIEW) — on players **and** on the GM map (one rule everywhere).
 - **D-14:** **No extra on-screen cue** (no JANUS text flash); the fade / cut is the cue.
 
+### Post-research decisions (2026-10-14, resolving 34-RESEARCH.md open questions)
+- **D-15:** **Fold the deck's authored YAML `rotation` into the projection as a
+  grid-space turn under iso** (same mechanism as the GM offset), so decks with an
+  authored rotation (e.g. Somnus `rotation: 90`) render with true 30° iso angles — rooms
+  are wide, flat diamonds like every other ship. This **changes Phase 33's shipped iso
+  output for authored-rotation decks** (previously a post-projection screen `rotate()`,
+  which stood the floor on its edge) and refines Phase 33 D-06. Top-down rendering is
+  unchanged. Labels/tokens stay upright (Phase 33 D-05).
+- **D-16:** D-11's reset to the authored default fires **only on location change**
+  (new location slug), not on every entry into the ENCOUNTER view.
+- **D-17:** The deckplan editor's private view **opens in top-down, offset 0** (not the
+  map's `default_view`).
+- **D-18:** If a broadcast view change arrives **mid-drag** (token/POI), the **drag is
+  cancelled** with no move applied.
+- **D-19:** YAML key for the authored default is `default_view: { projection,
+  rotation_offset }` — `rotation_offset`, not `rotation`, to avoid colliding with the
+  existing absolute per-deck `rotation`.
+
 ### Claude's Discretion
 - Exact YAML field name/shape for the authored default view (e.g. `default_view:
   { projection: iso, rotation: 90 }`) — keep it at deckplan/location level, not per-deck.
