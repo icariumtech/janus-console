@@ -55,6 +55,25 @@ Filled in by the planner/executor against task IDs. Requirement → test map (fr
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
+### Task → automated command map (filled by planner)
+
+Wave 0 test files are created INSIDE the owning task's RED step (tdd="true" / tracer starts red), so no separate Wave 0 plan exists; every task below carries an `<automated>` command.
+
+| Task | Plan / wave | Requirement | Automated command |
+|------|-------------|-------------|-------------------|
+| 34-01-T1 (tracer, server leg + projection seam) | 01 / W1 | ISO-04, ISO-05 | `.venv/bin/python manage.py test core.tests.test_encounter_view_state`; `pnpm exec vitest run .../geometry/__tests__/gridProjection.test.ts`; `pnpm run typecheck` |
+| 34-01-T2 (GM client leg) | 01 / W1 | ISO-04, ISO-05 | `pnpm run typecheck`; `pnpm run test` |
+| 34-02-T1 (rotate hardening + set-projection + core/encounter_view.py) | 02 / W2 | ISO-04, ISO-05 | `.venv/bin/python manage.py test core.tests.test_encounter_state core.tests.test_encounter_view_state` |
+| 34-02-T2 (default_view loader + schema docs) | 02 / W2 | ISO-06 | `.venv/bin/python manage.py test core.tests.test_data_loader core.tests.test_deckplan_passthrough` |
+| 34-02-T3 (switch-view reset, store/payload defaults) | 02 / W2 | ISO-06 | six-module backend suite (Full suite command, backend part) |
+| 34-03-T1 (viewOrientation module, hit-test matrix) | 03 / W2 | ISO-05, ISO-07 | `pnpm exec vitest run` on viewOrientation, gridProjection, svgCoordinates test files; `pnpm run typecheck` |
+| 34-03-T2 (transition planner, drag-cancel, popover-close predicates) | 03 / W2 | ISO-07 | `pnpm exec vitest run src/components/domain/encounter/__tests__/viewTransition.test.ts`; `pnpm run typecheck` |
+| 34-04-T1 (renderer modes, cluster, tracer-prop migration) | 04 / W3 | ISO-04, ISO-05, ISO-07 | `pnpm run typecheck`; `pnpm run test` |
+| 34-04-T2 (transition hook executing the tested plan, drag cancel) | 04 / W3 | ISO-07 | `pnpm exec vitest run src/components/domain/encounter/__tests__/viewTransition.test.ts` (the decisions the hook and layers execute); `pnpm run typecheck`; `pnpm run test` (DOM/GSAP timing itself is covered by the 34-05 human checks) |
+| 34-05-T1 | 05 / W4 | ISO-04 | `pnpm run typecheck` |
+| 34-05-T2 | 05 / W4 | ISO-04, ISO-05 | `pnpm run typecheck`; `pnpm run test` |
+| 34-05-T3 | 05 / W4 | ISO-04..07 | Full suite command + six `<human-check>` blocks (Manual-Only table below) |
+
 ---
 
 ## Wave 0 Requirements

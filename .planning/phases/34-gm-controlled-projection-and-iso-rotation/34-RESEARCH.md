@@ -605,27 +605,27 @@ export function classifyChange(prev: { projection: ViewProjection; rotationOffse
 | A5 | Somnus-style authored rotation under iso is acceptable as screen-space (P10) | Rotation Math | Medium — see Open Question 1 |
 | A6 | Phase 33 Pitfall 4 (`RoomsLayer` label_offset raw `unitSize`) is already fixed | Rotation Math | Low — not re-read this session; grep before planning. Phase 33 VERIFICATION reports PASSED |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Authored rotation under iso: keep screen-space or re-express as grid azimuth?**
+1. **Authored rotation under iso: keep screen-space or re-express as grid azimuth?** — *RESOLVED → D-15: fold into grid (re-express)*
    - What we know: Phase 33 D-06 locked the authored rotate as a post-projection SVG `rotate()`. Under iso that yields 120°/240° axes for a 90° deck today. D-07 requires offset 0 to equal today's rendering. The GM offset is grid-space.
    - What's unclear: whether the GM expects a 90° step to look identical to a 90° authored rotation.
    - Recommendation: keep the authored rotate as is (no change to shipped Phase 33 output). Document the asymmetry in the schema and the phase summary. If the user prefers uniform semantics, the change is to fold `mapRotation` into the iso azimuth as well, which changes Somnus's iso rendering — that needs an explicit decision.
 
-2. **D-11 reset predicate: slug change only, or any entry into ENCOUNTER?**
+2. **D-11 reset predicate: slug change only, or any entry into ENCOUNTER?** — *RESOLVED → D-16: location change only*
    - What we know: `is_new_encounter_location` also fires on view-type changes. Room visibility resets on that predicate today.
    - Recommendation: reset the view on slug change only, so returning from the bridge keeps the GM's rotation. Leave room visibility unchanged.
 
-3. **Location-level key name: `rotation_offset` or `rotation`?**
+3. **Location-level key name: `rotation_offset` or `rotation`?** — *RESOLVED → D-19: `rotation_offset`*
    - Recommendation: `rotation_offset` (avoids the deck-`rotation` collision, P4). CONTEXT lists `rotation` as an example only, under Claude's discretion.
 
-4. **Editor initial local view: top-down/0, or the deckplan's `default_view`?**
+4. **Editor initial local view: top-down/0, or the deckplan's `default_view`?** — *RESOLVED → D-17: top-down/0*
    - What we know: the editor parses deckplan YAML, and `default_view` is top-level.
    - Recommendation: start at top-down/0 (simpler; matches "private local state"). Starting from `default_view` is nicer for authoring and requires passing the top-level key into `DeckplanPreviewPane`.
 
-5. **Uncontrolled state location (MapPreview vs. renderer)** — see Renderer Modes. Recommendation: `MapPreview`-owned.
+5. **Uncontrolled state location (MapPreview vs. renderer)** — *RESOLVED → D-04: renderer `local` viewControl mode (plans 34-04/34-05)* — see Renderer Modes. Recommendation: `MapPreview`-owned.
 
-6. **Drag during broadcast change (P13)** — apply on pointer-up, or cancel the drag?
+6. **Drag during broadcast change (P13)** — *RESOLVED → D-18: cancel the drag* — apply on pointer-up, or cancel the drag?
 
 ## Environment Availability
 
