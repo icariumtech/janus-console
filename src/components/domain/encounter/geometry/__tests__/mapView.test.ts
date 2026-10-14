@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isoProjection, topDownProjection } from '../gridProjection';
 import { makeMapView } from '../mapView';
-import type { GridRect, GridRoom } from '../../../../../types/encounterMap';
+import type { Door, GridRect, GridRoom } from '../../../../../types/encounterMap';
 
 const ISO_EPS = 1e-9;
 
@@ -105,5 +105,72 @@ describe('MapView.circleTransform', () => {
     const qy = t.cy + t.m22;
     expect(Math.abs(qx - expectedY.x)).toBeLessThan(1e-9);
     expect(Math.abs(qy - expectedY.y)).toBeLessThan(1e-9);
+  });
+});
+
+describe('MapView.doorTransform', () => {
+  const makeDoor = (overrides: Partial<Door> = {}): Door => ({
+    id: 'door-1',
+    x: 3,
+    y: 2,
+    angle: 0,
+    width: 1,
+    roomA: 'a',
+    roomB: 'b',
+    type: 'standard',
+    status: 'CLOSED',
+    ...overrides,
+  });
+
+  it('reduces to identity (pure translate) for topDownProjection at angle 0', () => {
+    const view = makeMapView(topDownProjection({ unitSize: 40 }));
+    const t = view.doorTransform(makeDoor({ angle: 0 }));
+    expect(t).toEqual({ cx: 120, cy: 80, m11: 1, m21: 0, m12: 0, m22: 1 });
+  });
+
+  it('reduces to a pure rotation for topDownProjection at angle 90', () => {
+    const view = makeMapView(topDownProjection({ unitSize: 40 }));
+    const t = view.doorTransform(makeDoor({ angle: 90 }));
+    expect(t.cx).toBeCloseTo(120, 9);
+    expect(t.cy).toBeCloseTo(80, 9);
+    expect(t.m11).toBeCloseTo(0, 9);
+    expect(t.m21).toBeCloseTo(1, 9);
+    expect(t.m12).toBeCloseTo(-1, 9);
+    expect(t.m22).toBeCloseTo(0, 9);
+  });
+
+  it('basis vectors carry the real projected (foreshortened) magnitude under isoProjection, NOT normalized to a fixed size', () => {
+    // tilt: 30 means a grid-unit vector foreshortens to less than unitSize
+    // on screen — a door must shrink along with the walls/rooms around it,
+    // not stay a constant pixel size (CR: doors looked oversized under iso
+    // when this was normalized to unit vectors).
+    const proj = isoProjection({ unitSize: 40, tilt: 30, rotation: 45 });
+    const view = makeMapView(proj);
+    const t = view.doorTransform(makeDoor({ angle: 0 }));
+    expect(Math.hypot(t.m11, t.m21)).not.toBeCloseTo(1, 2);
+    expect(Math.hypot(t.m11, t.m21)).toBeLessThan(1);
+  });
+
+  it('the two basis vectors are NOT perpendicular under isoProjection (true parallelogram, not a rotated rect)', () => {
+    const proj = isoProjection({ unitSize: 40, tilt: 30, rotation: 45 });
+    const view = makeMapView(proj);
+    const t = view.doorTransform(makeDoor({ angle: 0 }));
+    const dot = t.m11 * t.m12 + t.m21 * t.m22;
+    expect(Math.abs(dot)).toBeGreaterThan(0.001);
+  });
+
+  it('along-axis vector matches the projected wall-angle direction, scaled by DOOR_REFERENCE_UNIT (40), for isoProjection', () => {
+    const proj = isoProjection({ unitSize: 40, tilt: 30, rotation: 45 });
+    const view = makeMapView(proj);
+    const door = makeDoor({ x: 1, y: 1, angle: 30 });
+    const t = view.doorTransform(door);
+
+    const rad = (30 * Math.PI) / 180;
+    const center = view.project({ gx: door.x, gy: door.y });
+    const alongPt = view.project({ gx: door.x + Math.cos(rad), gy: door.y + Math.sin(rad) });
+    const rawAlong = { x: alongPt.x - center.x, y: alongPt.y - center.y };
+
+    expect(t.m11).toBeCloseTo(rawAlong.x / 40, 9);
+    expect(t.m21).toBeCloseTo(rawAlong.y / 40, 9);
   });
 });

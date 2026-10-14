@@ -67,9 +67,6 @@ export function DoorsLayer({
             }
           }
         }
-        const svgPos = view.doorPosition(door);
-        const orientation: 'horizontal' | 'vertical' =
-          Math.abs((door.angle % 180 + 180) % 180 - 90) < 45 ? 'vertical' : 'horizontal';
         const styleEntry = CONNECTION_STYLES[door.type] || CONNECTION_STYLES.standard;
         const contextMenuHandler = onDoorContextMenu
           ? (e: React.MouseEvent) => onDoorContextMenu(e, door)
@@ -80,13 +77,10 @@ export function DoorsLayer({
         return (
           <DoorSymbol
             key={`door-${door.id}`}
-            x={svgPos.x}
-            y={svgPos.y}
             doorType={door.type}
             doorStatus={getEffectiveDoorStatus(door)}
             style={styleEntry}
-            orientation={orientation}
-            angle={view.doorBounds(door).angle}
+            transform={view.doorTransform(door)}
             onContextMenuHandler={contextMenuHandler}
             widthCells={door.width ?? 1}
             onClickHandler={clickHandler}

@@ -185,7 +185,14 @@ export function PoiLayer({
       COLORS.teal;
 
     const opacity = isGM && !isRoomVisible(poi.room) ? 0.3 : 1.0;
-    const iconSize = 20;
+    // Scaled by unitSize (like Token's tokenRadius) rather than a fixed
+    // pixel constant — under isoProjection a grid cell foreshortens to less
+    // than unitSize on screen, so a fixed-pixel icon would look oversized
+    // relative to the room/corridor around it (same class of bug the door
+    // glyph had before its unitSize-based fix). 0.5 matches the legacy
+    // fixed 20px at the default unitSize of 40, so topDownProjection with
+    // the default unitSize is unaffected.
+    const iconSize = view.unitSize * 0.5;
     const half = iconSize / 2;
 
     const handlePoiHover = (e: React.MouseEvent) => {

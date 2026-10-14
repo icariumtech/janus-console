@@ -3,91 +3,90 @@
  * overlays, type indicators). Extracted from EncounterMapRenderer's
  * renderDoorSymbol() — a pure function of its props, no closures over
  * component state.
+ *
+ * All geometry is drawn in a local coordinate frame centered at (0,0) where
+ * local +x is always the door's along-wall axis (the "long" dimension) and
+ * local +y is always the across-wall axis (the "short" dimension). The
+ * enclosing `<g>` applies `transform.matrix` (see `MapView.doorTransform`)
+ * to place and orient that local frame in SVG space — under
+ * `topDownProjection` this is a pure rotation, under `isoProjection` the two
+ * local axes are no longer perpendicular once projected, producing a true
+ * wall-aligned parallelogram instead of a rotated rectangle.
  */
 import { COLORS } from './mapColors';
+import { DoorTransform } from '../geometry/mapView';
 
 interface DoorSymbolProps {
-  x: number;
-  y: number;
   doorType: string;
   doorStatus: string | undefined;
   style: { stroke: string; doorFill: string };
-  orientation: 'horizontal' | 'vertical';
-  /**
-   * SVG-space angle (degrees) of the door's wall-slot direction, already
-   * projection-aware (see MapView.doorBounds / projectedAngle). Under
-   * topDownProjection this always equals 0 (horizontal) or 90 (vertical),
-   * matching `orientation`, so the extra rotation applied below is a no-op.
-   * Under isoProjection it generally differs — the glyph is drawn in its
-   * axis-aligned local shape (per `orientation`) and then rotated by the
-   * delta, rather than reworking every x/y branch below for an arbitrary
-   * angle.
-   */
-  angle: number;
+  transform: DoorTransform;
   onContextMenuHandler?: (e: React.MouseEvent) => void;
   widthCells?: number;
   onClickHandler?: (e: React.MouseEvent) => void;
 }
 
 export function DoorSymbol({
-  x,
-  y,
   doorType,
   doorStatus,
   style,
-  orientation,
-  angle,
+  transform,
   onContextMenuHandler,
   widthCells = 1,
   onClickHandler,
 }: DoorSymbolProps) {
-  const doorWidth = orientation === 'horizontal' ? 20 * widthCells : 12;
-  const doorHeight = orientation === 'horizontal' ? 12 : 20 * widthCells;
+  // Local-space dimensions, tuned against DOOR_REFERENCE_UNIT (see
+  // MapView.doorTransform) — `transform` scales/foreshortens these to real
+  // screen pixels, so they are NOT raw SVG pixels themselves.
+  const doorLength = 20 * widthCells; // along-wall (local x)
+  // Across-wall thickness is intentionally smaller than a naive "0.3 cell"
+  // ratio: under isoProjection the along/across axes project to well under
+  // 90° apart (e.g. 120° at the default tilt/rotation), so a thin
+  // rectangle's axis-aligned bounding box balloons along the diagonal even
+  // though its true projected area shrinks correctly. Trimming this keeps
+  // the glyph visually proportionate under iso without touching the
+  // along-wall length (which must stay flush with the door's actual width).
+  const doorThickness = 8;            // across-wall (local y)
   const isOpen = doorStatus === 'OPEN';
   const isDamaged = doorStatus === 'DAMAGED';
   const isLocked = doorStatus === 'LOCKED';
   const isSealed = doorStatus === 'SEALED';
 
   const statusClass = doorStatus ? `encounter-map__door--${doorStatus.toLowerCase()}` : '';
-  const baseAngle = orientation === 'horizontal' ? 0 : 90;
-  const rotationDelta = angle - baseAngle;
 
-  const splitOffset = orientation === 'horizontal' ? doorWidth * 0.55 : doorHeight * 0.55;
-
-  const openTransformLeft = orientation === 'horizontal'
-    ? `translateX(-${splitOffset}px)`
-    : `translateY(-${splitOffset}px)`;
-  const openTransformRight = orientation === 'horizontal'
-    ? `translateX(${splitOffset}px)`
-    : `translateY(${splitOffset}px)`;
+  const splitOffset = doorLength * 0.55;
+  const openTransformLeft = `translateX(-${splitOffset}px)`;
+  const openTransformRight = `translateX(${splitOffset}px)`;
 
   const doorFill = isDamaged ? COLORS.hazard : style.doorFill;
   const doorStroke = isLocked ? COLORS.amber : isSealed ? COLORS.hazard : COLORS.borderMain;
   const doorStrokeWidth = isLocked ? 2 : isSealed ? 2.5 : 1.5;
+
+  const t = transform;
 
   return (
     <g
       className={`encounter-map__door encounter-map__door--${doorType} ${statusClass}`}
       onContextMenu={onContextMenuHandler}
       onClick={onClickHandler}
-      transform={rotationDelta !== 0 ? `rotate(${rotationDelta}, ${x}, ${y})` : undefined}
+      transform={`matrix(${t.m11},${t.m21},${t.m12},${t.m22},${t.cx},${t.cy})`}
       style={{ cursor: onClickHandler ? 'pointer' : onContextMenuHandler ? 'context-menu' : 'default' }}
     >
       {/* Opaque background to cover wall lines behind door */}
       <rect
-        x={x - doorWidth / 2 + 1}
-        y={y - doorHeight / 2 + 1}
-        width={doorWidth - 2}
-        height={doorHeight - 2}
+        x={-doorLength / 2 + 1}
+        y={-doorThickness / 2 + 1}
+        width={doorLength - 2}
+        height={doorThickness - 2}
         fill={COLORS.bgPrimary}
         stroke="none"
       />
       {/* Door frame/gap indicator - always present, visible when open */}
       <rect
-        x={x - doorWidth / 2}
-        y={y - doorHeight / 2}
-        width={doorWidth}
-        height={doorHeight}
+        x={-doorLength / 2}
+        y={-doorThickness / 2}
+        width={doorLength}
+        height={doorThickness}
         fill={COLORS.bgPrimary}
         stroke={COLORS.borderSubtle}
         strokeWidth={1}
@@ -98,10 +97,10 @@ export function DoorSymbol({
 
       {/* First door half */}
       <rect
-        x={x - doorWidth / 2}
-        y={y - doorHeight / 2}
-        width={orientation === 'horizontal' ? doorWidth / 2 : doorWidth}
-        height={orientation === 'horizontal' ? doorHeight : doorHeight / 2}
+        x={-doorLength / 2}
+        y={-doorThickness / 2}
+        width={doorLength / 2}
+        height={doorThickness}
         fill={doorFill}
         stroke={doorStroke}
         strokeWidth={doorStrokeWidth}
@@ -113,10 +112,10 @@ export function DoorSymbol({
 
       {/* Second door half */}
       <rect
-        x={orientation === 'horizontal' ? x : x - doorWidth / 2}
-        y={orientation === 'horizontal' ? y - doorHeight / 2 : y}
-        width={orientation === 'horizontal' ? doorWidth / 2 : doorWidth}
-        height={orientation === 'horizontal' ? doorHeight : doorHeight / 2}
+        x={0}
+        y={-doorThickness / 2}
+        width={doorLength / 2}
+        height={doorThickness}
         fill={doorFill}
         stroke={doorStroke}
         strokeWidth={doorStrokeWidth}
@@ -130,32 +129,24 @@ export function DoorSymbol({
       {isDamaged && !isOpen && (
         <g className="encounter-map__door-damage">
           <path
-            d={orientation === 'horizontal'
-              ? `M${x - doorWidth / 2 + 2},${y - doorHeight / 2 + 2}
-                 L${x - 2},${y}
-                 L${x + doorWidth / 2 - 2},${y + doorHeight / 2 - 2}`
-              : `M${x - doorWidth / 2 + 2},${y - doorHeight / 2 + 2}
-                 L${x},${y - 2}
-                 L${x + doorWidth / 2 - 2},${y + doorHeight / 2 - 2}`
-            }
+            d={`M${-doorLength / 2 + 2},${-doorThickness / 2 + 2}
+                 L${-2},${0}
+                 L${doorLength / 2 - 2},${doorThickness / 2 - 2}`}
             fill="none"
             stroke={COLORS.bgPrimary}
             strokeWidth={2}
             strokeLinecap="round"
           />
           <path
-            d={orientation === 'horizontal'
-              ? `M${x + 3},${y - doorHeight / 2 + 1} L${x + 1},${y - 2}`
-              : `M${x + doorWidth / 2 - 1},${y - 3} L${x + 2},${y - 1}`
-            }
+            d={`M${3},${-doorThickness / 2 + 1} L${1},${-2}`}
             fill="none"
             stroke={COLORS.bgPrimary}
             strokeWidth={1.5}
             strokeLinecap="round"
           />
           <circle
-            cx={x - 2}
-            cy={y}
+            cx={-2}
+            cy={0}
             r={1.5}
             fill={COLORS.amber}
             className="encounter-map__door-spark"
@@ -167,24 +158,24 @@ export function DoorSymbol({
       {isLocked && !isOpen && (
         <g className="encounter-map__door-lock">
           <rect
-            x={orientation === 'horizontal' ? x - 4 : x - 5}
-            y={y - 5}
-            width={orientation === 'horizontal' ? 8 : 10}
-            height={orientation === 'horizontal' ? 10 : 12}
+            x={-4}
+            y={-5}
+            width={8}
+            height={10}
             fill={doorFill}
             stroke="none"
           />
           <circle
-            cx={x}
-            cy={y - 2}
+            cx={0}
+            cy={-2}
             r={2.5}
             fill={COLORS.bgPrimary}
             stroke={COLORS.amber}
             strokeWidth={1}
           />
           <rect
-            x={x - 1.5}
-            y={y}
+            x={-1.5}
+            y={0}
             width={3}
             height={4}
             fill={COLORS.bgPrimary}
@@ -198,19 +189,19 @@ export function DoorSymbol({
       {isSealed && !isOpen && (
         <g className="encounter-map__door-seal">
           <rect
-            x={x - doorWidth / 2 + 3}
-            y={y - doorHeight / 2 + 3}
-            width={doorWidth - 6}
-            height={doorHeight - 6}
+            x={-doorLength / 2 + 3}
+            y={-doorThickness / 2 + 3}
+            width={doorLength - 6}
+            height={doorThickness - 6}
             fill="none"
             stroke={COLORS.hazard}
             strokeWidth={1}
           />
           <line
-            x1={x - doorWidth / 2 + 2}
-            y1={y}
-            x2={x + doorWidth / 2 - 2}
-            y2={y}
+            x1={-doorLength / 2 + 2}
+            y1={0}
+            x2={doorLength / 2 - 2}
+            y2={0}
             stroke={COLORS.bgPrimary}
             strokeWidth={2}
           />
@@ -223,10 +214,10 @@ export function DoorSymbol({
           {/* Airlock double rectangle */}
           {doorType === 'airlock' && !isLocked && !isSealed && (
             <rect
-              x={x - doorWidth / 2 + 2}
-              y={y - doorHeight / 2 + 2}
-              width={doorWidth - 4}
-              height={doorHeight - 4}
+              x={-doorLength / 2 + 2}
+              y={-doorThickness / 2 + 2}
+              width={doorLength - 4}
+              height={doorThickness - 4}
               fill="none"
               stroke={COLORS.bgPrimary}
               strokeWidth={1}
@@ -236,18 +227,18 @@ export function DoorSymbol({
           {doorType === 'blast_door' && !isLocked && !isSealed && !isDamaged && (
             <>
               <line
-                x1={x - doorWidth / 2 + 2}
-                y1={y - doorHeight / 2 + 2}
-                x2={x + doorWidth / 2 - 2}
-                y2={y + doorHeight / 2 - 2}
+                x1={-doorLength / 2 + 2}
+                y1={-doorThickness / 2 + 2}
+                x2={doorLength / 2 - 2}
+                y2={doorThickness / 2 - 2}
                 stroke={COLORS.bgPrimary}
                 strokeWidth={1}
               />
               <line
-                x1={x + doorWidth / 2 - 2}
-                y1={y - doorHeight / 2 + 2}
-                x2={x - doorWidth / 2 + 2}
-                y2={y + doorHeight / 2 - 2}
+                x1={doorLength / 2 - 2}
+                y1={-doorThickness / 2 + 2}
+                x2={-doorLength / 2 + 2}
+                y2={doorThickness / 2 - 2}
                 stroke={COLORS.bgPrimary}
                 strokeWidth={1}
               />

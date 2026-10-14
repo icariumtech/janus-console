@@ -32,26 +32,22 @@ import {
   roomWallEdges,
 } from './roomGeometry';
 
+/**
+ * The `unitSize` `DoorSymbol`'s local pixel constants (20, 12, 2, ...) were
+ * originally tuned against, back when doors were drawn directly in SVG
+ * pixel space at the default grid `unitSize` of 40. `doorTransform` divides
+ * by this so those constants keep producing the same on-screen size under
+ * `topDownProjection({ unitSize: 40 })` while still scaling/foreshortening
+ * correctly for any other `unitSize` or `isoProjection`.
+ */
+const DOOR_REFERENCE_UNIT = 40;
+
 // -------------------------------------------------------------------
 // Public types
 // -------------------------------------------------------------------
 
 /** A line segment in SVG-pixel coordinates. */
 export interface SvgEdge { from: SvgPoint; to: SvgPoint; }
-
-/**
- * Bounds of a door slot: SVG center, width and height in pixels, and
- * the slot rotation angle (degrees, matching canonical Door.angle).
- *
- * Width and height correspond to the door slot's "long" and "short"
- * dimensions in SVG pixels, scaled by the projection's `unitSize`.
- */
-export interface DoorBounds {
-  center: SvgPoint;
-  width: number;
-  height: number;
-  angle: number;
-}
 
 /** SVG-space bounding box (origin + size in pixels). */
 export interface SvgBBox {
@@ -78,6 +74,45 @@ export interface CircleTransform {
 }
 
 /**
+ * Affine transform for rendering a door glyph as a wall-aligned
+ * parallelogram. Field names match the SVG `matrix(a,b,c,d,e,f)` parameter
+ * ORDER exactly (m11=a, m21=b, m12=c, m22=d), same convention as
+ * `CircleTransform` — call sites emit
+ * `matrix(${t.m11},${t.m21},${t.m12},${t.m22},${t.cx},${t.cy})` verbatim.
+ *
+ * Like `CircleTransform`, the basis vectors (m11,m21) and (m12,m22) carry
+ * the projection's real magnitude (scaled by `DOOR_REFERENCE_UNIT`, see
+ * below) rather than being normalized to a fixed on-screen size — a door
+ * foreshortens along with the walls/rooms around it instead of staying a
+ * constant pixel size regardless of projection (an earlier version of this
+ * transform normalized to unit vectors, which kept doors visually
+ * oversized relative to the corridor under isoProjection — see commit
+ * fixing door glyph over-sizing under iso). Under `topDownProjection` with
+ * the default `unitSize` this reduces to a pure rotation-by-door.angle (or
+ * identity for angle 0), byte-identical to the old `x,y` + `rotate()`
+ * approach. Under `isoProjection` the two axes are no longer perpendicular
+ * (or equal in projected length) after projection, so applying this matrix
+ * to a local axis-aligned door shape produces a true, correctly-foreshortened
+ * parallelogram — the door equivalent of how `circleTransform` turns a
+ * circle into a true ellipse.
+ *
+ * Apply as `matrix(...)` on a `<g>` wrapping door geometry drawn in local
+ * space where local +x is the along-wall axis and local +y is the
+ * across-wall axis, centered at local (0,0), using the SAME fixed pixel
+ * constants (20, 12, ...) `DoorSymbol` used before this transform existed —
+ * those constants were tuned against `DOOR_REFERENCE_UNIT`, not the live
+ * `unitSize`.
+ */
+export interface DoorTransform {
+  cx: number;
+  cy: number;
+  m11: number;
+  m21: number;
+  m12: number;
+  m22: number;
+}
+
+/**
  * The renderer-facing facade. Closure-captured projection means there is
  * exactly one source of pixel-scale truth per render pass.
  */
@@ -85,8 +120,11 @@ export interface MapView {
   /** SVG-space center of a canonical door. */
   doorPosition(door: Door): SvgPoint;
 
-  /** SVG-space bounds + angle of a canonical door slot. */
-  doorBounds(door: Door): DoorBounds;
+  /**
+   * Affine transform for rendering a door's glyph, wall-aligned and
+   * projection-correct. See `DoorTransform` for the coordinate convention.
+   */
+  doorTransform(door: Door): DoorTransform;
 
   /**
    * SVG `<polygon points>` string for a rect (no chamfer).
@@ -157,24 +195,7 @@ export function makeMapView(projection: Projection): MapView {
   // Projected length of the unit grid vector along x.
   const origin = projection.project({ gx: 0, gy: 0 });
   const unitX = projection.project({ gx: 1, gy: 0 });
-  const unitY = projection.project({ gx: 0, gy: 1 });
   const unitSize = Math.hypot(unitX.x - origin.x, unitX.y - origin.y);
-
-  // Map a grid-space direction angle (degrees, standard math convention:
-  // 0 = +gx axis, 90 = +gy axis) to the SVG-space angle of that same
-  // direction after projection. Identity under topDownProjection (grid axes
-  // are already SVG-aligned); under isoProjection the grid axes themselves
-  // are skewed/rotated in SVG space, so a raw passthrough of the grid angle
-  // (e.g. a door's wall-slot angle) no longer matches the visual wall
-  // orientation — this basis-vector transform is what keeps it aligned.
-  const projectedAngle = (gridAngleDeg: number): number => {
-    const rad = (gridAngleDeg * Math.PI) / 180;
-    const dx = Math.cos(rad);
-    const dy = Math.sin(rad);
-    const svgX = (unitX.x - origin.x) * dx + (unitY.x - origin.x) * dy;
-    const svgY = (unitX.y - origin.y) * dx + (unitY.y - origin.y) * dy;
-    return (Math.atan2(svgY, svgX) * 180) / Math.PI;
-  };
 
   const polygonToPointsString = (poly: Polygon): string => {
     return poly
@@ -191,19 +212,30 @@ export function makeMapView(projection: Projection): MapView {
       return projection.project({ gx: gp.gx, gy: gp.gy });
     },
 
-    doorBounds(door: Door): DoorBounds {
-      const center = view.doorPosition(door);
-      // Slot width along the wall = door.width grid cells × unitSize.
-      // Slot height across the wall = a small fraction of unitSize so the
-      // slot is a thin rectangle. Renderer used 20×12 px at unitSize=40,
-      // giving a 0.5 ratio for slot length and 0.3 for slot thickness.
-      const slotLength = door.width * unitSize * 0.5;
-      const slotThickness = unitSize * 0.3;
+    doorTransform(door: Door): DoorTransform {
+      const gp = doorGridPosition(door);
+      const rad = (door.angle * Math.PI) / 180;
+      // Along-wall and across-wall unit vectors in grid space.
+      const alongGrid = { gx: Math.cos(rad), gy: Math.sin(rad) };
+      const acrossGrid = { gx: -Math.sin(rad), gy: Math.cos(rad) };
+
+      const center = projection.project({ gx: gp.gx, gy: gp.gy });
+      const alongPt = projection.project({ gx: gp.gx + alongGrid.gx, gy: gp.gy + alongGrid.gy });
+      const acrossPt = projection.project({ gx: gp.gx + acrossGrid.gx, gy: gp.gy + acrossGrid.gy });
+
+      // Real projected magnitude (÷ DOOR_REFERENCE_UNIT), NOT normalized to
+      // a unit vector — see DoorTransform doc comment. A normalized basis
+      // would keep the glyph a constant pixel size regardless of
+      // projection, which makes it visually oversized under isoProjection
+      // (where a grid cell foreshortens to less than `unitSize` on screen)
+      // relative to the walls/rooms around it, which DO foreshorten.
       return {
-        center,
-        width: slotLength,
-        height: slotThickness,
-        angle: projectedAngle(door.angle),
+        cx: center.x,
+        cy: center.y,
+        m11: (alongPt.x - center.x) / DOOR_REFERENCE_UNIT,
+        m21: (alongPt.y - center.y) / DOOR_REFERENCE_UNIT,
+        m12: (acrossPt.x - center.x) / DOOR_REFERENCE_UNIT,
+        m22: (acrossPt.y - center.y) / DOOR_REFERENCE_UNIT,
       };
     },
 

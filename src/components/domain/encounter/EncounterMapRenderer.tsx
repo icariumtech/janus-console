@@ -11,7 +11,7 @@
  * structure, and the handlers those layers need.
  */
 
-import React, { useMemo, useCallback, useRef, useState } from 'react';
+import React, { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { usePanZoom } from '../../../hooks/usePanZoom';
 import { useExclusivePopover } from '../../../hooks/useExclusivePopover';
 import { useTokenPlacement } from '../../../hooks/useTokenPlacement';
@@ -39,7 +39,6 @@ import { RoomContextMenu } from './RoomContextMenu';
 import { DoorStatusPopup } from '../../gm/DoorStatusPopup';
 import { isoProjection, topDownProjection } from './geometry/gridProjection';
 import { makeMapView } from './geometry/mapView';
-import { roomBBoxGrid } from './geometry/roomGeometry';
 import { normalizeDoor, normalizeDoors } from './doors/doorNormalizer';
 import { hullPathD, mergeHulls } from './hull/hullNormalizer';
 import { partitionDetails } from './details/detailNormalizer';
@@ -179,6 +178,20 @@ export function EncounterMapRenderer({
   const svgRef = useRef<SVGSVGElement>(null);
   const { viewState, containerHandlers, resetView: handleResetView } = usePanZoom(containerRef);
 
+  // Tracked reactively (not just read on demand) so the oversized svg CSS
+  // box (sized from GRID_MARGIN_MULTIPLIER × container, see the svg style
+  // below) re-sizes on window/panel resize, not just on pan/zoom.
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => setContainerSize({ width: el.clientWidth, height: el.clientHeight });
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // unit_size — pixels per grid cell (default 40 if YAML omits it)
   const unitSize = mapData.unit_size ?? 40;
 
@@ -240,19 +253,53 @@ export function EncounterMapRenderer({
     };
   }, [view, mapData.rooms, effectiveHull, viewPadding]);
 
+  // Fixed map rotation (YAML-authored, not user-controlled)
+  const mapRotation = mapData.rotation ?? 0;
+  const mapCenterX = originX + svgWidth / 2;
+  const mapCenterY = originY + svgHeight / 2;
+  // For 90/270° rotations the effective bounding box flips W↔H
+  const rotIs90or270 = mapRotation === 90 || mapRotation === 270;
+  const rotViewBoxX = rotIs90or270 ? mapCenterX - svgHeight / 2 : originX;
+  const rotViewBoxY = rotIs90or270 ? mapCenterY - svgWidth / 2 : originY;
+  const rotViewBoxW = rotIs90or270 ? svgHeight : svgWidth;
+  const rotViewBoxH = rotIs90or270 ? svgWidth : svgHeight;
+
+  // Panning/zooming is done by CSS-transforming the whole <svg> element
+  // (see the `transform` style below) — the svg's own rendered box moves
+  // as a rigid unit, so once its edge is dragged into view there is
+  // structurally nothing beyond it (not a matter of what's drawn inside).
+  // The fix is to make BOTH the viewBox and the svg's CSS box
+  // GRID_MARGIN_MULTIPLIER× bigger than the "tight" ship-fitted size,
+  // scaled together (so the ship's default on-screen size is unchanged —
+  // scaling viewBox and box by the same factor leaves the `meet` fit
+  // scale, and thus everything's apparent size, identical) — this simply
+  // gives panning/zooming room to move before an edge can appear.
+  const GRID_MARGIN_MULTIPLIER = 4;
+  const gridViewBoxW = rotViewBoxW * GRID_MARGIN_MULTIPLIER;
+  const gridViewBoxH = rotViewBoxH * GRID_MARGIN_MULTIPLIER;
+  const gridViewBoxX = rotViewBoxX - (gridViewBoxW - rotViewBoxW) / 2;
+  const gridViewBoxY = rotViewBoxY - (gridViewBoxH - rotViewBoxH) / 2;
+
   // Background grid lines — drawn as individually projected line segments
   // (not a flat SVG <pattern> tile) so the grid follows the active
   // projection: axis-aligned under topDownProjection, skewed into
   // parallelograms under isoProjection. A projection is linear, so a
   // straight grid line in grid space is still a straight line once
   // projected — no polyline approximation needed, just project both
-  // endpoints.
+  // endpoints. Coverage spans the full (oversized) grid viewBox rather
+  // than just the ship's own bbox, so panning/zooming within that margin
+  // always shows grid instead of a hard black edge.
   const bgGridLines = useMemo(() => {
-    const grid = roomBBoxGrid(mapData.rooms, effectiveHull ?? undefined, viewPadding);
-    const gx0 = Math.floor(grid.gx);
-    const gy0 = Math.floor(grid.gy);
-    const gx1 = Math.ceil(grid.gx + grid.gw);
-    const gy1 = Math.ceil(grid.gy + grid.gh);
+    const corners = [
+      view.unproject({ x: gridViewBoxX, y: gridViewBoxY }),
+      view.unproject({ x: gridViewBoxX + gridViewBoxW, y: gridViewBoxY }),
+      view.unproject({ x: gridViewBoxX, y: gridViewBoxY + gridViewBoxH }),
+      view.unproject({ x: gridViewBoxX + gridViewBoxW, y: gridViewBoxY + gridViewBoxH }),
+    ];
+    const gx0 = Math.floor(Math.min(...corners.map((c) => c.gx)));
+    const gy0 = Math.floor(Math.min(...corners.map((c) => c.gy)));
+    const gx1 = Math.ceil(Math.max(...corners.map((c) => c.gx)));
+    const gy1 = Math.ceil(Math.max(...corners.map((c) => c.gy)));
     const lines: { x1: number; y1: number; x2: number; y2: number }[] = [];
     for (let gx = gx0; gx <= gx1; gx++) {
       const p1 = view.project({ gx, gy: gy0 });
@@ -265,18 +312,7 @@ export function EncounterMapRenderer({
       lines.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
     }
     return lines;
-  }, [view, mapData.rooms, effectiveHull, viewPadding]);
-
-  // Fixed map rotation (YAML-authored, not user-controlled)
-  const mapRotation = mapData.rotation ?? 0;
-  const mapCenterX = originX + svgWidth / 2;
-  const mapCenterY = originY + svgHeight / 2;
-  // For 90/270° rotations the effective bounding box flips W↔H
-  const rotIs90or270 = mapRotation === 90 || mapRotation === 270;
-  const rotViewBoxX = rotIs90or270 ? mapCenterX - svgHeight / 2 : originX;
-  const rotViewBoxY = rotIs90or270 ? mapCenterY - svgWidth / 2 : originY;
-  const rotViewBoxW = rotIs90or270 ? svgHeight : svgWidth;
-  const rotViewBoxH = rotIs90or270 ? svgWidth : svgHeight;
+  }, [view, gridViewBoxX, gridViewBoxY, gridViewBoxW, gridViewBoxH]);
 
   // Hull SVG geometry — projected via mapView. `fillPath` unions every
   // outer polygon and hole into one evenodd path (RoomsLayer's hole
@@ -487,13 +523,42 @@ export function EncounterMapRenderer({
       {/* SVG Map */}
       <svg
         ref={svgRef}
-        viewBox={`${rotViewBoxX} ${rotViewBoxY} ${rotViewBoxW} ${rotViewBoxH}`}
+        viewBox={`${gridViewBoxX} ${gridViewBoxY} ${gridViewBoxW} ${gridViewBoxH}`}
         className="encounter-map-renderer__svg"
         preserveAspectRatio="xMidYMid meet"
-        style={{
-          transform: `translate(${viewState.panX}px, ${viewState.panY}px) scale(${viewState.zoom})`,
-          transformOrigin: '0 0',
-        }}
+        style={
+          containerSize.width > 0 && containerSize.height > 0
+            ? {
+                // Both the viewBox (above) and this CSS box are scaled up
+                // by GRID_MARGIN_MULTIPLIER together, which leaves the
+                // `meet` fit scale (and so the ship's on-screen size)
+                // unchanged — see the GRID_MARGIN_MULTIPLIER comment above.
+                // This just gives panning/zooming margin: the svg element
+                // itself moves as a rigid box via the transform below, so
+                // without extra size here its edge would slide into view
+                // (exposing blank space past it) on any pan.
+                position: 'absolute',
+                // Override the class's max-width/max-height:100% (meant for
+                // the un-oversized fallback below) — otherwise it caps this
+                // explicit width/height right back down to the container.
+                maxWidth: 'none',
+                maxHeight: 'none',
+                left: (containerSize.width * (1 - GRID_MARGIN_MULTIPLIER)) / 2,
+                top: (containerSize.height * (1 - GRID_MARGIN_MULTIPLIER)) / 2,
+                width: containerSize.width * GRID_MARGIN_MULTIPLIER,
+                height: containerSize.height * GRID_MARGIN_MULTIPLIER,
+                transform: `translate(${viewState.panX}px, ${viewState.panY}px) scale(${viewState.zoom})`,
+                transformOrigin: '0 0',
+              }
+            : {
+                // Before the container's first measurement, fall back to
+                // the plain max-width/max-height-fitted box (no oversized
+                // margin yet) so there's no flash of an incorrectly sized
+                // element.
+                transform: `translate(${viewState.panX}px, ${viewState.panY}px) scale(${viewState.zoom})`,
+                transformOrigin: '0 0',
+              }
+        }
         onContextMenu={editable ? (e) => e.preventDefault() : undefined}
       >
         <defs>
@@ -513,12 +578,15 @@ export function EncounterMapRenderer({
             mapRotation is YAML-authored (e.g. 90 for a horizontally-oriented ship). */}
         <g transform={mapRotation !== 0 ? `rotate(${mapRotation}, ${mapCenterX}, ${mapCenterY})` : undefined}>
 
-        {/* Background — fill entire viewBox with faint grid.
-            Grid lines are individually projected (not a flat <pattern> tile)
-            so they follow the active projection — see bgGridLines above. */}
+        {/* Background — fills the full (oversized) grid viewBox, not just
+            the ship's own bbox, so panning/zooming within the margin (see
+            GRID_MARGIN_MULTIPLIER above) never scrolls past the grid into
+            blank space. Grid lines are individually projected (not a flat
+            <pattern> tile) so they follow the active projection — see
+            bgGridLines above. */}
         <rect
-          x={originX} y={originY}
-          width={svgWidth} height={svgHeight}
+          x={gridViewBoxX} y={gridViewBoxY}
+          width={gridViewBoxW} height={gridViewBoxH}
           fill={COLORS.bgPrimary}
         />
         <g className="encounter-map__bg-grid">
