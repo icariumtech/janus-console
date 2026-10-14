@@ -52,6 +52,8 @@ import { normalizeDoor, normalizeDoors } from './doors/doorNormalizer';
 import { hullPathD, mergeHulls } from './hull/hullNormalizer';
 import { partitionDetails } from './details/detailNormalizer';
 import { useRoomRevealAnimations } from './animation/useRoomRevealAnimations';
+import { useOrientationTransition } from './useOrientationTransition';
+import { buildViewKey, shouldClosePopover } from './viewTransition';
 import { COLORS } from './renderer/mapColors';
 import { RoomsLayer } from './renderer/RoomsLayer';
 import { DetailsLayer } from './renderer/DetailsLayer';
@@ -112,6 +114,9 @@ interface EncounterMapRendererProps {
    *  'broadcast' shows a button per supplied callback; 'local' owns private state
    *  (opens top-down / offset 0) and never calls the server (D-04). */
   viewControl?: ViewControl;
+  /** Identity of the encounter location. A location change together with an
+   *  orientation change is always an instant cut (D-08). */
+  locationKey?: string;
   // ----------------------------------------------------------------
   // Editor-mode props (Plan 29-03) — all four are inert unless `editable` is true.
   // Wiring these callbacks to Monaco edits is Plan 29-04.
@@ -199,6 +204,7 @@ export function EncounterMapRenderer({
   onVentsToggle,
   viewOrientation,
   viewControl,
+  locationKey,
   editable = false,
   onPoiClick,
   onPoiMove,
@@ -219,6 +225,7 @@ export function EncounterMapRenderer({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const fadeRef = useRef<HTMLDivElement>(null);
   const { viewState, containerHandlers, resetView: handleResetView } = usePanZoom(containerRef);
 
   // Tracked reactively (not just read on demand) so the oversized svg CSS
@@ -245,7 +252,20 @@ export function EncounterMapRenderer({
   const [localView, setLocalView] = useState<ViewOrientation>(DEFAULT_VIEW_ORIENTATION);
   const requested: ViewOrientation =
     control.mode === 'local' ? localView : (viewOrientation ?? DEFAULT_VIEW_ORIENTATION);
-  const displayed = requested;
+  // The displayed orientation lags `requested` during a rotation fade; the
+  // transition hook snaps it (and resets pan/zoom) when the map is invisible.
+  const displayed = useOrientationTransition({ ...requested, locationKey }, fadeRef, handleResetView);
+  // Changes with the REQUESTED orientation/location; TokenLayer/PoiLayer cancel
+  // an in-progress drag on it (D-18).
+  const viewKey = buildViewKey({ ...requested, locationKey });
+
+  // Popovers are anchored in screen pixels, so close any open one when the
+  // displayed geometry changes.
+  const prevDisplayedRef = useRef(displayed);
+  useEffect(() => {
+    if (shouldClosePopover(prevDisplayedRef.current, displayed)) closePopover();
+    prevDisplayedRef.current = displayed;
+  }, [displayed.projection, displayed.rotationOffset, closePopover]);
 
   // YAML-authored deck rotation. Top-down keeps it as the outer screen rotate();
   // iso folds it into the grid azimuth (D-15) — see viewOrientation.ts.
@@ -594,7 +614,9 @@ export function EncounterMapRenderer({
         ...style,
       }}
     >
-      {/* SVG Map */}
+      {/* SVG Map — wrapped so GSAP can fade it on rotation without touching
+          the overlay controls or popups (siblings outside this wrapper). */}
+      <div ref={fadeRef} className="encounter-map-renderer__fade">
       <svg
         ref={svgRef}
         viewBox={`${gridViewBoxX} ${gridViewBoxY} ${gridViewBoxW} ${gridViewBoxH}`}
@@ -808,6 +830,7 @@ export function EncounterMapRenderer({
           onPoiClick={onPoiClick}
           onPoiHover={(poi, x, y) => openPopover({ type: 'poi', payload: { poi, x, y } })}
           onPoiHoverEnd={closePopover}
+          viewKey={viewKey}
         />
 
         {/* Token layer (rendered above all other elements) */}
@@ -865,11 +888,13 @@ export function EncounterMapRenderer({
             mapRotation={mapRotation}
             mapCenterX={mapCenterX}
             mapCenterY={mapCenterY}
+            viewKey={viewKey}
           />
         )}
 
         </g>{/* end fixed rotation wrapper */}
       </svg>
+      </div>
 
       {/* Overlay panels - positioned by CSS Grid */}
       <div
