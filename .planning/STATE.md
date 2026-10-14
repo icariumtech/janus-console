@@ -5,16 +5,16 @@ milestone_name: Better Deckplans
 current_phase: 34
 current_phase_name: GM-Controlled Projection and Iso Rotation
 status: executing
-stopped_at: Completed 34-02-PLAN.md
-last_updated: "2026-10-14T20:41:43.083Z"
+stopped_at: Completed 34-03-PLAN.md
+last_updated: "2026-10-14T20:45:25.425Z"
 last_activity: 2026-10-14
 last_activity_desc: Phase 34 execution started
-state_head: a059ec6e45531073479c93b460342be55bab6724
+state_head: 0c4d9300a279ed36cdf357ab0513e09fd837034b
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 21
-  completed_plans: 18
+  completed_plans: 19
   percent: 71
 ---
 
@@ -85,8 +85,8 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 **Resume file:** None
 
-Last session: 2026-10-14T20:41:42.929Z
-Stopped at: Completed 34-02-PLAN.md
+Last session: 2026-10-14T20:45:25.271Z
+Stopped at: Completed 34-03-PLAN.md
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
@@ -111,6 +111,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 | Phase 32 P03 | ~15min | 2 tasks | 3 files |
 | Phase 33 P01 | ~15min | 2 tasks | 7 files |
 | Phase 34 P02 | 15 min | 3 tasks | 14 files |
+| Phase 34 P03 | 6 min | 2 tasks | 6 files |
 
 ## Operator Next Steps
 
@@ -128,6 +129,8 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 - [Phase 33]: 33-01: isoProjection uses fixed tilt:30/rotation:45 constants (true 30-degree isometric, not 26.565-degree dimetric); circleTransform's matrix field names mirror SVG matrix(a,b,c,d,e,f) order; added vectorEffect=non-scaling-stroke on circle-as-ellipse strokes to prevent stroke-width inflation from the scaling transform
 - [Phase 34]: 34-02: default_view keys are default_view/projection/rotation_offset (rotation_offset avoids collision with per-deck rotation)
 - [Phase 34]: 34-02: authored default view applies only when encounter_view_location_slug differs from the requested slug (BRIDGE/STANDBY clear location_slug, so it cannot detect a return)
+- [Phase 34]: 34-03: authored deck rotation folded into iso azimuth (45 + offset + authored); screenRotationFor('iso') is 0; top-down keeps authored rotation as outer screen rotate
+- [Phase 34]: 34-03: offset-only changes fade, projection/location changes (alone or with offset) cut; planTransition returns restore (fadeIn only, no snap/reset) when displayed orientation already equals the latest request
 
 ### Blockers
 
