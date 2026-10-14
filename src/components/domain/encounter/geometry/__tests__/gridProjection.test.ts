@@ -131,3 +131,45 @@ describe('topDownProjection rotation, payload to pixels (Phase 34 tracer)', () =
     closeToSvg(omitted.project({ gx: 1, gy: 0 }), { x: 40, y: 0 });
   });
 });
+
+describe('topDownProjection rotation at quarter turns (Phase 34)', () => {
+  it.each<[number, SvgPoint]>([
+    [90, { x: -80, y: 120 }],
+    [180, { x: -120, y: -80 }],
+    [270, { x: 80, y: -120 }],
+  ])('rotation %i maps grid (3,2) at 40 px to the exact pixel', (rotation, expected) => {
+    const proj = topDownProjection({ unitSize: 40, rotation });
+    closeToSvg(proj.project({ gx: 3, gy: 2 }), expected, 1e-9);
+  });
+
+  it.each([[90], [180], [270]])('rotation %i projects the origin to positive zero on both axes', (rotation) => {
+    const p = topDownProjection({ unitSize: 40, rotation }).project({ gx: 0, gy: 0 });
+    expect(Object.is(p.x, 0)).toBe(true);
+    expect(Object.is(p.y, 0)).toBe(true);
+  });
+
+  it('normalizes -90 to 270 and 450 to 90', () => {
+    const p: GridPoint = { gx: 3, gy: 2 };
+    closeToSvg(topDownProjection({ unitSize: 40, rotation: -90 }).project(p), topDownProjection({ unitSize: 40, rotation: 270 }).project(p), 1e-9);
+    closeToSvg(topDownProjection({ unitSize: 40, rotation: 450 }).project(p), topDownProjection({ unitSize: 40, rotation: 90 }).project(p), 1e-9);
+  });
+
+  it.each([[0], [90], [180], [270]])('unproject(project(p)) round-trips at rotation %i', (rotation) => {
+    const proj = topDownProjection({ unitSize: 40, rotation });
+    for (const p of [{ gx: 3, gy: 2 }, { gx: -2.5, gy: 7.25 }, { gx: 0, gy: 0 }]) {
+      closeToGrid(proj.unproject(proj.project(p)), p, 1e-9);
+    }
+  });
+});
+
+describe('isoProjection at 90 degree azimuth steps', () => {
+  it.each([[0], [90], [180], [270]])('azimuth 45+%i keeps both axes on the 30 degree lattice at constant length', (k) => {
+    const proj = isoProjection({ unitSize: 40, tilt: 30, rotation: 45 + k });
+    for (const axis of [{ gx: 1, gy: 0 }, { gx: 0, gy: 1 }]) {
+      const p = proj.project(axis);
+      const angle = ((((Math.atan2(p.y, p.x) * 180) / Math.PI) % 180) + 180) % 180;
+      expect(Math.min(Math.abs(angle - 30), Math.abs(angle - 150))).toBeLessThan(1e-6);
+      expect(Math.hypot(p.x, p.y)).toBeCloseTo(28.2843, 3);
+    }
+  });
+});
