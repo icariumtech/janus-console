@@ -82,3 +82,24 @@ class LoadFromDiskTests(IsolatedStateMixin, TestCase):
 
         state = active_view_store._load_from_disk()
         self.assertEqual(state, active_view_store._DEFAULT_STATE)
+
+
+class ViewStateDefaultsTests(IsolatedStateMixin, TestCase):
+    """Phase 34 view-orientation keys and their defaults (D-12)."""
+
+    def test_default_state_holds_view_orientation_defaults(self):
+        defaults = active_view_store._DEFAULT_STATE
+        self.assertEqual(defaults['encounter_projection'], 'top-down')
+        self.assertEqual(defaults['encounter_rotation_offset'], 0)
+        self.assertEqual(defaults['encounter_view_location_slug'], '')
+
+    def test_older_state_file_without_the_keys_loads_with_defaults(self):
+        active_view_store._STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with active_view_store._STATE_PATH.open('w', encoding='utf-8') as f:
+            json.dump({'view_type': 'ENCOUNTER'}, f)
+
+        state = active_view_store._load_from_disk()
+        self.assertEqual(state['view_type'], 'ENCOUNTER')
+        self.assertEqual(state['encounter_projection'], 'top-down')
+        self.assertEqual(state['encounter_rotation_offset'], 0)
+        self.assertEqual(state['encounter_view_location_slug'], '')

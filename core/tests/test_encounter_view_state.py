@@ -7,6 +7,8 @@ value), persists it, and broadcasts it on the SSE `activeview` event. These
 tests walk that whole path: HTTP -> state -> disk -> payload -> SSE.
 """
 import json
+from pathlib import Path
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
@@ -15,7 +17,9 @@ from django.urls import reverse
 from core import active_view_store
 from core.active_view_store import get_state
 from core.sse_broadcaster import broadcaster
+from core import encounter_state
 from core.tests.state_test_utils import IsolatedStateMixin
+from core.tests.test_payload_builder import FakeLoader
 from core.views.active_view import build_active_view_payload
 
 
@@ -202,3 +206,128 @@ class SetProjectionEndpointTests(_GmClientMixin, IsolatedStateMixin, TestCase):
     def test_projection_survives_store_reload(self):
         self._post({'projection': 'iso'})
         self.assertEqual(active_view_store._load_from_disk()['encounter_projection'], 'iso')
+
+
+def _deckplan(default_view=None, with_view_key=True):
+    plan = {
+        'name': 'Test', 'total_decks': 2, 'hull': None,
+        'decks': [
+            {'id': 'lower', 'level': 0, 'rooms': [{'id': 'engine'}]},
+            {'id': 'main_deck', 'level': 1, 'default': True, 'rooms': [{'id': 'bridge'}]},
+        ],
+    }
+    if with_view_key:
+        plan['default_view'] = default_view
+    return plan
+
+
+class SwitchViewDefaultViewTests(IsolatedStateMixin, TestCase):
+    """api_switch_view applies a location's authored default view once per location change."""
+
+    def setUp(self):
+        super().setUp()
+        user = get_user_model().objects.create_user('gm', password='pw')
+        self.client = Client()
+        self.client.force_login(user)
+        self.url = reverse('api_switch_view')
+        self.listener = broadcaster.listen()
+        self.addCleanup(broadcaster.unlisten, self.listener)
+
+        def loc(name):
+            return {'type': 'ship', 'name': name, 'directory': f'/nonexistent/{name}'}
+
+        self.loader = FakeLoader(
+            data_dir=Path('/nonexistent'),
+            locations={
+                'test-loc': loc('test-loc'),
+                'plain-loc': loc('plain-loc'),
+                'bad-loc': loc('bad-loc'),
+                'nodir-loc': {'type': 'ship', 'name': 'nodir', 'directory': None},
+            },
+            deckplans={
+                str(Path('/nonexistent/test-loc')): _deckplan({'projection': 'iso', 'rotation_offset': 90}),
+                str(Path('/nonexistent/plain-loc')): _deckplan(with_view_key=False),
+                str(Path('/nonexistent/bad-loc')): _deckplan({'projection': 'sideways', 'rotation_offset': 45}),
+            },
+        )
+        patcher = mock.patch('core.views.navigation.get_loader', return_value=self.loader)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _switch(self, view_type, slug=None):
+        body = {'view_type': view_type}
+        if slug is not None:
+            body['location_slug'] = slug
+        return self.client.post(self.url, data=json.dumps(body), content_type='application/json')
+
+    def _view(self):
+        state = get_state()
+        return state['encounter_projection'], state['encounter_rotation_offset']
+
+    def test_first_entry_applies_authored_default_view_and_marker(self):
+        self._switch('ENCOUNTER', 'test-loc')
+        state = get_state()
+        self.assertEqual(self._view(), ('iso', 90))
+        self.assertEqual(state['encounter_view_location_slug'], 'test-loc')
+
+    def test_sse_payload_carries_applied_view(self):
+        self._switch('ENCOUNTER', 'test-loc')
+        message = self.listener.get_nowait()
+        data_line = next(line for line in message.splitlines() if line.startswith('data: '))
+        payload = json.loads(data_line[len('data: '):])
+        self.assertEqual(payload['encounter_projection'], 'iso')
+        self.assertEqual(payload['encounter_rotation_offset'], 90)
+        self.assertNotIn('encounter_view_location_slug', payload)
+
+    def test_returning_via_bridge_keeps_the_gms_live_view(self):
+        self._switch('ENCOUNTER', 'test-loc')
+        encounter_state.set_projection('top-down')
+        encounter_state.rotate_view(90)  # 90 -> 180
+        self._switch('BRIDGE')
+        self._switch('ENCOUNTER', 'test-loc')
+        self.assertEqual(self._view(), ('top-down', 180))
+
+    def test_reselecting_same_slug_in_encounter_keeps_the_live_view(self):
+        self._switch('ENCOUNTER', 'test-loc')
+        encounter_state.set_projection('top-down')
+        encounter_state.rotate_view(90)
+        self._switch('ENCOUNTER', 'test-loc')
+        self.assertEqual(self._view(), ('top-down', 180))
+
+    def test_different_location_without_default_view_resets_to_defaults(self):
+        self._switch('ENCOUNTER', 'test-loc')
+        self._switch('ENCOUNTER', 'plain-loc')
+        self.assertEqual(self._view(), ('top-down', 0))
+        self.assertEqual(get_state()['encounter_view_location_slug'], 'plain-loc')
+
+    def test_location_without_directory_resets_to_defaults(self):
+        self._switch('ENCOUNTER', 'test-loc')
+        self._switch('ENCOUNTER', 'nodir-loc')
+        self.assertEqual(self._view(), ('top-down', 0))
+        self.assertEqual(get_state()['encounter_view_location_slug'], 'nodir-loc')
+
+    def test_unknown_slug_resets_to_defaults(self):
+        self._switch('ENCOUNTER', 'test-loc')
+        self._switch('ENCOUNTER', 'missing-loc')
+        self.assertEqual(self._view(), ('top-down', 0))
+
+    def test_hostile_default_view_is_normalized_defensively(self):
+        encounter_state.set_projection('iso')
+        encounter_state.rotate_view(90)
+        self._switch('ENCOUNTER', 'bad-loc')
+        self.assertEqual(self._view(), ('top-down', 0))
+
+    def test_standby_changes_neither_view_nor_marker(self):
+        self._switch('ENCOUNTER', 'test-loc')
+        self._switch('STANDBY')
+        self.assertEqual(self._view(), ('iso', 90))
+        self.assertEqual(get_state()['encounter_view_location_slug'], 'test-loc')
+
+    def test_new_location_still_initializes_portraits_rooms_and_default_deck(self):
+        encounter_state.toggle_portrait('npc_1')
+        self._switch('ENCOUNTER', 'test-loc')
+        state = get_state()
+        self.assertEqual(state['encounter_active_portraits'], [])
+        self.assertEqual(state['encounter_room_visibility'], {'engine': False, 'bridge': False})
+        self.assertEqual(state['encounter_level'], 1)
+        self.assertEqual(state['encounter_deck_id'], 'main_deck')
