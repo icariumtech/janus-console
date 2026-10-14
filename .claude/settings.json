@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash /home/gjohnson/mothership/charon/.claude/hooks/block-npm.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-npm.sh\""
           }
         ]
       }
@@ -31,7 +31,13 @@
       "Bash(git log:*)",
       "Bash(git diff:*)",
       "Bash(git tag:*)",
-      "Bash(pnpm *)"
+      "Bash(pnpm *)",
+      "Bash(.venv/bin/python manage.py test:*)",
+      "Bash(gsd_run:*)",
+      "Bash(GSD_TOOLS=\"/home/gjohnson/.claude/gsd-core/bin/gsd-tools.cjs\":*)",
+      "Bash(_GSD_SHIM_NAME=\"gsd-tools.cjs\":*)",
+      "Bash(node \"/home/gjohnson/.claude/gsd-core/bin/gsd-tools.cjs\":*)",
+      "Bash(node /home/gjohnson/.claude/gsd-core/bin/gsd-tools.cjs:*)"
     ]
   },
   "enabledPlugins": {
