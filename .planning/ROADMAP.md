@@ -135,7 +135,7 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 - **Status:** Not started
 - **Goal:** Make the map view (top-down vs. isometric, and iso rotation) a GM-owned setting broadcast to players, and let the GM rotate the iso view in 90° steps.
 - **Depends on:** Phase 33
-- **Requirements**: TBD
+- **Requirements**: ISO-04, ISO-05, ISO-06, ISO-07
 - **Success Criteria** (what must be TRUE):
   1. The player terminal no longer has a projection toggle; it renders whatever projection the GM console has selected, updating live
   2. The GM can rotate the view left/right in 90° steps (offset on top of the deck's authored `rotation`, in both top-down and iso), e.g. bringing the bridge to the lower-left corner, and players follow
