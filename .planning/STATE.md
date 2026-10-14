@@ -4,17 +4,18 @@ milestone: v3.0
 milestone_name: Better Deckplans
 current_phase: 34
 current_phase_name: GM-Controlled Projection and Iso Rotation
-status: executing
-stopped_at: Completed 34-04-PLAN.md
-last_updated: "2026-10-14T20:50:00.210Z"
+current_plan: 5
+status: verifying
+stopped_at: Completed 34-05-PLAN.md
+last_updated: "2026-10-14T20:54:38.163Z"
 last_activity: 2026-10-14
 last_activity_desc: Phase 34 execution started
-state_head: ab345274ce177deb057f317a34d5966939bab4c1
+state_head: 8e161fba8320061c6a3530624346985cf65bf6d9
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 21
-  completed_plans: 20
+  completed_plans: 21
   percent: 71
 ---
 
@@ -30,7 +31,9 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 ## Current Position
 
 Phase: 34 (GM-Controlled Projection and Iso Rotation) — EXECUTING
-Status: Executing Phase 34
+Current Plan: 5
+Total Plans in Phase: 5
+Status: Phase complete — ready for verification
 Last activity: 2026-10-14 — Phase 34 execution started
 
 ## v1.0 Milestone Archive
@@ -85,8 +88,8 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 **Resume file:** None
 
-Last session: 2026-10-14T20:50:00.048Z
-Stopped at: Completed 34-04-PLAN.md
+Last session: 2026-10-14T20:54:30.655Z
+Stopped at: Completed 34-05-PLAN.md
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
@@ -113,6 +116,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 | Phase 34 P02 | 15 min | 3 tasks | 14 files |
 | Phase 34 P03 | 6 min | 2 tasks | 6 files |
 | Phase 34 P04 | 8 min | 2 tasks | 8 files |
+| Phase 34 P05 | 3 min | 3 tasks | 11 files |
 
 ## Operator Next Steps
 
@@ -134,6 +138,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 - [Phase 34]: 34-03: offset-only changes fade, projection/location changes (alone or with offset) cut; planTransition returns restore (fadeIn only, no snap/reset) when displayed orientation already equals the latest request
 - [Phase 34]: 34-04: mapRotation now holds the residual screen rotation (screenRotationFor), keeping rotViewBox math and inverse-rotate call sites unchanged
 - [Phase 34]: 34-04: renderer local mode is structurally server-free (private useState, explicit branch, no service import); GM EncounterView passes broadcast mode with onRotate only until 34-05
+- [Phase 34]: 34-05: Only the GM tactical map passes viewControl mode 'broadcast'; player terminal, side panel and all thumbnails mirror viewOrientation read-only; editor preview uses mode 'local' with no service import
 
 ### Blockers
 

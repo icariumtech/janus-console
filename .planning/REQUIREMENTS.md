@@ -37,10 +37,10 @@
 - [x] **ISO-01**: An isometric projection renders any deckplan via the existing `gridProjection`/`mapView` seam — rooms, doors, vents, POIs, tokens, and details all project correctly
 - [x] **ISO-02**: Players can toggle the encounter view between top-down and isometric live — *superseded by ISO-04 (Phase 34 D-01)*
 - [x] **ISO-03**: GM can toggle the GM console map between top-down and isometric live
-- [ ] **ISO-04**: Projection is a single GM-owned setting broadcast to all players live; the GM map mirrors players; the player terminal has no view controls; the deckplan editor keeps a private, non-broadcast view
-- [ ] **ISO-05**: GM can rotate the view in 90° steps in both projections as an offset on top of the deck's authored `rotation`; iso keeps true 30° angles at every step, including authored-rotation decks
-- [ ] **ISO-06**: `deckplan.yaml` can author a location-level `default_view`; it applies on location change only, deck switches keep the view, and the broadcast view persists across reloads
-- [ ] **ISO-07**: At every projection/rotation, all map elements render and hit-test correctly; rotation fades, projection cuts, pan/zoom resets to fit, and an in-progress drag is cancelled
+- [x] **ISO-04**: Projection is a single GM-owned setting broadcast to all players live; the GM map mirrors players; the player terminal has no view controls; the deckplan editor keeps a private, non-broadcast view
+- [x] **ISO-05**: GM can rotate the view in 90° steps in both projections as an offset on top of the deck's authored `rotation`; iso keeps true 30° angles at every step, including authored-rotation decks
+- [x] **ISO-06**: `deckplan.yaml` can author a location-level `default_view`; it applies on location change only, deck switches keep the view, and the broadcast view persists across reloads
+- [x] **ISO-07**: At every projection/rotation, all map elements render and hit-test correctly; rotation fades, projection cuts, pan/zoom resets to fit, and an in-progress drag is cancelled
 
 ## Future Requirements (deferred)
 
@@ -78,7 +78,7 @@
 | ISO-01 | Phase 33 | Complete |
 | ISO-02 | Phase 33 | Superseded by ISO-04 |
 | ISO-03 | Phase 33 | Complete |
-| ISO-04 | Phase 34 | Pending |
-| ISO-05 | Phase 34 | Pending |
-| ISO-06 | Phase 34 | Pending |
-| ISO-07 | Phase 34 | Pending |
+| ISO-04 | Phase 34 | Complete |
+| ISO-05 | Phase 34 | Complete |
+| ISO-06 | Phase 34 | Complete |
+| ISO-07 | Phase 34 | Complete |

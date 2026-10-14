@@ -146,7 +146,7 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
   - [x] 34-02-PLAN.md — Backend: rotate-view hardening, set-projection endpoint, `core/encounter_view.py`, deckplan `default_view` (normalizer + schema docs), reset on location change only, store/payload defaults
   - [x] 34-03-PLAN.md — Pure logic: `viewOrientation.ts` (normalizers, authored-rotation fold under iso, screenRotationFor, hit-test matrix) and `viewTransition.ts` (fade/cut planner, drag-cancel and popover-close predicates)
   - [x] 34-04-PLAN.md — Renderer: readonly/broadcast/local view modes, control cluster, tracer-prop migration, GSAP hook executing the tested plan, mid-drag cancel
-  - [ ] 34-05-PLAN.md — Wiring: player terminal + mirrors, GM broadcast controls with toasts, editor local mode, phase gate + human checks, P9 deferral note
+  - [x] 34-05-PLAN.md — Wiring: player terminal + mirrors, GM broadcast controls with toasts, editor local mode, phase gate + human checks, P9 deferral note
 - **UI hint**: yes
 
 #### Phase 35: Stacked Deck View with Animated Transitions
@@ -183,5 +183,5 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | Complete    | 2026-08-04 |
 | 32. SVG Converter — Details/Hulls/Circles | v3.0 | 3/3 | Complete    | 2026-08-25 |
 | 33. Isometric View | v3.0 | 3/3 | Complete    | 2026-09-07 |
-| 34. GM-Controlled Projection & Iso Rotation | v3.0 | 4/5 | In Progress | — |
+| 34. GM-Controlled Projection & Iso Rotation | v3.0 | 5/5 | In Progress | — |
 | 35. Stacked Deck View | v3.0 | 0/? | Not started | — |
