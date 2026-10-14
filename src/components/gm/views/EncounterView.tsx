@@ -266,6 +266,17 @@ export function EncounterView({
     }
   }, [messageApi]);
 
+  // Same contract as handleRotate: no optimistic update, the button label and
+  // the map follow the SSE echo of encounter_projection.
+  const handleProjectionChange = useCallback(async (projection: 'top-down' | 'iso') => {
+    try {
+      await encounterApi.setProjection(projection);
+    } catch (err) {
+      console.error('Error switching projection:', err);
+      messageApi.error('Failed to switch map projection — try again');
+    }
+  }, [messageApi]);
+
   const handleDoorStatusChange = useCallback(async (connectionId: string, status: DoorStatus) => {
     try {
       const result = await encounterApi.setDoorStatus(connectionId, status);
@@ -454,7 +465,8 @@ export function EncounterView({
             ventsVisible={ventsVisible}
             onVentsToggle={handleVentsToggle}
             viewOrientation={viewOrientation}
-            viewControl={{ mode: 'broadcast', onRotate: handleRotate }}
+            viewControl={{ mode: 'broadcast', onProjectionChange: handleProjectionChange, onRotate: handleRotate }}
+            locationKey={locationSlug}
           />
         ) : noLocationSelected ? (
           <div className="gm-encounter-view__empty">

@@ -233,6 +233,7 @@ export function DeckplanPreviewPane({
             fill
             isGM
             editable
+            viewControl={{ mode: 'local' }}
             onRoomClick={onRoomClick}
             onDoorClick={onDoorClick}
             onPoiClick={onPoiClick}

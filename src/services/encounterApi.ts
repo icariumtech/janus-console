@@ -244,6 +244,18 @@ async function rotateView(delta: 90 | -90): Promise<{ success: boolean; rotation
 }
 
 /**
+ * Set the shared encounter projection (GM only).
+ * The server stores and broadcasts it; the map follows the SSE echo.
+ */
+async function setProjection(projection: 'top-down' | 'iso'): Promise<{ success: boolean; projection: string }> {
+  const response = await api.post<{ success: boolean; projection: string }>(
+    '/gm/encounter/set-projection/',
+    { projection }
+  );
+  return response.data;
+}
+
+/**
  * Toggle an NPC portrait display on the terminal (GM only).
  * If npcId is active, dismisses it. If not active, shows it.
  */
@@ -265,6 +277,7 @@ export const encounterApi = {
   setDoorStatus,
   setVentsVisible,
   rotateView,
+  setProjection,
   placeToken,
   moveToken,
   removeToken,

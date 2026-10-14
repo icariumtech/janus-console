@@ -89,6 +89,8 @@ interface MapPreviewProps {
   viewOrientation?: ViewOrientation;
   /** View-control mode and callbacks, forwarded to the grid renderer */
   viewControl?: ViewControl;
+  /** Identity of the displayed location; a change cuts instead of fading the rotation */
+  locationKey?: string;
   // ----------------------------------------------------------------
   // Editor-mode props (Plan 29-03) — forwarded to EncounterMapRenderer.
   // All four are inert unless `editable` is true.
@@ -148,6 +150,7 @@ export function MapPreview({
   onVentsToggle,
   viewOrientation,
   viewControl,
+  locationKey,
   editable,
   onPoiClick,
   onPoiMove,
@@ -245,6 +248,7 @@ export function MapPreview({
             onVentsToggle={onVentsToggle}
             viewOrientation={viewOrientation}
             viewControl={viewControl}
+            locationKey={locationKey}
             editable={editable}
             onPoiClick={onPoiClick}
             onPoiMove={onPoiMove}
