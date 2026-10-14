@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from pathlib import Path
 from core.data_loader import get_loader
+from core.encounter_view import normalize_default_view
 from core.active_view_store import get_state
 from core.sse_broadcaster import broadcaster
 from core.janus_session import JanusSessionManager
@@ -58,23 +59,32 @@ def api_switch_view(request, data):
         update_kwargs['encounter_active_portraits'] = []
         loader = get_loader()
         location = loader.find_location_by_slug(new_location_slug)
+        deckplan = None
         if location and location.get('directory'):
-            location_dir = Path(location['directory'])
-            deckplan = loader.load_deckplan(location_dir)
-            if deckplan and deckplan.get('decks'):
-                decks = deckplan['decks']
-                # Collect all room IDs from all decks and set them to hidden
-                all_room_ids = [r['id'] for deck in decks for r in deck.get('rooms', [])]
-                update_kwargs['encounter_room_visibility'] = {rid: False for rid in all_room_ids}
+            deckplan = loader.load_deckplan(Path(location['directory']))
+        if deckplan and deckplan.get('decks'):
+            decks = deckplan['decks']
+            # Collect all room IDs from all decks and set them to hidden
+            all_room_ids = [r['id'] for deck in decks for r in deck.get('rooms', [])]
+            update_kwargs['encounter_room_visibility'] = {rid: False for rid in all_room_ids}
 
-                # Set default deck level and ID
-                default_deck = next((d for d in decks if d.get('default')), decks[0] if decks else None)
-                if default_deck:
-                    update_kwargs['encounter_level'] = default_deck.get('level', 1)
-                    update_kwargs['encounter_deck_id'] = default_deck.get('id', '')
-                else:
-                    update_kwargs['encounter_level'] = 1
-                    update_kwargs['encounter_deck_id'] = ''
+            # Set default deck level and ID
+            default_deck = next((d for d in decks if d.get('default')), decks[0] if decks else None)
+            if default_deck:
+                update_kwargs['encounter_level'] = default_deck.get('level', 1)
+                update_kwargs['encounter_deck_id'] = default_deck.get('id', '')
+            else:
+                update_kwargs['encounter_level'] = 1
+                update_kwargs['encounter_deck_id'] = ''
+
+        # Apply the authored default view only when the location itself changes.
+        # BRIDGE/STANDBY switches clear location_slug, so the dedicated marker
+        # (not location_slug) tells a return to the same location from a new one (D-16).
+        if current.get('encounter_view_location_slug') != new_location_slug:
+            default_view = normalize_default_view(deckplan.get('default_view') if deckplan else None)
+            update_kwargs['encounter_projection'] = default_view['projection']
+            update_kwargs['encounter_rotation_offset'] = default_view['rotation_offset']
+            update_kwargs['encounter_view_location_slug'] = new_location_slug
 
     new_state = sync_state(**update_kwargs)
 

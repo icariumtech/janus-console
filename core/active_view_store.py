@@ -35,6 +35,11 @@ _DEFAULT_STATE: dict = {
     'encounter_vents_visible': False,
     'encounter_projection': 'top-down',
     'encounter_rotation_offset': 0,
+    # Slug of the encounter location whose authored default view was last
+    # applied. Internal only (not in the SSE payload): BRIDGE/STANDBY switches
+    # clear location_slug, so it cannot detect a return to the same location
+    # and the GM's live view would be reset on every return (D-16).
+    'encounter_view_location_slug': '',
     'encounter_tokens_by_location': {},
     'encounter_active_portraits': [],
 }
