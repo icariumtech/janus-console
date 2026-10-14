@@ -84,6 +84,10 @@ interface MapPreviewProps {
   /** Vent visibility state (per-vent) */
   ventsVisible?: boolean;
   onVentsToggle?: (visible: boolean) => void;
+  /** Shared view offset in degrees (0/90/180/270), forwarded to the grid renderer */
+  rotationOffset?: number;
+  /** Rotate-clockwise callback — shows the rotate button on the grid renderer */
+  onRotate?: (delta: 90 | -90) => void;
   // ----------------------------------------------------------------
   // Editor-mode props (Plan 29-03) — forwarded to EncounterMapRenderer.
   // All four are inert unless `editable` is true.
@@ -141,6 +145,8 @@ export function MapPreview({
   fill,
   ventsVisible,
   onVentsToggle,
+  rotationOffset,
+  onRotate,
   editable,
   onPoiClick,
   onPoiMove,
@@ -236,6 +242,8 @@ export function MapPreview({
             onTokenStatusToggle={onTokenStatusToggle}
             ventsVisible={ventsVisible}
             onVentsToggle={onVentsToggle}
+            rotationOffset={rotationOffset}
+            onRotate={onRotate}
             editable={editable}
             onPoiClick={onPoiClick}
             onPoiMove={onPoiMove}

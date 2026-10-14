@@ -98,6 +98,11 @@ export function EncounterView({
   const locationSlug = activeView?.location_slug || '';
   const currentDeckId = activeView?.encounter_deck_id || '';
   const locationType = activeView?.location_type || '';
+  // Shared view offset comes from the SSE echo only (D-01) — no local view
+  // state. Anything other than 90/180/270 (hand-edited 45, string, null,
+  // undefined) is coerced to 0 rather than fed to trig.
+  const rawOffset = activeView?.encounter_rotation_offset;
+  const rotationOffset = rawOffset === 90 || rawOffset === 180 || rawOffset === 270 ? rawOffset : 0;
 
   // Location types that have encounter maps (2D tactical maps)
   const encounterMapTypes = ['station', 'ship', 'base', 'deck', 'room', 'level', 'section'];
@@ -244,6 +249,17 @@ export function EncounterView({
     } catch (err) {
       console.error('Error toggling vents:', err);
       messageApi.error('Failed to toggle vent visibility');
+    }
+  }, [messageApi]);
+
+  // No optimistic update (D-01): the map re-projects when the SSE echo
+  // updates activeView.encounter_rotation_offset.
+  const handleRotate = useCallback(async (delta: 90 | -90) => {
+    try {
+      await encounterApi.rotateView(delta);
+    } catch (err) {
+      console.error('Error rotating map:', err);
+      messageApi.error('Failed to rotate map — try again');
     }
   }, [messageApi]);
 
@@ -434,6 +450,8 @@ export function EncounterView({
             hull={manifest?.hull as HullDef | undefined}
             ventsVisible={ventsVisible}
             onVentsToggle={handleVentsToggle}
+            rotationOffset={rotationOffset}
+            onRotate={handleRotate}
           />
         ) : noLocationSelected ? (
           <div className="gm-encounter-view__empty">
