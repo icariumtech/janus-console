@@ -37,7 +37,16 @@ import { TokenLayer } from './TokenLayer';
 import { TokenPopup } from './TokenPopup';
 import { RoomContextMenu } from './RoomContextMenu';
 import { DoorStatusPopup } from '../../gm/DoorStatusPopup';
-import { isoProjection, topDownProjection } from './geometry/gridProjection';
+import {
+  buildProjection,
+  screenRotationFor,
+  stepRotationOffset,
+  DEFAULT_VIEW_ORIENTATION,
+  type ViewOrientation,
+  type ViewControl,
+  type ViewProjection,
+  type RotateDelta,
+} from './geometry/viewOrientation';
 import { makeMapView } from './geometry/mapView';
 import { normalizeDoor, normalizeDoors } from './doors/doorNormalizer';
 import { hullPathD, mergeHulls } from './hull/hullNormalizer';
@@ -96,10 +105,13 @@ interface EncounterMapRendererProps {
   ventsVisible?: boolean;
   /** Callback when GM right-clicks a vent to toggle all vents */
   onVentsToggle?: (visible: boolean) => void;
-  /** Shared view offset in degrees (0/90/180/270): grid azimuth added on top of the projection. Default 0. */
-  rotationOffset?: number;
-  /** When supplied a rotate-clockwise button is shown; supplied only by the GM tactical map. */
-  onRotate?: (delta: 90 | -90) => void;
+  /** The broadcast view (projection + rotation offset). Used in 'readonly' and
+   *  'broadcast' control modes; ignored in 'local' mode. Defaults to top-down / 0. */
+  viewOrientation?: ViewOrientation;
+  /** Who controls the view. Defaults to read-only with no buttons ('readonly').
+   *  'broadcast' shows a button per supplied callback; 'local' owns private state
+   *  (opens top-down / offset 0) and never calls the server (D-04). */
+  viewControl?: ViewControl;
   // ----------------------------------------------------------------
   // Editor-mode props (Plan 29-03) — all four are inert unless `editable` is true.
   // Wiring these callbacks to Monaco edits is Plan 29-04.
@@ -137,6 +149,31 @@ type EncounterPopover =
   | { type: 'room';  payload: { room: GridRoom; x: number; y: number; gridX?: number; gridY?: number } }
   | { type: 'vent';  payload: { x: number; y: number; currentlyVisible: boolean } }
 
+// Default control mode: mirrors the broadcast view, renders no view buttons (D-03, D-14).
+const READONLY_VIEW_CONTROL: ViewControl = { mode: 'readonly' };
+
+// Rotate glyphs. If either fails the human glyph check (shows as a box in the
+// GM's Cascadia Code stack), switch these to the pre-declared text fallback
+// 'CCW' / 'CW' (UI-SPEC glyph backstop).
+const ROTATE_CCW_LABEL = '⟲';
+const ROTATE_CW_LABEL = '⟳';
+
+// Shared overlay button style (UI-SPEC touch row): RESET VIEW and all three
+// cluster buttons use this; per-button overrides are only `color` and, for the
+// projection button, `border`. No hover style and no outline override.
+const OVERLAY_BUTTON_STYLE: React.CSSProperties = {
+  pointerEvents: 'auto',
+  background: 'rgba(15, 21, 21, 0.95)',
+  border: '1px solid #4a6b6b',
+  fontFamily: "'Cascadia Code', 'Courier New', monospace",
+  fontSize: '11px',
+  letterSpacing: '2px',
+  padding: '8px 16px',
+  minWidth: '44px',
+  minHeight: '44px',
+  cursor: 'pointer',
+};
+
 export function EncounterMapRenderer({
   mapData,
   roomVisibility,
@@ -160,8 +197,8 @@ export function EncounterMapRenderer({
   showLegend = true,
   ventsVisible,
   onVentsToggle,
-  rotationOffset = 0,
-  onRotate,
+  viewOrientation,
+  viewControl,
   editable = false,
   onPoiClick,
   onPoiMove,
@@ -201,19 +238,25 @@ export function EncounterMapRenderer({
   // unit_size — pixels per grid cell (default 40 if YAML omits it)
   const unitSize = mapData.unit_size ?? 40;
 
-  // Top-down/iso projection toggle (D-03/D-04) — local to this mount, no
-  // shared/global store, so player and GM views toggle independently.
-  const [projectionMode, setProjectionMode] = useState<'top-down' | 'iso'>('top-down');
+  // View orientation (D-04, D-17). Controlled modes ('readonly' / 'broadcast')
+  // follow the broadcast value; 'local' owns private state that always opens
+  // top-down / offset 0 and ignores any map default_view.
+  const control = viewControl ?? READONLY_VIEW_CONTROL;
+  const [localView, setLocalView] = useState<ViewOrientation>(DEFAULT_VIEW_ORIENTATION);
+  const requested: ViewOrientation =
+    control.mode === 'local' ? localView : (viewOrientation ?? DEFAULT_VIEW_ORIENTATION);
+  const displayed = requested;
+
+  // YAML-authored deck rotation. Top-down keeps it as the outer screen rotate();
+  // iso folds it into the grid azimuth (D-15) — see viewOrientation.ts.
+  const authoredRotation = mapData.rotation ?? 0;
 
   // Projection + mapView — the renderer's seam to all SVG-space queries.
   // After plan 21-03 the renderer never multiplies by unitSize directly;
-  // everything goes through `view`. Phase 33 adds the isometric alternative.
+  // everything goes through `view`.
   const projection = useMemo(
-    () =>
-      projectionMode === 'iso'
-        ? isoProjection({ unitSize, tilt: 30, rotation: 45 + rotationOffset })
-        : topDownProjection({ unitSize, rotation: rotationOffset }),
-    [unitSize, projectionMode, rotationOffset]
+    () => buildProjection(displayed.projection, displayed.rotationOffset, unitSize, authoredRotation),
+    [unitSize, displayed.projection, displayed.rotationOffset, authoredRotation]
   );
   const view = useMemo(() => makeMapView(projection), [projection]);
 
@@ -259,8 +302,9 @@ export function EncounterMapRenderer({
     };
   }, [view, mapData.rooms, effectiveHull, viewPadding]);
 
-  // Fixed map rotation (YAML-authored, not user-controlled)
-  const mapRotation = mapData.rotation ?? 0;
+  // Residual SCREEN rotation (D-15): the authored rotation under top-down, 0
+  // under iso (where it is already folded into the projection).
+  const mapRotation = screenRotationFor(displayed.projection, authoredRotation);
   const mapCenterX = originX + svgWidth / 2;
   const mapCenterY = originY + svgHeight / 2;
   // For 90/270° rotations the effective bounding box flips W↔H
@@ -489,6 +533,30 @@ export function EncounterMapRenderer({
       y: e.clientY - (rect?.top || 0),
     } });
   }, [isGM, onRoomClick, openPopover]);
+
+  // -------------------------------------------------------------------
+  // View-control handlers (D-02, D-04). Local mode updates private state and
+  // never calls a control callback; broadcast mode only calls what was supplied.
+  // -------------------------------------------------------------------
+  const handleProjectionToggle = () => {
+    const next: ViewProjection = requested.projection === 'iso' ? 'top-down' : 'iso';
+    if (control.mode === 'local') setLocalView((v) => ({ ...v, projection: next }));
+    else if (control.mode === 'broadcast') control.onProjectionChange?.(next);
+  };
+
+  const handleRotateClick = (delta: RotateDelta) => {
+    if (control.mode === 'local') {
+      setLocalView((v) => ({ ...v, rotationOffset: stepRotationOffset(v.rotationOffset, delta) }));
+    } else if (control.mode === 'broadcast') {
+      control.onRotate?.(delta);
+    }
+  };
+
+  const showProjectionButton =
+    control.mode === 'local' || (control.mode === 'broadcast' && !!control.onProjectionChange);
+  const showRotateButtons =
+    control.mode === 'local' || (control.mode === 'broadcast' && !!control.onRotate);
+  const followNote = control.mode === 'broadcast' ? ' (players follow)' : '';
 
   const { handleDragOver, handleDrop } = useTokenPlacement({
     svgRef,
@@ -828,79 +896,75 @@ export function EncounterMapRenderer({
             onClick={handleResetView}
             title="Reset view"
             style={{
+              ...OVERLAY_BUTTON_STYLE,
               gridArea: 'top-left',
               alignSelf: 'start',
               justifySelf: 'start',
-              pointerEvents: 'auto',
-              background: 'rgba(15, 21, 21, 0.95)',
-              border: '1px solid #4a6b6b',
               color: '#8b7355',
-              fontFamily: "'Cascadia Code', 'Courier New', monospace",
-              fontSize: '11px',
-              letterSpacing: '2px',
-              padding: '8px 16px',
-              cursor: 'pointer',
             }}
           >
             RESET VIEW
           </button>
         )}
 
-        {/* Projection toggle - bottom left (D-03/D-04). Renders
-            unconditionally, unlike RESET VIEW's pan/zoom gate. */}
-        <div
-          className="encounter-map__view-controls"
-          style={{
-            gridArea: 'bottom-left',
-            alignSelf: 'end',
-            justifySelf: 'start',
-            display: 'flex',
-            gap: '8px',
-            pointerEvents: 'none',
-          }}
-        >
-          <button
-            className="encounter-map__projection-toggle"
-            onClick={() => setProjectionMode((m) => (m === 'iso' ? 'top-down' : 'iso'))}
-            title={projectionMode === 'iso' ? 'Switch to top-down view' : 'Switch to isometric view'}
-            aria-label="Toggle map projection between top-down and isometric"
-            aria-pressed={projectionMode === 'iso'}
+        {/* View-control cluster - bottom left (D-02, D-05). Only for the
+            broadcast / local control modes; read-only mounts get none (D-03). */}
+        {(showProjectionButton || showRotateButtons) && (
+          <div
+            className="encounter-map__view-controls"
             style={{
-              pointerEvents: 'auto',
-              background: 'rgba(15, 21, 21, 0.95)',
-              border: projectionMode === 'iso' ? '1px solid #c9a050' : '1px solid #4a6b6b',
-              color: projectionMode === 'iso' ? '#c9a050' : '#7ab8b8',
-              fontFamily: "'Cascadia Code', 'Courier New', monospace",
-              fontSize: '11px',
-              letterSpacing: '2px',
-              padding: '8px 16px',
-              cursor: 'pointer',
+              gridArea: 'bottom-left',
+              alignSelf: 'end',
+              justifySelf: 'start',
+              display: 'flex',
+              gap: '8px',
+              pointerEvents: 'none',
             }}
           >
-            {projectionMode === 'iso' ? 'TOP DOWN' : 'ISO VIEW'}
-          </button>
-          {onRotate && (
-            <button
-              className="encounter-map__rotate-cw"
-              onClick={() => onRotate?.(90)}
-              title="Rotate map clockwise (players follow)"
-              aria-label="Rotate map clockwise"
-              style={{
-                pointerEvents: 'auto',
-                background: 'rgba(15, 21, 21, 0.95)',
-                border: '1px solid #4a6b6b',
-                color: '#7ab8b8',
-                fontFamily: "'Cascadia Code', 'Courier New', monospace",
-                fontSize: '11px',
-                letterSpacing: '2px',
-                padding: '8px 16px',
-                cursor: 'pointer',
-              }}
-            >
-              ⟳
-            </button>
-          )}
-        </div>
+            {showProjectionButton && (
+              <button
+                className="encounter-map__projection-toggle"
+                onClick={handleProjectionToggle}
+                title={
+                  requested.projection === 'iso'
+                    ? `Switch map to top-down view${followNote}`
+                    : `Switch map to isometric view${followNote}`
+                }
+                aria-label="Toggle map projection between top-down and isometric"
+                aria-pressed={requested.projection === 'iso'}
+                style={{
+                  ...OVERLAY_BUTTON_STYLE,
+                  border: requested.projection === 'iso' ? '1px solid #c9a050' : '1px solid #4a6b6b',
+                  color: requested.projection === 'iso' ? '#c9a050' : '#7ab8b8',
+                }}
+              >
+                {requested.projection === 'iso' ? 'TOP DOWN' : 'ISO VIEW'}
+              </button>
+            )}
+            {showRotateButtons && (
+              <>
+                <button
+                  className="encounter-map__rotate-ccw"
+                  onClick={() => handleRotateClick(-90)}
+                  title={`Rotate map counter-clockwise${followNote}`}
+                  aria-label="Rotate map counter-clockwise"
+                  style={{ ...OVERLAY_BUTTON_STYLE, color: '#7ab8b8' }}
+                >
+                  {ROTATE_CCW_LABEL}
+                </button>
+                <button
+                  className="encounter-map__rotate-cw"
+                  onClick={() => handleRotateClick(90)}
+                  title={`Rotate map clockwise${followNote}`}
+                  aria-label="Rotate map clockwise"
+                  style={{ ...OVERLAY_BUTTON_STYLE, color: '#7ab8b8' }}
+                >
+                  {ROTATE_CW_LABEL}
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Level indicator - top right */}
         <div

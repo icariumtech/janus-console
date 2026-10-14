@@ -82,6 +82,12 @@
   justify-self: end;
 }
 
+/* UI-SPEC narrow viewports: the legend yields to the view-control cluster
+   below 480px. The control cluster is never hidden. */
+@media (max-width: 479px) {
+  .encounter-map__legend { display: none; }
+}
+
 /* Room wall lines — amber blueprint aesthetic */
 .encounter-map__wall {
   shape-rendering: crispEdges;

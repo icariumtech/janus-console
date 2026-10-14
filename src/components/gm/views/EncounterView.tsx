@@ -25,6 +25,7 @@ import type {
   TokenType,
   TokenStatus,
 } from '@/types/encounterMap';
+import { toViewOrientation } from '@/components/domain/encounter/geometry/viewOrientation';
 import { MapPreview } from '../MapPreview';
 import { ToolRail, type ToolRailButton } from '../layout/ToolRail';
 import { SlideOutPanel } from '../layout/SlideOutPanel';
@@ -98,11 +99,13 @@ export function EncounterView({
   const locationSlug = activeView?.location_slug || '';
   const currentDeckId = activeView?.encounter_deck_id || '';
   const locationType = activeView?.location_type || '';
-  // Shared view offset comes from the SSE echo only (D-01) — no local view
-  // state. Anything other than 90/180/270 (hand-edited 45, string, null,
-  // undefined) is coerced to 0 rather than fed to trig.
-  const rawOffset = activeView?.encounter_rotation_offset;
-  const rotationOffset = rawOffset === 90 || rawOffset === 180 || rawOffset === 270 ? rawOffset : 0;
+  // Shared view comes from the SSE echo only (D-01) — no local view state.
+  // toViewOrientation coerces any invalid value (45, string, null, undefined)
+  // to top-down / 0 rather than feeding it to trig.
+  const viewOrientation = useMemo(
+    () => toViewOrientation(activeView?.encounter_projection, activeView?.encounter_rotation_offset),
+    [activeView?.encounter_projection, activeView?.encounter_rotation_offset],
+  );
 
   // Location types that have encounter maps (2D tactical maps)
   const encounterMapTypes = ['station', 'ship', 'base', 'deck', 'room', 'level', 'section'];
@@ -450,8 +453,8 @@ export function EncounterView({
             hull={manifest?.hull as HullDef | undefined}
             ventsVisible={ventsVisible}
             onVentsToggle={handleVentsToggle}
-            rotationOffset={rotationOffset}
-            onRotate={handleRotate}
+            viewOrientation={viewOrientation}
+            viewControl={{ mode: 'broadcast', onRotate: handleRotate }}
           />
         ) : noLocationSelected ? (
           <div className="gm-encounter-view__empty">
