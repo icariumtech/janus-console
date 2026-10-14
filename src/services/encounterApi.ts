@@ -232,6 +232,18 @@ async function setVentsVisible(visible: boolean): Promise<{ success: boolean; ve
 }
 
 /**
+ * Rotate the shared encounter view one 90-degree step (GM only).
+ * The server applies the relative delta to its own state; the map follows the SSE echo.
+ */
+async function rotateView(delta: 90 | -90): Promise<{ success: boolean; rotation_offset: number }> {
+  const response = await api.post<{ success: boolean; rotation_offset: number }>(
+    '/gm/encounter/rotate-view/',
+    { delta }
+  );
+  return response.data;
+}
+
+/**
  * Toggle an NPC portrait display on the terminal (GM only).
  * If npcId is active, dismisses it. If not active, shows it.
  */
@@ -252,6 +264,7 @@ export const encounterApi = {
   hideAllRooms,
   setDoorStatus,
   setVentsVisible,
+  rotateView,
   placeToken,
   moveToken,
   removeToken,

@@ -96,6 +96,10 @@ interface EncounterMapRendererProps {
   ventsVisible?: boolean;
   /** Callback when GM right-clicks a vent to toggle all vents */
   onVentsToggle?: (visible: boolean) => void;
+  /** Shared view offset in degrees (0/90/180/270): grid azimuth added on top of the projection. Default 0. */
+  rotationOffset?: number;
+  /** When supplied a rotate-clockwise button is shown; supplied only by the GM tactical map. */
+  onRotate?: (delta: 90 | -90) => void;
   // ----------------------------------------------------------------
   // Editor-mode props (Plan 29-03) — all four are inert unless `editable` is true.
   // Wiring these callbacks to Monaco edits is Plan 29-04.
@@ -156,6 +160,8 @@ export function EncounterMapRenderer({
   showLegend = true,
   ventsVisible,
   onVentsToggle,
+  rotationOffset = 0,
+  onRotate,
   editable = false,
   onPoiClick,
   onPoiMove,
@@ -205,9 +211,9 @@ export function EncounterMapRenderer({
   const projection = useMemo(
     () =>
       projectionMode === 'iso'
-        ? isoProjection({ unitSize, tilt: 30, rotation: 45 })
-        : topDownProjection({ unitSize }),
-    [unitSize, projectionMode]
+        ? isoProjection({ unitSize, tilt: 30, rotation: 45 + rotationOffset })
+        : topDownProjection({ unitSize, rotation: rotationOffset }),
+    [unitSize, projectionMode, rotationOffset]
   );
   const view = useMemo(() => makeMapView(projection), [projection]);
 
@@ -842,29 +848,59 @@ export function EncounterMapRenderer({
 
         {/* Projection toggle - bottom left (D-03/D-04). Renders
             unconditionally, unlike RESET VIEW's pan/zoom gate. */}
-        <button
-          className="encounter-map__projection-toggle"
-          onClick={() => setProjectionMode((m) => (m === 'iso' ? 'top-down' : 'iso'))}
-          title={projectionMode === 'iso' ? 'Switch to top-down view' : 'Switch to isometric view'}
-          aria-label="Toggle map projection between top-down and isometric"
-          aria-pressed={projectionMode === 'iso'}
+        <div
+          className="encounter-map__view-controls"
           style={{
             gridArea: 'bottom-left',
             alignSelf: 'end',
             justifySelf: 'start',
-            pointerEvents: 'auto',
-            background: 'rgba(15, 21, 21, 0.95)',
-            border: projectionMode === 'iso' ? '1px solid #c9a050' : '1px solid #4a6b6b',
-            color: projectionMode === 'iso' ? '#c9a050' : '#7ab8b8',
-            fontFamily: "'Cascadia Code', 'Courier New', monospace",
-            fontSize: '11px',
-            letterSpacing: '2px',
-            padding: '8px 16px',
-            cursor: 'pointer',
+            display: 'flex',
+            gap: '8px',
+            pointerEvents: 'none',
           }}
         >
-          {projectionMode === 'iso' ? 'TOP DOWN' : 'ISO VIEW'}
-        </button>
+          <button
+            className="encounter-map__projection-toggle"
+            onClick={() => setProjectionMode((m) => (m === 'iso' ? 'top-down' : 'iso'))}
+            title={projectionMode === 'iso' ? 'Switch to top-down view' : 'Switch to isometric view'}
+            aria-label="Toggle map projection between top-down and isometric"
+            aria-pressed={projectionMode === 'iso'}
+            style={{
+              pointerEvents: 'auto',
+              background: 'rgba(15, 21, 21, 0.95)',
+              border: projectionMode === 'iso' ? '1px solid #c9a050' : '1px solid #4a6b6b',
+              color: projectionMode === 'iso' ? '#c9a050' : '#7ab8b8',
+              fontFamily: "'Cascadia Code', 'Courier New', monospace",
+              fontSize: '11px',
+              letterSpacing: '2px',
+              padding: '8px 16px',
+              cursor: 'pointer',
+            }}
+          >
+            {projectionMode === 'iso' ? 'TOP DOWN' : 'ISO VIEW'}
+          </button>
+          {onRotate && (
+            <button
+              className="encounter-map__rotate-cw"
+              onClick={() => onRotate?.(90)}
+              title="Rotate map clockwise (players follow)"
+              aria-label="Rotate map clockwise"
+              style={{
+                pointerEvents: 'auto',
+                background: 'rgba(15, 21, 21, 0.95)',
+                border: '1px solid #4a6b6b',
+                color: '#7ab8b8',
+                fontFamily: "'Cascadia Code', 'Courier New', monospace",
+                fontSize: '11px',
+                letterSpacing: '2px',
+                padding: '8px 16px',
+                cursor: 'pointer',
+              }}
+            >
+              ⟳
+            </button>
+          )}
+        </div>
 
         {/* Level indicator - top right */}
         <div

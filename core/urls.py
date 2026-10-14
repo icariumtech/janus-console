@@ -75,6 +75,7 @@ urlpatterns = [
     path('api/gm/encounter/switch-level/', views.api_encounter_switch_level, name='encounter_switch_level'),
     path('api/gm/encounter/toggle-room/', views.api_encounter_toggle_room, name='encounter_toggle_room'),
     path('api/gm/encounter/set-vents-visible/', views.api_encounter_set_vents_visible, name='encounter_set_vents_visible'),
+    path('api/gm/encounter/rotate-view/', views.api_encounter_rotate_view, name='encounter_rotate_view'),
     path('api/gm/encounter/room-visibility/', views.api_encounter_room_visibility, name='encounter_room_visibility'),
     path('api/gm/encounter/set-door-status/', views.api_encounter_set_door_status, name='encounter_set_door_status'),
     path('api/gm/encounter/place-token/', views.api_encounter_place_token, name='encounter_place_token'),

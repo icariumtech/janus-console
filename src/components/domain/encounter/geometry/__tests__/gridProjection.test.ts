@@ -113,3 +113,21 @@ describe('isoProjection', () => {
     expect(() => isoProjection({ unitSize: 40, tilt: 90, rotation: 45 })).toThrow();
   });
 });
+
+describe('topDownProjection rotation, payload to pixels (Phase 34 tracer)', () => {
+  it('turns the grid 90 degrees clockwise for the SSE payload offset (D-06)', () => {
+    // Literal payload shape from the SSE activeview event: pins the JSON key names.
+    const payload = { encounter_projection: 'top-down', encounter_rotation_offset: 90 };
+    const proj = topDownProjection({ unitSize: 40, rotation: payload.encounter_rotation_offset });
+    // Grid +x now points down the screen, grid +y points left.
+    closeToSvg(proj.project({ gx: 1, gy: 0 }), { x: 0, y: 40 }, 1e-9);
+    closeToSvg(proj.project({ gx: 0, gy: 1 }), { x: -40, y: 0 }, 1e-9);
+  });
+
+  it('rotation 0 and an omitted rotation are identity (D-07)', () => {
+    const explicit = topDownProjection({ unitSize: 40, rotation: 0 });
+    const omitted = topDownProjection({ unitSize: 40 });
+    closeToSvg(explicit.project({ gx: 1, gy: 0 }), { x: 40, y: 0 });
+    closeToSvg(omitted.project({ gx: 1, gy: 0 }), { x: 40, y: 0 });
+  });
+});

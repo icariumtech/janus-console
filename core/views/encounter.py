@@ -98,6 +98,24 @@ def api_encounter_set_vents_visible(request, data):
 
 @login_required
 @post_json
+def api_encounter_rotate_view(request, data):
+    """
+    Rotate the shared encounter view one 90-degree step.
+    POST: { delta: 90 | -90 }
+    """
+    try:
+        new_state = enc.rotate_view(data.get('delta'))
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({
+        'success': True,
+        'rotation_offset': new_state['encounter_rotation_offset'],
+    })
+
+
+@login_required
+@post_json
 def api_encounter_set_door_status(request, data):
     """
     Set door status for a connection (door).

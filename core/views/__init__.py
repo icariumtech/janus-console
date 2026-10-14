@@ -66,6 +66,7 @@ from .encounter import (
     api_encounter_toggle_portrait,
     api_encounter_toggle_room,
     api_encounter_set_vents_visible,
+    api_encounter_rotate_view,
     api_encounter_token_images,
     api_encounter_update_token_status,
     api_terminal_data,
