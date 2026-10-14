@@ -16,6 +16,7 @@ import { GalaxyMap } from '@components/domain/maps/GalaxyMap';
 import { SystemMap } from '@components/domain/maps/SystemMap';
 import { OrbitMap } from '@components/domain/maps/OrbitMap';
 import { EncounterMapDisplay } from './EncounterMapDisplay';
+import type { ViewOrientation } from './geometry/viewOrientation';
 import type { StarMapData } from '../../../types/starMap';
 import type { RoomVisibilityState, DoorStatusState, TokenState, TokenStatus } from '../../../types/encounterMap';
 import './EncounterView.css';
@@ -68,6 +69,8 @@ interface EncounterViewProps {
   doorStatus?: DoorStatusState;
   /** Vent visibility state from GM */
   ventsVisible?: boolean;
+  /** GM-broadcast projection + rotation, rendered read-only (no controls) */
+  viewOrientation?: ViewOrientation;
   /** Token state */
   tokens?: TokenState;
   /** Is this a GM view? */
@@ -113,6 +116,7 @@ export function EncounterView({
   roomVisibility,
   doorStatus,
   ventsVisible,
+  viewOrientation,
   tokens,
   isGM = false,
   onTokenMove,
@@ -216,6 +220,7 @@ export function EncounterView({
             roomVisibility={roomVisibility}
             doorStatus={doorStatus}
             ventsVisible={ventsVisible}
+            viewOrientation={viewOrientation}
             currentLevel={encounterLevel}
             totalLevels={totalDecks}
             deckName={deckName}

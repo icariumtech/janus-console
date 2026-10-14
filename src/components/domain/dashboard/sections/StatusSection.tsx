@@ -5,6 +5,7 @@ import { DashboardPanel } from '@/components/ui/DashboardPanel';
 import { gmConsoleApi } from '@/services/gmConsoleApi';
 import { ENCOUNTER_ICONS } from '@/components/domain/encounter/EncounterIcons';
 import type { ShipDeckData } from '@/types/gmConsole';
+import type { ViewOrientation } from '@/components/domain/encounter/geometry/viewOrientation';
 import './Section.css';
 import './StatusSection.css';
 
@@ -15,6 +16,8 @@ interface StatusSectionProps {
   shipDeckTotalDecks?: number;
   shipDeckAllDecks?: Record<string, ShipDeckData['current_deck']>;
   revealKey?: number;
+  /** GM-broadcast map view, rendered read-only on the deck thumbnail */
+  viewOrientation?: ViewOrientation;
 }
 
 interface SelectedRow {
@@ -83,7 +86,7 @@ function getThresholdClass(pct: number): string {
   return '';
 }
 
-export function StatusSection({ shipData, shipDeckData, shipDeckTotalDecks, shipDeckAllDecks, revealKey }: StatusSectionProps) {
+export function StatusSection({ shipData, shipDeckData, shipDeckTotalDecks, shipDeckAllDecks, revealKey, viewOrientation }: StatusSectionProps) {
   const [staggerComplete, setStaggerComplete] = useState(false);
   const [currentDeckId, setCurrentDeckId] = useState<string>(() => shipDeckData?.current_deck_id ?? '');
 
@@ -458,6 +461,7 @@ export function StatusSection({ shipData, shipDeckData, shipDeckTotalDecks, ship
               deckName={currentDeckName}
               viewPadding={8}
               showLegend={false}
+              viewOrientation={viewOrientation}
             />
           ) : (
             <div className="status-map-unavailable">DECK MAP UNAVAILABLE</div>

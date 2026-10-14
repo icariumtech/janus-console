@@ -1,6 +1,7 @@
 import { ReactNode, useState, useEffect, useRef } from 'react';
 import type { ShipStatusData } from '@/types/shipStatus';
 import type { ShipDeckData } from '@/types/gmConsole';
+import type { ViewOrientation } from '@/components/domain/encounter/geometry/viewOrientation';
 import { TabBar, BridgeTab } from './TabBar';
 import { PersonnelSection } from './sections/PersonnelSection';
 import { LogsSection } from './sections/LogsSection';
@@ -87,6 +88,8 @@ export interface BridgeViewProps {
   shipDeckTotalDecks?: number;
   shipDeckAllDecks?: Record<string, ShipDeckData['current_deck']>;
   revealKey?: number;
+  /** GM-broadcast map view, mirrored read-only on the status thumbnail */
+  viewOrientation?: ViewOrientation;
 }
 
 // Applies bridge-tab-glitch on mount; boot stagger overrides via higher CSS specificity
@@ -114,6 +117,7 @@ export function BridgeView({
   shipDeckTotalDecks,
   shipDeckAllDecks,
   revealKey,
+  viewOrientation,
 }: BridgeViewProps) {
   const [staggerDone, setStaggerDone] = useState(false);
   const mountedRef = useRef(false);
@@ -160,7 +164,7 @@ export function BridgeView({
         {tab === 'map' && children}
         {tab === 'personnel' && <PersonnelSection />}
         {tab === 'logs' && <LogsSection />}
-        {tab === 'status' && <StatusSection shipData={shipData ?? null} shipDeckData={shipDeckData} shipDeckTotalDecks={shipDeckTotalDecks} shipDeckAllDecks={shipDeckAllDecks} revealKey={revealKey} />}
+        {tab === 'status' && <StatusSection shipData={shipData ?? null} shipDeckData={shipDeckData} shipDeckTotalDecks={shipDeckTotalDecks} shipDeckAllDecks={shipDeckAllDecks} revealKey={revealKey} viewOrientation={viewOrientation} />}
       </Wrap>
     );
   };
