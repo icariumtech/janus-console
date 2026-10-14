@@ -7,6 +7,7 @@ the get → copy → mutate → sync_state pattern inline.
 """
 
 from core.active_view_store import get_state
+from core.encounter_view import PROJECTIONS, ROTATION_DELTAS
 
 
 def _sync(*args, **kwargs) -> dict:
@@ -72,20 +73,27 @@ def set_vents_visible(visible: bool) -> dict:
 # View orientation (Phase 34)
 # ---------------------------------------------------------------------------
 
-ROTATION_DELTAS = (90, -90)
-
-
 def rotate_view(delta: int) -> dict:
     """Rotate the shared encounter view one 90-degree step.
 
     The new offset is computed here from current server state, never taken
     from the client, so a double click or two GM clients each apply exactly
-    one step. Raises ValueError for any delta outside ROTATION_DELTAS.
+    one step. Raises ValueError for any delta outside ROTATION_DELTAS; only a
+    real int qualifies (bool and 90.0 compare equal to ints but are rejected).
     """
-    if delta not in ROTATION_DELTAS:
+    if isinstance(delta, bool) or not isinstance(delta, int) or delta not in ROTATION_DELTAS:
         raise ValueError(f"Invalid rotation delta {delta!r}. Must be 90 or -90.")
     offset = (get_state().get('encounter_rotation_offset', 0) + delta) % 360
     return _sync(encounter_rotation_offset=offset)
+
+
+def set_projection(projection: str) -> dict:
+    """Set the shared encounter projection. Raises ValueError for any value outside PROJECTIONS."""
+    if not (isinstance(projection, str) and projection in PROJECTIONS):
+        raise ValueError(
+            f"Invalid projection {projection!r}. Must be one of: {', '.join(PROJECTIONS)}"
+        )
+    return _sync(encounter_projection=projection)
 
 
 # ---------------------------------------------------------------------------

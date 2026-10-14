@@ -103,6 +103,8 @@ def api_encounter_rotate_view(request, data):
     Rotate the shared encounter view one 90-degree step.
     POST: { delta: 90 | -90 }
     """
+    if not isinstance(data, dict):
+        return JsonResponse({'error': 'Request body must be a JSON object'}, status=400)
     try:
         new_state = enc.rotate_view(data.get('delta'))
     except ValueError as e:
@@ -111,6 +113,25 @@ def api_encounter_rotate_view(request, data):
     return JsonResponse({
         'success': True,
         'rotation_offset': new_state['encounter_rotation_offset'],
+    })
+
+
+@login_required
+@post_json
+def api_encounter_set_projection(request, data):
+    """
+    Set the shared encounter projection. POST: { projection: 'top-down' | 'iso' }
+    """
+    if not isinstance(data, dict):
+        return JsonResponse({'error': 'Request body must be a JSON object'}, status=400)
+    try:
+        new_state = enc.set_projection(data.get('projection'))
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+    return JsonResponse({
+        'success': True,
+        'projection': new_state['encounter_projection'],
     })
 
 
