@@ -69,6 +69,26 @@ def set_vents_visible(visible: bool) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# View orientation (Phase 34)
+# ---------------------------------------------------------------------------
+
+ROTATION_DELTAS = (90, -90)
+
+
+def rotate_view(delta: int) -> dict:
+    """Rotate the shared encounter view one 90-degree step.
+
+    The new offset is computed here from current server state, never taken
+    from the client, so a double click or two GM clients each apply exactly
+    one step. Raises ValueError for any delta outside ROTATION_DELTAS.
+    """
+    if delta not in ROTATION_DELTAS:
+        raise ValueError(f"Invalid rotation delta {delta!r}. Must be 90 or -90.")
+    offset = (get_state().get('encounter_rotation_offset', 0) + delta) % 360
+    return _sync(encounter_rotation_offset=offset)
+
+
+# ---------------------------------------------------------------------------
 # Tokens
 # ---------------------------------------------------------------------------
 

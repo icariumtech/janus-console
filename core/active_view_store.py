@@ -33,6 +33,8 @@ _DEFAULT_STATE: dict = {
     # migration.
     'encounter_door_status': {},
     'encounter_vents_visible': False,
+    'encounter_projection': 'top-down',
+    'encounter_rotation_offset': 0,
     'encounter_tokens_by_location': {},
     'encounter_active_portraits': [],
 }

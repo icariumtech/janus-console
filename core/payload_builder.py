@@ -96,6 +96,8 @@ class PayloadBuilder:
             'encounter_room_visibility': state.get('encounter_room_visibility', {}),
             'encounter_door_status': state.get('encounter_door_status', {}),
             'encounter_vents_visible': state.get('encounter_vents_visible', False),
+            'encounter_projection': state.get('encounter_projection', 'top-down'),
+            'encounter_rotation_offset': state.get('encounter_rotation_offset', 0),
             'encounter_tokens': encounter_state.get_tokens_for_location(
                 state.get('location_slug', ''), state.get('encounter_deck_id', '')
             ),
