@@ -5,16 +5,16 @@ milestone_name: Better Deckplans
 current_phase: 34
 current_phase_name: GM-Controlled Projection and Iso Rotation
 status: executing
-stopped_at: Phase 34 UI-SPEC approved
-last_updated: "2026-10-14T20:15:10.032Z"
+stopped_at: Completed 34-02-PLAN.md
+last_updated: "2026-10-14T20:41:43.083Z"
 last_activity: 2026-10-14
 last_activity_desc: Phase 34 execution started
-state_head: 11828f5883fd62eeff046ff19443bac301631ecf
+state_head: a059ec6e45531073479c93b460342be55bab6724
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 21
-  completed_plans: 16
+  completed_plans: 18
   percent: 71
 ---
 
@@ -83,10 +83,10 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/34-gm-controlled-projection-and-iso-rotation/34-UI-SPEC.md
+**Resume file:** None
 
-Last session: 2026-10-14T18:52:17.234Z
-Stopped at: Phase 34 UI-SPEC approved
+Last session: 2026-10-14T20:41:42.929Z
+Stopped at: Completed 34-02-PLAN.md
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
@@ -110,6 +110,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 | Phase 32 P02 | ~7min | 2 tasks | 3 files |
 | Phase 32 P03 | ~15min | 2 tasks | 3 files |
 | Phase 33 P01 | ~15min | 2 tasks | 7 files |
+| Phase 34 P02 | 15 min | 3 tasks | 14 files |
 
 ## Operator Next Steps
 
@@ -125,6 +126,8 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 - [Phase 32]: 32-02: HULL-03 satisfied via shared `_extract_hull_layer()`/`_write_hull_block()` for both root and per-deck Hull sublayers (multi-deck-only scoping, Pitfall 4); the plan's assumed regression-test fixture content did not match reality (both ship_template*.svg Hull layers hold only a placeholder `<rect>`, no `<path>`) — corrected via source-grounding, test adjusted to true pre-refactor behavior plus an added controlled-fixture test proving the compact-form case
 - [Phase 32]: 32-03: DET-02 satisfied via `_extract_details_layer()` — closed/open read from the raw d string directly (never `parse_path_d()`'s return value, per Pattern 4/Pitfall 3); room association reuses `_find_room_at()` unchanged; circle details reuse Plan 01's circle-shape helpers. Phase-gate: full 19-test suite green, both fixture SVGs re-converted with zero output drift — Phase 32 (all 3 plans) complete.
 - [Phase 33]: 33-01: isoProjection uses fixed tilt:30/rotation:45 constants (true 30-degree isometric, not 26.565-degree dimetric); circleTransform's matrix field names mirror SVG matrix(a,b,c,d,e,f) order; added vectorEffect=non-scaling-stroke on circle-as-ellipse strokes to prevent stroke-width inflation from the scaling transform
+- [Phase 34]: 34-02: default_view keys are default_view/projection/rotation_offset (rotation_offset avoids collision with per-deck rotation)
+- [Phase 34]: 34-02: authored default view applies only when encounter_view_location_slug differs from the requested slug (BRIDGE/STANDBY clear location_slug, so it cannot detect a return)
 
 ### Blockers
 
