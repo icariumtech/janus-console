@@ -53,6 +53,39 @@ class UpdateStateTests(IsolatedStateMixin, TestCase):
         self.assertEqual(siblings, [active_view_store._STATE_PATH])
 
 
+class UpdateStateFnTests(IsolatedStateMixin, TestCase):
+    def test_fn_sees_current_state_under_lock_and_result_persists(self):
+        active_view_store.update_state(encounter_rotation_offset=90)
+        seen = {}
+
+        def step(state):
+            seen['locked'] = active_view_store._lock.locked()
+            return {'encounter_rotation_offset': state['encounter_rotation_offset'] + 90}
+
+        result = active_view_store.update_state_fn(step)
+        self.assertTrue(seen['locked'])
+        self.assertEqual(result['encounter_rotation_offset'], 180)
+        self.assertEqual(active_view_store.get_state()['encounter_rotation_offset'], 180)
+        self.assertEqual(active_view_store._load_from_disk()['encounter_rotation_offset'], 180)
+
+    def test_fn_receives_a_copy(self):
+        def mutate(state):
+            state['encounter_room_visibility']['x'] = True
+            return {}
+
+        active_view_store.update_state_fn(mutate)
+        self.assertEqual(active_view_store.get_state()['encounter_room_visibility'], {})
+
+    def test_fn_exception_leaves_state_untouched_and_releases_lock(self):
+        def boom(state):
+            raise RuntimeError('nope')
+
+        with self.assertRaises(RuntimeError):
+            active_view_store.update_state_fn(boom)
+        self.assertFalse(active_view_store._lock.locked())
+        self.assertEqual(active_view_store.get_state()['encounter_rotation_offset'], 0)
+
+
 class LoadFromDiskTests(IsolatedStateMixin, TestCase):
     def test_missing_file_returns_defaults(self):
         # _STATE_PATH points at a tmpdir file that doesn't exist yet

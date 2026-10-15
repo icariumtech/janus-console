@@ -7,6 +7,8 @@ Each function under test calls through to the real `sync_state()` (via
 payload via PayloadBuilder. IsolatedStateMixin keeps that off the real
 var/active_view.json file used by the dev server.
 """
+from unittest import mock
+
 from django.test import TestCase
 
 from core import active_view_store, encounter_state
@@ -150,6 +152,30 @@ class RotateViewTests(IsolatedStateMixin, TestCase):
                 with self.assertRaises(ValueError):
                     encounter_state.rotate_view(bad)
                 self.assertEqual(get_state()['encounter_rotation_offset'], 0)
+
+    def test_off_grid_stored_offset_is_treated_as_zero(self):
+        # Simulates a bad in-memory value (e.g. loaded before normalization existed).
+        for bad in (135, 'x', None, 90.0, True):
+            with self.subTest(stored=bad):
+                active_view_store.update_state(encounter_rotation_offset=bad)
+                state = encounter_state.rotate_view(90)
+                self.assertEqual(state['encounter_rotation_offset'], 90)
+
+    def test_step_is_computed_inside_the_store_lock(self):
+        # The read-modify-write must be one critical section: the lock is held
+        # while the step function reads current state.
+        seen = {}
+        real = active_view_store.update_state_fn
+
+        def spy(fn):
+            def wrapped(state):
+                seen['locked'] = active_view_store._lock.locked()
+                return fn(state)
+            return real(wrapped)
+
+        with mock.patch('core.views.active_view.update_state_fn', spy):
+            encounter_state.rotate_view(90)
+        self.assertTrue(seen['locked'])
 
     def test_rotation_survives_store_reload(self):
         encounter_state.rotate_view(90)

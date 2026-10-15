@@ -2,7 +2,7 @@ from django.http import JsonResponse, StreamingHttpResponse
 import queue as queue_module
 import json
 from django.conf import settings
-from core.active_view_store import get_state, update_state
+from core.active_view_store import get_state, update_state, update_state_fn
 from core.sse_broadcaster import broadcaster, format_sse
 from core.data_loader import get_loader
 
@@ -33,6 +33,18 @@ def invalidate_payload_cache() -> None:
 def sync_state(**kwargs) -> dict:
     """Update active view state and broadcast the enriched payload to all SSE clients."""
     new_state = update_state(**kwargs)
+    payload = build_active_view_payload(new_state)
+    broadcaster.announce(payload)
+    return new_state
+
+
+def sync_state_fn(fn) -> dict:
+    """Like sync_state, but the update is computed from current state atomically.
+
+    `fn(current_state) -> updates` runs inside the store lock, so a
+    read-modify-write (e.g. stepping the rotation offset) cannot lose updates.
+    """
+    new_state = update_state_fn(fn)
     payload = build_active_view_payload(new_state)
     broadcaster.announce(payload)
     return new_state

@@ -122,3 +122,19 @@ def update_state(**kwargs) -> dict:
         snapshot = dict(_state)
         _write_to_disk(snapshot)
         return snapshot
+
+
+def update_state_fn(fn) -> dict:
+    """Atomic read-modify-write: apply `fn(current_state) -> updates` under the lock.
+
+    `fn` receives a deep copy of the current state and returns a dict of
+    updates. Use this when the new value depends on the current one, so the
+    read and the write form a single critical section (no lost updates).
+    Exceptions from `fn` propagate and leave the state untouched.
+    """
+    with _lock:
+        updates = fn(copy.deepcopy(_state))
+        _state.update(updates)
+        snapshot = dict(_state)
+        _write_to_disk(snapshot)
+        return snapshot
