@@ -5,11 +5,11 @@ titles: json
 findings:
   - id: WR-01
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "`rotate_view` trusts the stored offset and does a non-atomic read-modify-write"
   - id: WR-02
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "`build()` broadcasts unvalidated stored projection and offset"
   - id: IN-01
     severity: info
@@ -23,17 +23,17 @@ findings:
     severity: info
     disposition: open
     title: "Bridge ship thumbnail inherits the last encounter's orientation"
-open: 5
+open: 3
 total: 5
-recorded: 2026-10-14T21:01:08.038Z
+recorded: 2026-10-15T21:58:37.502Z
 ---
 
 # Phase 34: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | open | - |
-| WR-02 | warning | open | - |
+| WR-01 | warning | fixed | 34-REVIEW-FIX.md |
+| WR-02 | warning | fixed | 34-REVIEW-FIX.md |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
