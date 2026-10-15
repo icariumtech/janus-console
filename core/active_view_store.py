@@ -7,6 +7,8 @@ import tempfile
 import threading
 from pathlib import Path
 
+from core.encounter_view import PROJECTIONS, ROTATION_OFFSETS
+
 _lock = threading.Lock()
 
 _DEFAULT_STATE: dict = {
@@ -50,6 +52,23 @@ _BASE_DIR = Path(__file__).resolve().parent.parent
 _STATE_PATH = Path(os.environ.get('JANUS_STATE_PATH', _BASE_DIR / 'var' / 'active_view.json'))
 
 
+def normalize_view_fields(state: dict) -> dict:
+    """Coerce the persisted view-orientation fields to their closed enums.
+
+    Applied at the disk-load boundary so hand-edited or older-build values
+    (a non-multiple of 90, a non-int, an unknown projection) can never reach
+    `rotate_view` or the SSE payload. Invalid values fall back to the defaults.
+    Mutates and returns `state`.
+    """
+    projection = state.get('encounter_projection')
+    if not (isinstance(projection, str) and projection in PROJECTIONS):
+        state['encounter_projection'] = _DEFAULT_STATE['encounter_projection']
+    offset = state.get('encounter_rotation_offset')
+    if not (isinstance(offset, int) and not isinstance(offset, bool) and offset in ROTATION_OFFSETS):
+        state['encounter_rotation_offset'] = _DEFAULT_STATE['encounter_rotation_offset']
+    return state
+
+
 def _load_from_disk() -> dict:
     state = copy.deepcopy(_DEFAULT_STATE)
     try:
@@ -65,7 +84,7 @@ def _load_from_disk() -> dict:
         pass
     except (OSError, ValueError) as exc:
         print(f'active_view_store: failed to load {_STATE_PATH}: {exc}', file=sys.stderr)
-    return state
+    return normalize_view_fields(state)
 
 
 def _write_to_disk(state: dict) -> None:

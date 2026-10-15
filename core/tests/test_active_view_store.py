@@ -84,6 +84,35 @@ class LoadFromDiskTests(IsolatedStateMixin, TestCase):
         self.assertEqual(state, active_view_store._DEFAULT_STATE)
 
 
+class LoadFromDiskViewNormalizationTests(IsolatedStateMixin, TestCase):
+    """Stored projection/offset are coerced to the closed enums on load (WR-02)."""
+
+    def _load_with(self, **stored):
+        active_view_store._STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        active_view_store._STATE_PATH.write_text(json.dumps(stored), encoding='utf-8')
+        return active_view_store._load_from_disk()
+
+    def test_invalid_offsets_fall_back_to_zero(self):
+        for bad in (135, -90, 360, '90', 90.5, None, True, [90]):
+            with self.subTest(offset=bad):
+                self.assertEqual(self._load_with(encounter_rotation_offset=bad)['encounter_rotation_offset'], 0)
+
+    def test_invalid_projections_fall_back_to_top_down(self):
+        for bad in ('isometric', 'ISO', 3, None, ['iso']):
+            with self.subTest(projection=bad):
+                self.assertEqual(self._load_with(encounter_projection=bad)['encounter_projection'], 'top-down')
+
+    def test_valid_values_are_preserved(self):
+        state = self._load_with(encounter_projection='iso', encounter_rotation_offset=270)
+        self.assertEqual(state['encounter_projection'], 'iso')
+        self.assertEqual(state['encounter_rotation_offset'], 270)
+
+    def test_each_field_falls_back_independently(self):
+        state = self._load_with(encounter_projection='iso', encounter_rotation_offset=135)
+        self.assertEqual(state['encounter_projection'], 'iso')
+        self.assertEqual(state['encounter_rotation_offset'], 0)
+
+
 class ViewStateDefaultsTests(IsolatedStateMixin, TestCase):
     """Phase 34 view-orientation keys and their defaults (D-12)."""
 
