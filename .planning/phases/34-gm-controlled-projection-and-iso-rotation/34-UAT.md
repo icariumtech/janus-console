@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 34-gm-controlled-projection-and-iso-rotation
 source: [34-VERIFICATION.md]
 started: 2026-10-14T00:00:00Z
@@ -61,8 +61,15 @@ blocked: 0
   reason: "User reported: Lets put the rotate buttons on either side of the view toggle.  Then lets make the CCW/CW icons a little bigger"
   severity: cosmetic
   test: 5
-  artifacts: []  # Filled by diagnosis
-  missing: []    # Filled by diagnosis
+  root_cause: "Layout/design request, not a defect: the bottom-left view cluster renders [projection toggle][⟲][⟳] in that order, and the rotate glyphs inherit OVERLAY_BUTTON_STYLE's 11px font, so they read small."
+  artifacts:
+    - path: "src/components/domain/encounter/EncounterMapRenderer.tsx"
+      issue: "Cluster JSX (~lines 949-990) places both rotate buttons after the projection toggle; rotate buttons use OVERLAY_BUTTON_STYLE fontSize 11px (lines 163-180)"
+  missing:
+    - "Reorder cluster to [⟲ CCW][projection toggle][⟳ CW] (rotate buttons flank the toggle)"
+    - "Give the rotate buttons a larger glyph font size (e.g. ~16-18px) while keeping ≥44px targets and the 360px-width fit"
+    - "Update any renderer tests asserting cluster button order"
+  debug_session: ""
 
 - gap_id: G-34-6
   truth: "Entering a location with an authored default_view renders directly in that view with no intermediate frame"
@@ -70,5 +77,16 @@ blocked: 0
   reason: "User reported: The default_view works but there is some artifacting, when selecting a location with a default_view it seems to flash to the screen in top down first then does the projection and rotation.  Its fast but causes a flicker on the screen"
   severity: minor
   test: 6
-  artifacts: []  # Filled by diagnosis
-  missing: []    # Filled by diagnosis
+  root_cause: "GM-only. GM EncounterView takes viewOrientation + locationKey from the new activeView immediately, but currentDeckMapData and manifest (hull) are fetched by two separate effects and never cleared on location change. useOrientationTransition cuts/resets pan-zoom on the PREVIOUS location's map in the new view (e.g. Somnus shown top-down when leaving, Morrigan shown iso/90 when entering), then paints a mixed frame (new rooms + old hull) before the correct map. Pre-existing stale-data behavior made visible by Phase 34 default_view. Player terminal is clean (map, slug, view arrive in one payload)."
+  artifacts:
+    - path: "src/components/gm/views/EncounterView.tsx"
+      issue: "Lines 99/105-108 derive slug+view from activeView; 121-148 loadAllDecks (manifest/hull) and 150-172 loadCurrentDeckMap don't clear old data, are separate requests, and lack stale-response guards; 449-470 renders MapPreview for any non-null currentDeckMapData regardless of which location it belongs to"
+    - path: "src/components/domain/encounter/useOrientationTransition.ts"
+      issue: "Lines 69-73 cut + onSnap run on whatever map is present; the real new map arriving later gets no reset of its own (hook itself is correct)"
+  missing:
+    - "Bind map data to its location: store {slug, mapData, manifest} as one unit and render MapPreview only when loaded.slug === locationSlug (else loading state or freeze old map in its old view)"
+    - "Load deck map + manifest together (Promise.all, single state set) so rooms and hull commit together"
+    - "Guard both loads against out-of-order responses (cancelled flag / AbortController) — fixes latent A→B→C stale-map bug"
+    - "Regression test: GM EncounterView across a location change between differing views never pairs one location's map with another's view or hull"
+    - "No server or player-side changes needed"
+  debug_session: ".planning/debug/34-default-view-flicker.md"
