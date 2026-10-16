@@ -4,18 +4,18 @@ milestone: v3.0
 milestone_name: Better Deckplans
 current_phase: 34
 current_phase_name: gm-controlled-projection-and-iso-rotation
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: Completed 34-06-PLAN.md
-last_updated: "2026-10-16T19:54:34.839Z"
+stopped_at: Completed 34-07-PLAN.md
+last_updated: "2026-10-16T20:00:47.825Z"
 last_activity: 2026-10-16
 last_activity_desc: Phase 34 execution started
-state_head: f3f82f7eaed8fbc9454f8e063c43a889bacf91f8
+state_head: 46f24aceca3d95a84f2e52e07efe18e821b22a1f
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 23
-  completed_plans: 22
+  completed_plans: 23
   percent: 71
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-06-12)
 ## Current Position
 
 Phase: 34 (gm-controlled-projection-and-iso-rotation) — EXECUTING
-Current Plan: 2
+Current Plan: 3
 Total Plans in Phase: 7
 Status: Ready to execute
 Last activity: 2026-10-16 — Phase 34 execution started
@@ -88,8 +88,8 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 **Resume file:** None
 
-Last session: 2026-10-16T19:54:34.650Z
-Stopped at: Completed 34-06-PLAN.md
+Last session: 2026-10-16T20:00:47.649Z
+Stopped at: Completed 34-07-PLAN.md
 Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Performance Metrics
@@ -118,6 +118,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 | Phase 34 P04 | 8 min | 2 tasks | 8 files |
 | Phase 34 P05 | 3 min | 3 tasks | 11 files |
 | Phase 34 P06 | 12 min | 2 tasks | 5 files |
+| Phase 34 P07 | 4 min | 2 tasks | 4 files |
 
 ## Operator Next Steps
 
@@ -141,6 +142,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 - [Phase 34]: 34-04: renderer local mode is structurally server-free (private useState, explicit branch, no service import); GM EncounterView passes broadcast mode with onRotate only until 34-05
 - [Phase 34]: 34-05: Only the GM tactical map passes viewControl mode 'broadcast'; player terminal, side panel and all thumbnails mirror viewOrientation read-only; editor preview uses mode 'local' with no service import
 - [Phase 34]: 34-06: rotate buttons flank projection toggle with 18px glyph style (ROTATE_BUTTON_STYLE); CONTEXT D-02 amended at GM request (G-34-5)
+- [Phase 34]: 34-07: GM encounter map renders from a slug-bound unit (useLocationMapBundle); previous map frozen in its own view until the new map+manifest arrive; mutating controls withheld during the freeze (endpoints take no slug)
 
 ### Blockers
 
