@@ -185,5 +185,5 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | Complete    | 2026-08-04 |
 | 32. SVG Converter — Details/Hulls/Circles | v3.0 | 3/3 | Complete    | 2026-08-25 |
 | 33. Isometric View | v3.0 | 3/3 | Complete    | 2026-09-07 |
-| 34. GM-Controlled Projection & Iso Rotation | v3.0 | 7/7 | In Progress | — |
+| 34. GM-Controlled Projection & Iso Rotation | v3.0 | 7/7 | Complete    | 2026-10-16 |
 | 35. Stacked Deck View | v3.0 | 0/? | Not started | — |

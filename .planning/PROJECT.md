@@ -10,9 +10,9 @@ Give the GM a single tool that enhances the tabletop experience with atmospheric
 
 ## Current State
 
-**Shipped:** v1.0 MVP (2026-05-07) · v2.0 AI Tooling (2026-06-12) · **Active:** v3.0 Better Deckplans — Phase 31 (Deckplan Format — Per-Deck Hulls & Detail Linework) complete; Phase 32 (SVG Converter) and Phase 33 (Isometric View) remain
+**Shipped:** v1.0 MVP (2026-05-07) · v2.0 AI Tooling (2026-06-12) · **Active:** v3.0 Better Deckplans — Phases 29–34 complete (through GM-Controlled Projection & Iso Rotation); Phase 35 (Stacked Deck View) remains
 
-- Phases 1–31 complete · v2.0 archived 2026-06-12
+- Phases 1–34 complete · v2.0 archived 2026-06-12
 - ~40k LOC first-party source (TypeScript + Python) + standalone `janus-skills` repo (10 Claude Code skills, schema resources, install.sh)
 - Tech stack: Django 5.2.7, React 19, TypeScript, Vite 5.4, React Three Fiber 9.0, Zustand, GSAP, Ant Design 6.1
 - Data: YAML/Markdown files, flat location directory, per-entity character files
@@ -87,11 +87,11 @@ Key systems shipped in v1.0:
 - ✓ Interactive deckplan map editor — live preview, YAML sync, POI placement — v3.0 (Phase 29)
 - ✓ Per-deck hull polygons — additive merge with the shared silhouette, multi-polygon + evenodd holes — v3.0 (Phase 31)
 - ✓ Map detail linework — room-interior + hull-exterior decorative linework, interior details reveal-gated via the room's own SVG reveal group — v3.0 (Phase 31)
+- ✓ Isometric view — true 30° iso projection; GM-broadcast top-down/iso toggle + 90° iso rotation mirrored live on player views; authored per-location `default_view` — v3.0 (Phases 33–34)
 
 ### Active
 
 - [ ] Circular room SVG conversion — v3.0
-- [ ] Isometric view toggle (player + GM) — v3.0
 - [ ] UI audio — click sounds, transition effects, ambient atmosphere (AUDI-01..03, deferred from v1.0; not in v3.0)
 
 ### Out of Scope
@@ -145,6 +145,8 @@ Key systems shipped in v1.0:
 | Targeted map-element edit endpoint (resolver + verbs) | AI edits one room/door/POI without rewriting deckplan.yaml; 404/409 return suggestions instead of failing | ✓ Good |
 | Phase 26 shipped ad-hoc without plans | Small polish pass; formal planning overhead not justified | ✓ Accepted |
 | Per-deck hulls are additive, not override | Roadmap originally said a deck hull "overrides" the shared silhouette; discussion refined this so the shared outline always renders and deck hulls add geometry on top — avoids a deck hull ever hiding the ship's baseline shape | ✓ Good |
+| Projection/rotation is GM-broadcast, players read-only | One shared view at the table; only the GM tactical map carries controls, editor preview uses a private local mode | ✓ Good |
+| GM map binds to its location (slug-bound bundle, frozen during load) | Eliminated top-down flash / mixed-frame flicker on location change and the latent A→B→C stale-map race | ✓ Good |
 
 ## Evolution
 
@@ -164,4 +166,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-04 — Phase 31 complete (per-deck hulls + detail linework validated)*
+*Last updated: 2026-10-16 — Phase 34 complete (GM-controlled projection + iso rotation validated)*

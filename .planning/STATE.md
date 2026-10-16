@@ -2,39 +2,39 @@
 gsd_state_version: "1.0"
 milestone: v3.0
 milestone_name: Better Deckplans
-current_phase: 34
-current_phase_name: gm-controlled-projection-and-iso-rotation
-current_plan: 3
-status: executing
-stopped_at: Completed 34-07-PLAN.md
-last_updated: "2026-10-16T20:00:47.825Z"
+current_phase: 35
+current_phase_name: Stacked Deck View with Animated Transitions
+current_plan: Not started
+status: planning
+stopped_at: Phase 34 complete, ready to plan Phase 35
+last_updated: "2026-10-16T23:44:29.772Z"
 last_activity: 2026-10-16
-last_activity_desc: Phase 34 execution started
-state_head: 46f24aceca3d95a84f2e52e07efe18e821b22a1f
+last_activity_desc: Phase 34 complete, transitioned to Phase 35
+state_head: 0cec3f49c489fc85c6511bc84569a476424a825f
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 23
   completed_plans: 23
-  percent: 71
+  percent: 29
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-12)
+See: .planning/PROJECT.md (updated 2026-10-16)
 
 **Core value:** Give the GM a single tool that enhances the tabletop experience with atmospheric digital interfaces without interrupting gameplay flow.
-**Current focus:** Phase 34 — gm-controlled-projection-and-iso-rotation
+**Current focus:** Phase 35 — Stacked Deck View with Animated Transitions
 
 ## Current Position
 
-Phase: 34 (gm-controlled-projection-and-iso-rotation) — EXECUTING
-Current Plan: 3
+Phase: 35 — Stacked Deck View with Animated Transitions
+Current Plan: Not started
 Total Plans in Phase: 7
-Status: Ready to execute
-Last activity: 2026-10-16 — Phase 34 execution started
+Status: Ready to plan
+Last activity: 2026-10-16 — Phase 34 complete, transitioned to Phase 35
 
 ## v1.0 Milestone Archive
 
@@ -89,8 +89,8 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 **Resume file:** None
 
 Last session: 2026-10-16T20:00:47.649Z
-Stopped at: Completed 34-07-PLAN.md
-Next step: /gsd-plan-phase 32 (or /gsd-next)
+Stopped at: Phase 34 complete, ready to plan Phase 35
+Next step: /gsd-discuss-phase 35 (no CONTEXT.md yet)
 
 ## Performance Metrics
 
@@ -122,7 +122,7 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 
 ## Operator Next Steps
 
-- Milestone v3.0 (Better Deckplans) is not yet complete — Phase 31 of 3 is done; Phase 32 (SVG Converter) and Phase 33 (Isometric View) remain. Run /gsd-plan-phase 32 next.
+- Milestone v3.0 (Better Deckplans) is not yet complete — Phase 34 done; Phase 35 (Stacked Deck View with Animated Transitions) remains. Run /gsd-discuss-phase 35 next.
 
 ## Decisions
 
