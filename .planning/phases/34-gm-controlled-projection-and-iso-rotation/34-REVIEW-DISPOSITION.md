@@ -5,35 +5,40 @@ titles: json
 findings:
   - id: WR-01
     severity: warning
-    disposition: fixed
-    title: "`rotate_view` trusts the stored offset and does a non-atomic read-modify-write"
+    disposition: open
+    title: "Failed location load leaves the GM on a permanent \"Loading...\" placeholder with no recovery path"
   - id: WR-02
     severity: warning
-    disposition: fixed
-    title: "`build()` broadcasts unvalidated stored projection and offset"
+    disposition: open
+    title: "Deck-map refetch failure is swallowed, leaving the displayed deck out of step with the selected deck"
+  - id: WR-03
+    severity: warning
+    disposition: open
+    title: "`latchedMapInputsRef` is read during render and written in an effect"
   - id: IN-01
     severity: info
     disposition: open
-    title: "Schema pitfalls are out of order"
+    title: "No visual indication that the map is frozen / read-only"
   - id: IN-02
     severity: info
     disposition: open
-    title: "Rotate glyphs depend on font coverage and use inline literals"
+    title: "Misleading comment on `ROTATE_BUTTON_STYLE` padding"
   - id: IN-03
     severity: info
     disposition: open
-    title: "Bridge ship thumbnail inherits the last encounter's orientation"
-open: 3
-total: 5
-recorded: 2026-10-15T21:58:37.502Z
+    title: "Test coverage gaps for the new hook's failure branches"
+open: 6
+total: 6
+recorded: 2026-10-16T00:00:00Z
 ---
 
 # Phase 34: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | fixed | 34-REVIEW-FIX.md |
-| WR-02 | warning | fixed | 34-REVIEW-FIX.md |
+| WR-01 | warning | open | - |
+| WR-02 | warning | open | - |
+| WR-03 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
