@@ -147,7 +147,7 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
   - [x] 34-03-PLAN.md — Pure logic: `viewOrientation.ts` (normalizers, authored-rotation fold under iso, screenRotationFor, hit-test matrix) and `viewTransition.ts` (fade/cut planner, drag-cancel and popover-close predicates)
   - [x] 34-04-PLAN.md — Renderer: readonly/broadcast/local view modes, control cluster, tracer-prop migration, GSAP hook executing the tested plan, mid-drag cancel
   - [x] 34-05-PLAN.md — Wiring: player terminal + mirrors, GM broadcast controls with toasts, editor local mode, phase gate + human checks, P9 deferral note
-  - [ ] 34-06-PLAN.md — Gap closure G-34-5: rotate buttons flank the projection toggle, larger rotate glyphs, vitest path aliases + first renderer DOM test, UI-SPEC update
+  - [x] 34-06-PLAN.md — Gap closure G-34-5: rotate buttons flank the projection toggle, larger rotate glyphs, vitest path aliases + first renderer DOM test, UI-SPEC update
   - [ ] 34-07-PLAN.md — Gap closure G-34-6: GM EncounterView binds map + manifest + view as one stale-guarded unit (no location-change flicker), regression test, codemap
 - **UI hint**: yes
 
@@ -185,5 +185,5 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | Complete    | 2026-08-04 |
 | 32. SVG Converter — Details/Hulls/Circles | v3.0 | 3/3 | Complete    | 2026-08-25 |
 | 33. Isometric View | v3.0 | 3/3 | Complete    | 2026-09-07 |
-| 34. GM-Controlled Projection & Iso Rotation | v3.0 | 5/5 | In Progress | — |
+| 34. GM-Controlled Projection & Iso Rotation | v3.0 | 6/7 | In Progress | — |
 | 35. Stacked Deck View | v3.0 | 0/? | Not started | — |
