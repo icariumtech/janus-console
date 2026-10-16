@@ -1,20 +1,14 @@
 ---
-status: testing
+status: complete
 phase: 34-gm-controlled-projection-and-iso-rotation
 source: [34-VERIFICATION.md, 34-06-SUMMARY.md, 34-07-SUMMARY.md]
 started: 2026-10-14T00:00:00Z
-updated: 2026-10-16T00:00:00Z
+updated: 2026-10-16T23:44:16.571Z
 ---
 
 ## Current Test
 
-number: 8
-name: G-34-5 re-check — rotate buttons flank the toggle, larger glyphs
-expected: |
-  The GM map cluster reads [⟲][ISO VIEW / TOP DOWN][⟳]. The ⟲/⟳ glyphs are clearly larger (18px) and legible
-  (not boxes — else switch to CCW/CW at EncounterMapRenderer.tsx:163-164). Each button is ≥44px; ⟲ turns CCW,
-  ⟳ turns CW. At 360px width the cluster still fits.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
@@ -52,22 +46,22 @@ result: pass
 
 ### 8. G-34-5 re-check — rotate buttons flank the toggle, larger glyphs
 expected: Cluster reads [⟲][projection toggle][⟳]; glyphs 18px and legible; ≥44px targets; ⟲=CCW, ⟳=CW; fits at 360px.
-result: [pending]
+result: pass
 
 ### 9. G-34-6 re-check — no flicker on location change
 expected: With Somnus default_view {iso, 90}, switching another location → Somnus and back (also with DevTools network throttling) never shows a top-down flash or a mixed frame (old ship in the new view, or new rooms with the old hull). The old map stays until the new one swaps in at once. A→B→C quick switches land on C. Deck switch and BRIDGE round trip unchanged.
-result: [pending]
+result: pass
 
 ### 10. Frozen-map controls during a location load
 expected: While a new location is loading (easiest with network throttling), the still-visible old map is read-only: rotate/projection buttons absent, REVEAL ALL / HIDE ALL and deck picker disabled, token palette hidden, tokens not draggable. Everything returns once the new map appears.
-result: [pending]
+result: pass
 
 ## Summary
 
 total: 10
-passed: 5
+passed: 8
 issues: 2
-pending: 3
+pending: 0
 skipped: 0
 blocked: 0
 
