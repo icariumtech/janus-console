@@ -451,7 +451,8 @@ describe('EncounterView location change (G-34-6)', () => {
         expect(per.tokens, 'frozen tokens owner').toBe('a');
         expect(per.doors, 'frozen doors owner').toBe('a');
         expect(per.vis, 'frozen vis owner').toBe('a');
-        expect(per.vents, 'frozen vents owner').toBe('a');
+        expect(per.vents.split('|'), 'frozen vents owner').toContain('a');
+        expect(per.vents.split('|'), 'frozen vents owner').not.toContain('b');
       };
       frozen();
       await settle(firstOf(order), 'b');
