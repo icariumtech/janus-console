@@ -8,6 +8,12 @@ export default defineConfig({
     globals: false,
   },
   resolve: {
-    alias: { '@': path.resolve(__dirname, 'src') },
+    // Keep in sync with vite.config.ts and the tsconfig.json paths.
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+      '@components': path.resolve(__dirname, 'src/components'),
+      '@hooks': path.resolve(__dirname, 'src/hooks'),
+      '@services': path.resolve(__dirname, 'src/services'),
+    },
   },
 });
