@@ -30,6 +30,12 @@ top-down ↔ iso toggle; any new height/extrusion rendering.
 - **D-02:** GM controls live in the **map overlay**: the existing bottom-left
   projection button (Phase 33 D-03 slot) plus new ⟲ ⟳ rotate buttons beside it, same
   button styling as RESET VIEW. Not duplicated in the GM encounter side panel.
+  Amended 2026-10-16 (UAT G-34-5, user-requested): the rotate buttons now flank the
+  projection button, order [rotate counter-clockwise][projection][rotate clockwise], and
+  the two rotate glyph buttons use an 18px glyph style (44px by 44px targets) instead of
+  sharing RESET VIEW's 11px label style; the projection button and RESET VIEW keep that
+  style. Still in the map overlay, not duplicated in the side panel; "beside" is realised
+  as flanking. See 34-UI-SPEC.md.
 - **D-03:** **Player terminal shows no view controls at all** — no toggle, no
   read-only orientation badge. Players keep pan/zoom and RESET VIEW only.
 - **D-04:** The **deckplan editor preview** (`DeckplanPreviewPane` → `MapPreview`) keeps

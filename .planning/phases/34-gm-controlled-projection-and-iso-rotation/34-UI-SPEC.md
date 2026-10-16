@@ -38,6 +38,7 @@ Recorded so the planner does not re-open these from the research file:
 - **D-15 supersedes RESEARCH Open Question 1 and Pitfall P10.** Research recommended keeping the authored deck `rotation` as a screen-space `rotate()` under iso. CONTEXT D-15 (post-research, locked) overrides that: under iso the authored rotation becomes a grid-space turn, so every deck gets true 30° axes. Visual consequence: decks with an authored rotation (Somnus, `rotation: 90`) change their iso output from Phase 33. This is intended. Top-down output is unchanged.
 - **D-01 supersedes ISO-02** (player-side toggle). REQUIREMENTS.md row must be updated; players have no projection control.
 - **D-17 and D-18** are applied in the Layout & Interaction section below.
+- **G-34-5 (2026-10-16):** CONTEXT D-02's "beside" is now realised as flanking, and the rotate glyph size is 18px, at the GM's UAT request. The amendment is also recorded in 34-CONTEXT.md. No other decision is affected.
 - **D-19** (YAML key names `default_view.projection` and `default_view.rotation_offset`) is a schema concern. This spec does not define the schema; the schema doc change is a plan task under CLAUDE.md Schema Sync. This spec covers only the visual effect of an authored default (see Authored default view).
 
 ---
@@ -59,7 +60,8 @@ Exceptions:
 - Overlay grid outer padding stays at the pre-existing `20px` (`encounter-map__overlays`). Not changed by this phase.
 - `RESET VIEW` joins the 44px minimum via the shared style object (see Layout: Control cluster). Its colors, font, and padding do not change.
 - Label `letter-spacing: 2px` is not on the spacing scale. It is a typographic tracking value carried unchanged from the existing `RESET VIEW` inline style, so the cluster matches it exactly.
-- Cluster width of about 194px (see Narrow and tablet viewports) is a derived measurement, not a spacing token. It follows from the 44px minimum width on each rotate button, the 8px gaps, and the `ISO VIEW` label width at 11px with 2px tracking.
+- The rotate glyph buttons (`⟲`, `⟳`) use `padding: 8px` on all sides (a multiple of 4), so they are exactly the 44px minimum square (G-34-5).
+- Cluster width of about 194px (see Narrow and tablet viewports) is a derived measurement, not a spacing token. It follows from the 44px minimum width on each rotate button, the 8px gaps, and the `ISO VIEW` label width at 11px with 2px tracking. The derived cluster width stays about 194px after G-34-5.
 
 ---
 
@@ -67,11 +69,12 @@ Exceptions:
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Label (all overlay buttons: `ISO VIEW`, `TOP DOWN`, `⟲`, `⟳`, `RESET VIEW`) | 11px | 400 (unset, matches `RESET VIEW`) | 1.2 (default for single-line button text) |
+| Label (`ISO VIEW`, `TOP DOWN`, `RESET VIEW`) | 11px | 400 (unset, matches `RESET VIEW`) | 1.2 (default for single-line button text) |
+| Rotate glyph (`⟲`, `⟳`) | 18px | 400 | 1 |
 
 - Text labels: uppercase, `letter-spacing: 2px`.
-- Glyphs `⟲` / `⟳`: 11px, same font stack, no letter-spacing needed (single character).
-- Declared weights for this phase: exactly one, 400. Size scale for this phase: exactly one, 11px. The wider app type scale is defined in `STYLE_GUIDE.md` and is not restated here.
+- Glyphs `⟲` / `⟳`: 18px, same font stack, `letter-spacing: 0` (single centered character; changed from 11px at the GM's request, G-34-5).
+- Declared weights for this phase: exactly one, 400. Size scale for this phase: exactly two, 11px (labels) and 18px (rotate glyphs). The wider app type scale is defined in `STYLE_GUIDE.md` and is not restated here.
 
 ---
 
@@ -133,8 +136,8 @@ Per-button state table:
 ### Control cluster (D-02, D-03, D-04)
 
 - Container: one `div` in the existing `encounter-map__overlays` grid. Style: `gridArea: 'bottom-left'`, `alignSelf: 'end'`, `justifySelf: 'start'`, `display: 'flex'`, `gap: '8px'`. Container `pointerEvents: 'none'`; each button `pointerEvents: 'auto'`.
-- Order, left to right: `[ISO VIEW | TOP DOWN]  [⟲]  [⟳]`.
-- Shared overlay button style: one style object used by `RESET VIEW` and all three cluster buttons. It carries `background`, `border`, `fontFamily`, `fontSize: '11px'`, `letterSpacing: '2px'`, `padding: '8px 16px'`, `minWidth: '44px'`, `minHeight: '44px'`, `cursor: 'pointer'`. Per-button overrides are `color` and, for the projection button only, `border` colour.
+- Order, left to right: [⟲]  [ISO VIEW | TOP DOWN]  [⟳].
+- Shared overlay button style: one style object used by `RESET VIEW` and all three cluster buttons. It carries `background`, `border`, `fontFamily`, `fontSize: '11px'`, `letterSpacing: '2px'`, `padding: '8px 16px'`, `minWidth: '44px'`, `minHeight: '44px'`, `cursor: 'pointer'`. Per-button overrides are `color` and, for the projection button only, `border` colour. The two rotate glyph buttons additionally override `fontSize` (18px), `letterSpacing` (0), `lineHeight` (1) and `padding` (8px) so they are exactly 44px by 44px; `color` is the only other per-button override (G-34-5).
 - Rotate buttons render in **both** projections (D-05).
 - Mounts that show the cluster: GM tactical map (broadcast mode) and deckplan editor preview (local mode), whenever the grid branch renders.
 - Mounts that show no cluster: player terminal, GM side panel, BridgeView thumbnail, StatusSection thumbnail, and the legacy non-grid `MapPreview` branch. Those mounts render the broadcast view read-only.
@@ -188,7 +191,7 @@ Per-button state table:
 
 ### Narrow and tablet viewports
 
-- Cluster width at minimum size is about 194px (`ISO VIEW` about 90px + 2 × 44px rotate buttons + 2 × 8px gaps).
+- Cluster width at minimum size is about 194px (`ISO VIEW` about 90px + 2 × 44px rotate buttons + 2 × 8px gaps). The cluster width is unchanged by G-34-5 (the rotate buttons are still 44px wide).
 - Legend (`LegendPanel`, bottom-right) yields to the cluster: below a 480px viewport width the legend is hidden, never the controls.
 - Human checkpoint: verify at 360px width (phone) and about 768px to 1024px (tablet, GM use case).
 
@@ -233,7 +236,7 @@ Calls made in this contract where CONTEXT.md left the choice open. Each is rever
 | 1 | Fade is 200ms out + 200ms in, GSAP on a wrapper | Within the 150–250ms-each-way range from CONTEXT; GSAP already a dependency, gives kill/restart semantics. |
 | 2 | `prefers-reduced-motion` turns rotation into a cut | No existing convention in `src/`; accessibility default. |
 | 3 | Shared overlay button style with 44px minimum, applied to `RESET VIEW` too | Tablet use case. One style object avoids duplicating the chrome (CLAUDE.md: avoid duplication). `RESET VIEW` visual identity is otherwise unchanged. |
-| 4 | Cluster order `[ISO VIEW] [⟲] [⟳]` | Keeps the existing projection button in its current slot; rotate pair sits beside it per D-02. |
+| 4 | Cluster order `[⟲] [ISO VIEW] [⟳]` (changed at the GM's request after UAT, G-34-5) | The rotate pair flanks the projection button; rotate glyphs render at 18px. Originally `[ISO VIEW] [⟲] [⟳]`. |
 | 5 | Glyphs `⟲` / `⟳`, text fallback `CCW` / `CW` | Glyphs match the physical-turn metaphor. Font coverage is not verifiable from the repo, so the fallback is pre-declared. |
 | 6 | Side panel and thumbnails are read-only mirrors with no buttons | CONTEXT names only the map overlay (D-02); research mount analysis agrees. |
 | 7 | Location change is always a cut | A different map is never faded; avoids a fade through the wrong geometry (research P12). |
