@@ -163,9 +163,10 @@ const READONLY_VIEW_CONTROL: ViewControl = { mode: 'readonly' };
 const ROTATE_CCW_LABEL = '⟲';
 const ROTATE_CW_LABEL = '⟳';
 
-// Shared overlay button style (UI-SPEC touch row): RESET VIEW and all three
-// cluster buttons use this; per-button overrides are only `color` and, for the
-// projection button, `border`. No hover style and no outline override.
+// Shared overlay button style (UI-SPEC touch row): RESET VIEW and the projection
+// button use this directly; per-button overrides are only `color` and, for the
+// projection button, `border`. The two rotate glyph buttons build on it via
+// ROTATE_BUTTON_STYLE below. No hover style and no outline override.
 const OVERLAY_BUTTON_STYLE: React.CSSProperties = {
   pointerEvents: 'auto',
   background: 'rgba(15, 21, 21, 0.95)',
@@ -177,6 +178,20 @@ const OVERLAY_BUTTON_STYLE: React.CSSProperties = {
   minWidth: '44px',
   minHeight: '44px',
   cursor: 'pointer',
+};
+
+// G-34-5: the rotate glyph buttons read larger than the 11px text labels. Only
+// size and padding differ from OVERLAY_BUTTON_STYLE: no tracking on a single
+// centered glyph, line-height 1 so a fallback font's tall metrics cannot inflate
+// the row, and 8px padding so the button stays the 44px minimum square.
+const ROTATE_GLYPH_FONT_SIZE = '18px';
+const ROTATE_BUTTON_STYLE: React.CSSProperties = {
+  ...OVERLAY_BUTTON_STYLE,
+  fontSize: ROTATE_GLYPH_FONT_SIZE,
+  letterSpacing: '0',
+  lineHeight: 1,
+  padding: '8px',
+  color: '#7ab8b8',
 };
 
 export function EncounterMapRenderer({
@@ -932,8 +947,9 @@ export function EncounterMapRenderer({
           </button>
         )}
 
-        {/* View-control cluster - bottom left (D-02, D-05). Only for the
-            broadcast / local control modes; read-only mounts get none (D-03). */}
+        {/* View-control cluster - bottom left (D-02 as amended by G-34-5, D-05).
+            Order: [rotate ccw][projection][rotate cw]. Only for the broadcast /
+            local control modes; read-only mounts get none (D-03). */}
         {(showProjectionButton || showRotateButtons) && (
           <div
             className="encounter-map__view-controls"
@@ -946,6 +962,17 @@ export function EncounterMapRenderer({
               pointerEvents: 'none',
             }}
           >
+            {showRotateButtons && (
+              <button
+                className="encounter-map__rotate-ccw"
+                onClick={() => handleRotateClick(-90)}
+                title={`Rotate map counter-clockwise${followNote}`}
+                aria-label="Rotate map counter-clockwise"
+                style={ROTATE_BUTTON_STYLE}
+              >
+                {ROTATE_CCW_LABEL}
+              </button>
+            )}
             {showProjectionButton && (
               <button
                 className="encounter-map__projection-toggle"
@@ -967,26 +994,15 @@ export function EncounterMapRenderer({
               </button>
             )}
             {showRotateButtons && (
-              <>
-                <button
-                  className="encounter-map__rotate-ccw"
-                  onClick={() => handleRotateClick(-90)}
-                  title={`Rotate map counter-clockwise${followNote}`}
-                  aria-label="Rotate map counter-clockwise"
-                  style={{ ...OVERLAY_BUTTON_STYLE, color: '#7ab8b8' }}
-                >
-                  {ROTATE_CCW_LABEL}
-                </button>
-                <button
-                  className="encounter-map__rotate-cw"
-                  onClick={() => handleRotateClick(90)}
-                  title={`Rotate map clockwise${followNote}`}
-                  aria-label="Rotate map clockwise"
-                  style={{ ...OVERLAY_BUTTON_STYLE, color: '#7ab8b8' }}
-                >
-                  {ROTATE_CW_LABEL}
-                </button>
-              </>
+              <button
+                className="encounter-map__rotate-cw"
+                onClick={() => handleRotateClick(90)}
+                title={`Rotate map clockwise${followNote}`}
+                aria-label="Rotate map clockwise"
+                style={ROTATE_BUTTON_STYLE}
+              >
+                {ROTATE_CW_LABEL}
+              </button>
             )}
           </div>
         )}
