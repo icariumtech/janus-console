@@ -19,15 +19,43 @@ const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 6;
 
 /**
+ * Zoom by `factor` while keeping the point under (anchorX, anchorY) fixed.
+ * Anchor coordinates are relative to the transformed element's untransformed
+ * origin (its layout top-left, since the transform uses origin `0 0`).
+ */
+function zoomAt(prev: ViewState, anchorX: number, anchorY: number, factor: number): ViewState {
+  const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev.zoom * factor));
+  const zoomRatio = newZoom / prev.zoom;
+  return {
+    panX: anchorX - (anchorX - prev.panX) * zoomRatio,
+    panY: anchorY - (anchorY - prev.panY) * zoomRatio,
+    zoom: newZoom,
+  };
+}
+
+/**
  * Manages pan and zoom state for an SVG map container.
  *
  * Pass containerRef (owned by the caller) so other code can share the same
  * ref for hit-testing (door popups, context menus, etc.). Spread the returned
  * containerHandlers onto the container div, and apply viewState to the SVG
  * transform.
+ *
+ * Pass contentRef (the element the transform is applied to) when it is not
+ * laid out at the container's top-left — e.g. an oversized, negatively
+ * offset svg. Zoom anchors are then measured from its untransformed origin
+ * so the point under the cursor/pinch stays put. Without it the content is
+ * assumed to sit at the container's origin.
  */
-export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>) {
+export function usePanZoom(
+  containerRef: RefObject<HTMLDivElement | null>,
+  contentRef?: RefObject<Element | null>,
+) {
   const [viewState, setViewState] = useState<ViewState>({ panX: 0, panY: 0, zoom: 1 });
+  // Last rendered state — matches what the DOM currently shows, so it can be
+  // subtracted from the content's measured rect to recover its layout origin.
+  const renderedView = useRef(viewState);
+  renderedView.current = viewState;
 
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -39,25 +67,32 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>) {
     setViewState({ panX: 0, panY: 0, zoom: 1 });
   }, []);
 
+  // Client coords → coords relative to the content's untransformed origin.
+  // The transform is translate(pan) scale(zoom) with origin 0 0, so the
+  // content's rendered top-left is layoutOrigin + pan.
+  const toAnchor = useCallback((clientX: number, clientY: number) => {
+    const container = containerRef.current;
+    if (!container) return null;
+    const containerRect = container.getBoundingClientRect();
+    let originX = containerRect.left;
+    let originY = containerRect.top;
+    const content = contentRef?.current;
+    if (content) {
+      const contentRect = content.getBoundingClientRect();
+      originX = contentRect.left - renderedView.current.panX;
+      originY = contentRect.top - renderedView.current.panY;
+    }
+    return { x: clientX - originX, y: clientY - originY };
+  }, [containerRef, contentRef]);
+
   // Wheel zoom — registered as a native listener so preventDefault works.
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
-    const container = containerRef.current;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+    const anchor = toAnchor(e.clientX, e.clientY);
+    if (!anchor) return;
     const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
-    setViewState((prev) => {
-      const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev.zoom * zoomDelta));
-      const zoomRatio = newZoom / prev.zoom;
-      return {
-        panX: mouseX - (mouseX - prev.panX) * zoomRatio,
-        panY: mouseY - (mouseY - prev.panY) * zoomRatio,
-        zoom: newZoom,
-      };
-    });
-  }, [containerRef]);
+    setViewState((prev) => zoomAt(prev, anchor.x, anchor.y, zoomDelta));
+  }, [toAnchor]);
 
   // Touch move — registered native so preventDefault works.
   const touchMoveHandler = useCallback((e: TouchEvent) => {
@@ -75,25 +110,17 @@ export function usePanZoom(containerRef: RefObject<HTMLDivElement | null>) {
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      const container = containerRef.current;
-      if (!container || !lastTouchCenter.current) return;
-      const rect = container.getBoundingClientRect();
-      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
-      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+      if (!lastTouchCenter.current) return;
+      const clientX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const clientY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      const anchor = toAnchor(clientX, clientY);
+      if (!anchor) return;
       const scale = distance / lastTouchDistance.current;
-      setViewState((prev) => {
-        const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev.zoom * scale));
-        const zoomRatio = newZoom / prev.zoom;
-        return {
-          panX: centerX - (centerX - prev.panX) * zoomRatio,
-          panY: centerY - (centerY - prev.panY) * zoomRatio,
-          zoom: newZoom,
-        };
-      });
+      setViewState((prev) => zoomAt(prev, anchor.x, anchor.y, scale));
       lastTouchDistance.current = distance;
-      lastTouchCenter.current = { x: centerX + (containerRef.current?.getBoundingClientRect().left ?? 0), y: centerY + (containerRef.current?.getBoundingClientRect().top ?? 0) };
+      lastTouchCenter.current = { x: clientX, y: clientY };
     }
-  }, [containerRef]);
+  }, [toAnchor]);
 
   useEffect(() => {
     const container = containerRef.current;

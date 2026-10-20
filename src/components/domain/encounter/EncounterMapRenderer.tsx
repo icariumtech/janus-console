@@ -241,7 +241,7 @@ export function EncounterMapRenderer({
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const fadeRef = useRef<HTMLDivElement>(null);
-  const { viewState, containerHandlers, resetView: handleResetView } = usePanZoom(containerRef);
+  const { viewState, containerHandlers, resetView: handleResetView } = usePanZoom(containerRef, svgRef);
 
   // Tracked reactively (not just read on demand) so the oversized svg CSS
   // box (sized from GRID_MARGIN_MULTIPLIER × container, see the svg style
