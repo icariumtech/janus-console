@@ -194,6 +194,9 @@ const ROTATE_BUTTON_STYLE: React.CSSProperties = {
   color: '#7ab8b8',
 };
 
+/** Oversize factor for the svg box + viewBox (pan margin) — see the render comment. */
+const GRID_MARGIN_MULTIPLIER = 4;
+
 export function EncounterMapRenderer({
   mapData,
   roomVisibility,
@@ -241,7 +244,6 @@ export function EncounterMapRenderer({
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const fadeRef = useRef<HTMLDivElement>(null);
-  const { viewState, containerHandlers, resetView: handleResetView } = usePanZoom(containerRef, svgRef);
 
   // Tracked reactively (not just read on demand) so the oversized svg CSS
   // box (sized from GRID_MARGIN_MULTIPLIER × container, see the svg style
@@ -256,6 +258,13 @@ export function EncounterMapRenderer({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // The oversized svg's untransformed top-left within the container (matches
+  // its measured-branch left/top below), so zoom anchors at the cursor.
+  const { viewState, containerHandlers, resetView: handleResetView } = usePanZoom(containerRef, {
+    x: (containerSize.width * (1 - GRID_MARGIN_MULTIPLIER)) / 2,
+    y: (containerSize.height * (1 - GRID_MARGIN_MULTIPLIER)) / 2,
+  });
 
   // unit_size — pixels per grid cell (default 40 if YAML omits it)
   const unitSize = mapData.unit_size ?? 40;
@@ -359,7 +368,7 @@ export function EncounterMapRenderer({
   // scaling viewBox and box by the same factor leaves the `meet` fit
   // scale, and thus everything's apparent size, identical) — this simply
   // gives panning/zooming room to move before an edge can appear.
-  const GRID_MARGIN_MULTIPLIER = 4;
+  // (GRID_MARGIN_MULTIPLIER is module-level so usePanZoom can use it too.)
   const gridViewBoxW = rotViewBoxW * GRID_MARGIN_MULTIPLIER;
   const gridViewBoxH = rotViewBoxH * GRID_MARGIN_MULTIPLIER;
   const gridViewBoxX = rotViewBoxX - (gridViewBoxW - rotViewBoxW) / 2;

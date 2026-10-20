@@ -41,21 +41,20 @@ function zoomAt(prev: ViewState, anchorX: number, anchorY: number, factor: numbe
  * containerHandlers onto the container div, and apply viewState to the SVG
  * transform.
  *
- * Pass contentRef (the element the transform is applied to) when it is not
- * laid out at the container's top-left — e.g. an oversized, negatively
- * offset svg. Zoom anchors are then measured from its untransformed origin
- * so the point under the cursor/pinch stays put. Without it the content is
- * assumed to sit at the container's origin.
+ * Pass contentOrigin — the transformed element's untransformed layout
+ * top-left, in px relative to the container — when it is not laid out at the
+ * container's corner (e.g. an oversized, negatively offset svg). Zoom anchors
+ * are measured from it so the point under the cursor/pinch stays put. It is
+ * supplied rather than measured: the element's rendered rect lags behind the
+ * state while a CSS transform transition is running.
  */
 export function usePanZoom(
   containerRef: RefObject<HTMLDivElement | null>,
-  contentRef?: RefObject<Element | null>,
+  contentOrigin: { x: number; y: number } = { x: 0, y: 0 },
 ) {
   const [viewState, setViewState] = useState<ViewState>({ panX: 0, panY: 0, zoom: 1 });
-  // Last rendered state — matches what the DOM currently shows, so it can be
-  // subtracted from the content's measured rect to recover its layout origin.
-  const renderedView = useRef(viewState);
-  renderedView.current = viewState;
+  const originRef = useRef(contentOrigin);
+  originRef.current = contentOrigin;
 
   const isDragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
@@ -67,23 +66,17 @@ export function usePanZoom(
     setViewState({ panX: 0, panY: 0, zoom: 1 });
   }, []);
 
-  // Client coords → coords relative to the content's untransformed origin.
-  // The transform is translate(pan) scale(zoom) with origin 0 0, so the
-  // content's rendered top-left is layoutOrigin + pan.
+  // Client coords → coords relative to the content's untransformed origin
+  // (the transform is translate(pan) scale(zoom) with origin 0 0).
   const toAnchor = useCallback((clientX: number, clientY: number) => {
     const container = containerRef.current;
     if (!container) return null;
-    const containerRect = container.getBoundingClientRect();
-    let originX = containerRect.left;
-    let originY = containerRect.top;
-    const content = contentRef?.current;
-    if (content) {
-      const contentRect = content.getBoundingClientRect();
-      originX = contentRect.left - renderedView.current.panX;
-      originY = contentRect.top - renderedView.current.panY;
-    }
-    return { x: clientX - originX, y: clientY - originY };
-  }, [containerRef, contentRef]);
+    const rect = container.getBoundingClientRect();
+    return {
+      x: clientX - rect.left - originRef.current.x,
+      y: clientY - rect.top - originRef.current.y,
+    };
+  }, [containerRef]);
 
   // Wheel zoom — registered as a native listener so preventDefault works.
   const handleWheel = useCallback((e: WheelEvent) => {
