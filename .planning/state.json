@@ -76,13 +76,23 @@
     {
       "number": "33",
       "name": "Isometric View",
+      "status": "complete"
+    },
+    {
+      "number": "34",
+      "name": "GM-Controlled Projection & Iso Rotation",
+      "status": "complete"
+    },
+    {
+      "number": "35",
+      "name": "Stacked Deck View",
       "status": "pending"
     }
   ],
   "next": {
     "command": "/gsd:progress --next",
-    "label": "Advance to the next step",
-    "reason": "Phase 33 of 5 · 80% · executing"
+    "label": "Advance to the next step (plan phase 35)",
+    "reason": "Phase 35 of 7 — needs a plan"
   },
-  "updated_at": "2026-09-06T19:47:42.894Z"
+  "updated_at": "2026-10-16T23:44:29.780Z"
 }
