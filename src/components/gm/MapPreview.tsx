@@ -28,6 +28,7 @@ import { EncounterMapRenderer } from '@/components/domain/encounter/EncounterMap
 import { mergeHulls } from '@/components/domain/encounter/hull/hullNormalizer';
 import { getGridCell } from '@/utils/svgCoordinates';
 import { makeMapView } from '@/components/domain/encounter/geometry/mapView';
+import type { ViewOrientation, ViewControl } from '@/components/domain/encounter/geometry/viewOrientation';
 import { topDownProjection } from '@/components/domain/encounter/geometry/gridProjection';
 import { message } from 'antd';
 
@@ -84,6 +85,12 @@ interface MapPreviewProps {
   /** Vent visibility state (per-vent) */
   ventsVisible?: boolean;
   onVentsToggle?: (visible: boolean) => void;
+  /** Broadcast view (projection + rotation offset), forwarded to the grid renderer */
+  viewOrientation?: ViewOrientation;
+  /** View-control mode and callbacks, forwarded to the grid renderer */
+  viewControl?: ViewControl;
+  /** Identity of the displayed location; a change cuts instead of fading the rotation */
+  locationKey?: string;
   // ----------------------------------------------------------------
   // Editor-mode props (Plan 29-03) — forwarded to EncounterMapRenderer.
   // All four are inert unless `editable` is true.
@@ -141,6 +148,9 @@ export function MapPreview({
   fill,
   ventsVisible,
   onVentsToggle,
+  viewOrientation,
+  viewControl,
+  locationKey,
   editable,
   onPoiClick,
   onPoiMove,
@@ -236,6 +246,9 @@ export function MapPreview({
             onTokenStatusToggle={onTokenStatusToggle}
             ventsVisible={ventsVisible}
             onVentsToggle={onVentsToggle}
+            viewOrientation={viewOrientation}
+            viewControl={viewControl}
+            locationKey={locationKey}
             editable={editable}
             onPoiClick={onPoiClick}
             onPoiMove={onPoiMove}

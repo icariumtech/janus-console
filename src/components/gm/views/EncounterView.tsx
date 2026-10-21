@@ -13,18 +13,17 @@ import { gmConsoleApi } from '@/services/gmConsoleApi';
 import type { ActiveView, Location } from '@/types/gmConsole';
 import type { ShipStatusData } from '@/types/shipStatus';
 import type {
-  EncounterManifest,
   HullDef,
   RoomVisibilityState,
   DoorStatusState,
   DoorStatus,
-  EncounterMapData,
-  GridEncounterMapData,
   GridRect,
   TokenState,
   TokenType,
   TokenStatus,
 } from '@/types/encounterMap';
+import { toViewOrientation } from '@/components/domain/encounter/geometry/viewOrientation';
+import { useLocationMapBundle, type LocationMapBundle } from './useLocationMapBundle';
 import { MapPreview } from '../MapPreview';
 import { ToolRail, type ToolRailButton } from '../layout/ToolRail';
 import { SlideOutPanel } from '../layout/SlideOutPanel';
@@ -62,6 +61,9 @@ interface EncounterViewProps {
   shipData?: ShipStatusData | null;
 }
 
+// Stable empty list so memos over allDecks keep their identity while no bundle is loaded.
+const NO_DECKS: DeckWithRooms[] = [];
+
 const ENCOUNTER_TOOLS: ToolRailButton[] = [
   { key: 'locations', icon: <ApartmentOutlined />, tooltip: 'Locations' },
   { key: 'tokens', icon: <TeamOutlined />, tooltip: 'Token Palette' },
@@ -83,21 +85,24 @@ export function EncounterView({
   onDialogToggle,
   shipData,
 }: EncounterViewProps) {
-  const [manifest, setManifest] = useState<EncounterManifest | null>(null);
-  const [allDecks, setAllDecks] = useState<DeckWithRooms[]>([]);
   const [roomVisibility, setRoomVisibility] = useState<RoomVisibilityState>({});
   const [doorStatus, setDoorStatus] = useState<DoorStatusState>({});
   const [ventsVisible, setVentsVisible] = useState<boolean>(false);
-  const [currentDeckMapData, setCurrentDeckMapData] = useState<EncounterMapData | GridEncounterMapData | null>(null);
   const [encounterTokens, setEncounterTokens] = useState<TokenState>({});
   const tokenMoveInFlight = useRef(false);
-  const [loading, setLoading] = useState(false);
   const [activePanel, setActivePanel] = useState<string | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
 
   const locationSlug = activeView?.location_slug || '';
   const currentDeckId = activeView?.encounter_deck_id || '';
   const locationType = activeView?.location_type || '';
+  // Shared view comes from the SSE echo only (D-01) — no local view state.
+  // toViewOrientation coerces any invalid value (45, string, null, undefined)
+  // to top-down / 0 rather than feeding it to trig.
+  const viewOrientation = useMemo(
+    () => toViewOrientation(activeView?.encounter_projection, activeView?.encounter_rotation_offset),
+    [activeView?.encounter_projection, activeView?.encounter_rotation_offset],
+  );
 
   // Location types that have encounter maps (2D tactical maps)
   const encounterMapTypes = ['station', 'ship', 'base', 'deck', 'room', 'level', 'section'];
@@ -110,58 +115,24 @@ export function EncounterView({
     }
   }, [locationSlug]);
 
-  // Load all decks data when location changes
-  useEffect(() => {
-    if (!locationSlug || !hasEncounterMap) {
-      setManifest(null);
-      setAllDecks([]);
-      setRoomVisibility({});
-      return;
-    }
-
-    const loadAllDecks = async () => {
-      setLoading(true);
-      try {
-        const data = await encounterApi.getAllDecks(locationSlug);
-        setManifest(data.manifest || null);
-        setAllDecks(data.decks || []);
-        setRoomVisibility(data.room_visibility || {});
-      } catch (err) {
-        console.error('Error loading all decks:', err);
-        if (hasEncounterMap) {
-          messageApi.error('Failed to load map data');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAllDecks();
-  }, [locationSlug, hasEncounterMap, messageApi]);
-
-  // Load current deck's full map data
-  useEffect(() => {
-    if (!locationSlug || !hasEncounterMap) {
-      setCurrentDeckMapData(null);
-      return;
-    }
-
-    const loadCurrentDeckMap = async () => {
-      try {
-        const data = await encounterApi.getMapData(locationSlug);
-        if ('is_multi_deck' in data && data.is_multi_deck) {
-          setCurrentDeckMapData(data.current_deck);
-        } else {
-          setCurrentDeckMapData(data as EncounterMapData);
-        }
-      } catch (err) {
-        console.error('Error loading current deck map:', err);
-        setCurrentDeckMapData(null);
-      }
-    };
-
-    loadCurrentDeckMap();
-  }, [locationSlug, hasEncounterMap, currentDeckId]);
+  // Map, manifest (hull) and room visibility for the active location load together and are
+  // committed as one unit bound to a slug (G-34-6). While a new location loads, the previous
+  // unit stays on screen; the room visibility reset happens in the same commit as the map.
+  const handleLocationBundle = useCallback(
+    (next: LocationMapBundle | null) => setRoomVisibility(next ? next.roomVisibility : {}),
+    [],
+  );
+  const handleLoadError = useCallback((text: string) => messageApi.error(text), [messageApi]);
+  const { bundle, loading } = useLocationMapBundle({
+    locationSlug,
+    enabled: hasEncounterMap,
+    currentDeckId,
+    onLocationBundle: handleLocationBundle,
+    onError: handleLoadError,
+  });
+  const manifest = bundle?.manifest ?? null;
+  const allDecks = bundle?.allDecks ?? NO_DECKS;
+  const currentDeckMapData = bundle?.mapData ?? null;
 
   // Build flat list of all rooms with deck info
   const allRooms: RoomWithDeck[] = useMemo(() => {
@@ -244,6 +215,28 @@ export function EncounterView({
     } catch (err) {
       console.error('Error toggling vents:', err);
       messageApi.error('Failed to toggle vent visibility');
+    }
+  }, [messageApi]);
+
+  // No optimistic update (D-01): the map re-projects when the SSE echo
+  // updates activeView.encounter_rotation_offset.
+  const handleRotate = useCallback(async (delta: 90 | -90) => {
+    try {
+      await encounterApi.rotateView(delta);
+    } catch (err) {
+      console.error('Error rotating map:', err);
+      messageApi.error('Failed to rotate map — try again');
+    }
+  }, [messageApi]);
+
+  // Same contract as handleRotate: no optimistic update, the button label and
+  // the map follow the SSE echo of encounter_projection.
+  const handleProjectionChange = useCallback(async (projection: 'top-down' | 'iso') => {
+    try {
+      await encounterApi.setProjection(projection);
+    } catch (err) {
+      console.error('Error switching projection:', err);
+      messageApi.error('Failed to switch map projection — try again');
     }
   }, [messageApi]);
 
@@ -410,6 +403,60 @@ export function EncounterView({
     return locationSlug ? findLocation(locations, locationSlug) : null;
   }, [locations, locationSlug]);
 
+  // The displayed bundle is current when it belongs to the selected location. Between a
+  // location change and the arrival of the new bundle the previous map stays frozen on screen.
+  const bundleIsCurrent = bundle !== null && bundle.slug === locationSlug;
+
+  // Everything MapPreview renders that follows activeView. The orientation is always a
+  // broadcast value (D-01). All five are held at the last values that were live for the
+  // displayed bundle while that bundle is frozen, because the activeView-sync effects move
+  // them to the new location immediately and would otherwise paint the new location's view,
+  // tokens, doors, room shading and vents onto the old map.
+  const liveMapInputs = useMemo(
+    () => ({ viewOrientation, roomVisibility, doorStatus, encounterTokens, ventsVisible }),
+    [viewOrientation, roomVisibility, doorStatus, encounterTokens, ventsVisible],
+  );
+  const latchedMapInputsRef = useRef(liveMapInputs);
+  useEffect(() => {
+    if (bundleIsCurrent) latchedMapInputsRef.current = liveMapInputs;
+  }, [bundleIsCurrent, liveMapInputs]);
+  const shownMapInputs = bundleIsCurrent ? liveMapInputs : latchedMapInputsRef.current;
+
+  // Mutation gate (T-34-28): every GM mutating endpoint acts on the server's ACTIVE location
+  // and takes no slug, so while the frozen bundle belongs to the previous location it cannot
+  // be targeted. Withhold the mutating callbacks instead; they return with the new bundle.
+  const mapMutationProps = useMemo(
+    () =>
+      bundleIsCurrent
+        ? {
+            onDoorStatusChange: handleDoorStatusChange,
+            onTokenPlace: handleTokenPlace,
+            onTokenMove: handleTokenMove,
+            onTokenRemove: handleTokenRemove,
+            onTokenStatusToggle: handleTokenStatusToggle,
+            onRoomToggle: handleRoomToggle,
+            onVentsToggle: handleVentsToggle,
+          }
+        : {},
+    [
+      bundleIsCurrent,
+      handleDoorStatusChange,
+      handleTokenPlace,
+      handleTokenMove,
+      handleTokenRemove,
+      handleTokenStatusToggle,
+      handleRoomToggle,
+      handleVentsToggle,
+    ],
+  );
+  const viewControl = useMemo(
+    () =>
+      bundleIsCurrent
+        ? { mode: 'broadcast' as const, onProjectionChange: handleProjectionChange, onRotate: handleRotate }
+        : { mode: 'broadcast' as const },
+    [bundleIsCurrent, handleProjectionChange, handleRotate],
+  );
+
   return (
     <div className="gm-encounter-view">
       {contextHolder}
@@ -419,21 +466,18 @@ export function EncounterView({
         {currentDeckMapData ? (
           <MapPreview
             mapData={currentDeckMapData}
-            roomVisibility={roomVisibility}
-            doorStatus={doorStatus}
-            onDoorStatusChange={handleDoorStatusChange}
+            roomVisibility={shownMapInputs.roomVisibility}
+            doorStatus={shownMapInputs.doorStatus}
             showAllRooms={true}
-            tokens={encounterTokens}
+            tokens={shownMapInputs.encounterTokens}
             isGM={true}
             fill={true}
-            onTokenPlace={handleTokenPlace}
-            onTokenMove={handleTokenMove}
-            onTokenRemove={handleTokenRemove}
-            onTokenStatusToggle={handleTokenStatusToggle}
-            onRoomToggle={handleRoomToggle}
+            {...mapMutationProps}
             hull={manifest?.hull as HullDef | undefined}
-            ventsVisible={ventsVisible}
-            onVentsToggle={handleVentsToggle}
+            ventsVisible={shownMapInputs.ventsVisible}
+            viewOrientation={shownMapInputs.viewOrientation}
+            viewControl={viewControl}
+            locationKey={bundle?.slug}
           />
         ) : noLocationSelected ? (
           <div className="gm-encounter-view__empty">
@@ -456,10 +500,10 @@ export function EncounterView({
         {currentDeckMapData && (
           <div className="gm-encounter-view__floating-controls">
             <div style={{ display: 'flex', gap: 8 }}>
-              <Button size="small" onClick={handleShowAll} style={{ color: '#4a6b6b', borderColor: '#2a3a3a' }}>
+              <Button size="small" disabled={!bundleIsCurrent} onClick={handleShowAll} style={{ color: '#4a6b6b', borderColor: '#2a3a3a' }}>
                 REVEAL ALL
               </Button>
-              <Button size="small" onClick={handleHideAll} style={{ color: '#8b5555', borderColor: '#2a3a3a' }}>
+              <Button size="small" disabled={!bundleIsCurrent} onClick={handleHideAll} style={{ color: '#8b5555', borderColor: '#2a3a3a' }}>
                 HIDE ALL
               </Button>
             </div>
@@ -467,6 +511,7 @@ export function EncounterView({
               <Select
                 value={currentDeckId}
                 onChange={handleDeckSelect}
+                disabled={!bundleIsCurrent}
                 options={deckOptions}
                 size="small"
                 style={{ minWidth: 140 }}
@@ -481,13 +526,16 @@ export function EncounterView({
         <ToolRail tools={ENCOUNTER_TOOLS} activePanel={activePanel} onToggle={handlePanelToggle} />
 
         <SlideOutPanel open={activePanel === 'tokens'} title="Token Palette" onClose={closePanel}>
-          <TokenPalettePanel
-            activeView={activeView}
-            tokens={encounterTokens}
-            onTokensChange={setEncounterTokens}
-            mapData={currentDeckMapData}
-            roomVisibility={roomVisibility}
-          />
+          {/* CLEAR ALL acts on the active location, so the palette is not offered while the previous map is frozen. */}
+          {bundleIsCurrent && (
+            <TokenPalettePanel
+              activeView={activeView}
+              tokens={encounterTokens}
+              onTokensChange={setEncounterTokens}
+              mapData={currentDeckMapData}
+              roomVisibility={roomVisibility}
+            />
+          )}
         </SlideOutPanel>
 
         <SlideOutPanel open={activePanel === 'portraits'} title="NPC Portraits" onClose={closePanel}>

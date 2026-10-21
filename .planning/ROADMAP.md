@@ -141,12 +141,14 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
   2. The GM can rotate the view left/right in 90° steps (offset on top of the deck's authored `rotation`, in both top-down and iso), e.g. bringing the bridge to the lower-left corner, and players follow
   3. At every rotation, rooms, doors, POIs, tokens, details and the background grid render correctly, and clicks/drags hit the correct grid cell
   4. A `deckplan.yaml` can author its default view (projection + rotation); loading a location applies it, and the broadcast view persists across reloads
-- **Plans:** 5 plans
-  - [ ] 34-01-PLAN.md — Tracer (14 files): GM rotate-clockwise end to end — rotate-view endpoint, store, SSE payload, top-down projection rotation, GM map wiring
-  - [ ] 34-02-PLAN.md — Backend: rotate-view hardening, set-projection endpoint, `core/encounter_view.py`, deckplan `default_view` (normalizer + schema docs), reset on location change only, store/payload defaults
-  - [ ] 34-03-PLAN.md — Pure logic: `viewOrientation.ts` (normalizers, authored-rotation fold under iso, screenRotationFor, hit-test matrix) and `viewTransition.ts` (fade/cut planner, drag-cancel and popover-close predicates)
-  - [ ] 34-04-PLAN.md — Renderer: readonly/broadcast/local view modes, control cluster, tracer-prop migration, GSAP hook executing the tested plan, mid-drag cancel
-  - [ ] 34-05-PLAN.md — Wiring: player terminal + mirrors, GM broadcast controls with toasts, editor local mode, phase gate + human checks, P9 deferral note
+- **Plans:** 7 plans
+  - [x] 34-01-PLAN.md — Tracer (14 files): GM rotate-clockwise end to end — rotate-view endpoint, store, SSE payload, top-down projection rotation, GM map wiring
+  - [x] 34-02-PLAN.md — Backend: rotate-view hardening, set-projection endpoint, `core/encounter_view.py`, deckplan `default_view` (normalizer + schema docs), reset on location change only, store/payload defaults
+  - [x] 34-03-PLAN.md — Pure logic: `viewOrientation.ts` (normalizers, authored-rotation fold under iso, screenRotationFor, hit-test matrix) and `viewTransition.ts` (fade/cut planner, drag-cancel and popover-close predicates)
+  - [x] 34-04-PLAN.md — Renderer: readonly/broadcast/local view modes, control cluster, tracer-prop migration, GSAP hook executing the tested plan, mid-drag cancel
+  - [x] 34-05-PLAN.md — Wiring: player terminal + mirrors, GM broadcast controls with toasts, editor local mode, phase gate + human checks, P9 deferral note
+  - [x] 34-06-PLAN.md — Gap closure G-34-5: rotate buttons flank the projection toggle, larger rotate glyphs, vitest path aliases + first renderer DOM test, UI-SPEC update
+  - [x] 34-07-PLAN.md — Gap closure G-34-6: GM EncounterView binds map + manifest + view as one stale-guarded unit (no location-change flicker), regression test, codemap
 - **UI hint**: yes
 
 #### Phase 35: Stacked Deck View with Animated Transitions
@@ -183,5 +185,5 @@ See `.planning/milestones/v2.0-ROADMAP.md` for full phase details.
 | 31. Deckplan Format — Hulls & Details | v3.0 | 3/3 | Complete    | 2026-08-04 |
 | 32. SVG Converter — Details/Hulls/Circles | v3.0 | 3/3 | Complete    | 2026-08-25 |
 | 33. Isometric View | v3.0 | 3/3 | Complete    | 2026-09-07 |
-| 34. GM-Controlled Projection & Iso Rotation | v3.0 | 0/? | Not started | — |
+| 34. GM-Controlled Projection & Iso Rotation | v3.0 | 7/7 | Complete    | 2026-10-16 |
 | 35. Stacked Deck View | v3.0 | 0/? | Not started | — |

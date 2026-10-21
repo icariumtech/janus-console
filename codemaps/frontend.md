@@ -31,6 +31,9 @@ src/
 │   │   │   │                   #   with player views' position:fixed classes
 │   │   │   ├── BridgeView.tsx      # ⚠ 1000+ lines; locations tree + bridge control
 │   │   │   ├── EncounterView.tsx   # Map + ToolRail + panels
+│   │   │   ├── useLocationMapBundle.ts  # Loads deck map + manifest + room
+│   │   │   │                       #   visibility as one unit bound to a location
+│   │   │   │                       #   slug, with a stale-response guard
 │   │   │   ├── FileEditorView.tsx  # ★ Monaco editor (@monaco-editor/react) for
 │   │   │   │                       #   data/ YAML+MD, split view w/ live preview
 │   │   │   ├── StandbyView.tsx
@@ -150,6 +153,17 @@ moves, vent reveal). Room shapes: `rects` (multi-rect w/ optional chamfer),
 `circle`, or `polygon` (+ `holes`). Doors: top-level `doors:` array normalized
 by `doorNormalizer` into canonical `Door` (explicit x/y/angle format preferred).
 Layout styles on the renderer must be INLINE (Ant Design overrides classes).
+
+The GM tactical map (`gm/views/EncounterView`) renders only from the unit bound
+by `useLocationMapBundle`. On a location change the previous map stays on screen
+in its own broadcast view until the new map and manifest have both loaded, then
+swaps in one commit (the renderer's location-change cut and pan/zoom reset fire
+on that commit). The player terminal needs no such binding: its map, slug and
+view arrive in a single payload. While the previous map is frozen the GM view is
+read-only (mutating map callbacks withheld, REVEAL ALL / HIDE ALL / deck picker
+disabled, token palette not rendered) because the GM mutation endpoints act on
+the server's active location and take no slug; controls return when the new
+bundle is current.
 
 ## Deckplan Editor (v3.0, phase 29)
 

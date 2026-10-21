@@ -20,6 +20,7 @@ import { NPCPortraitOverlay } from '@components/domain/encounter/NPCPortraitOver
 import { janusApi } from '@/services/janusApi';
 import { terminalApi } from '@/services/terminalApi';
 import { encounterApi } from '@/services/encounterApi';
+import { toViewOrientation } from '@/components/domain/encounter/geometry/viewOrientation';
 import { useTransitionGuard } from '@hooks/useDebounce';
 import { useSSE } from '@hooks/useSSE';
 import { useViewTransition } from '@hooks/useViewTransition';
@@ -81,6 +82,9 @@ interface ActiveView {
   encounter_room_visibility?: { [roomId: string]: boolean };
   encounter_door_status?: DoorStatusState;
   encounter_vents_visible?: boolean;
+  // GM-controlled map view (Phase 34)
+  encounter_projection?: string;
+  encounter_rotation_offset?: number;
   // Multi-deck manifest info (added by API)
   encounter_total_decks?: number;
   encounter_deck_name?: string;
@@ -910,6 +914,8 @@ function SharedConsole() {
     }
   }, []);
 
+  // GM-broadcast map view (projection + rotation), mirrored read-only on every player map
+  const viewOrientation = toViewOrientation(activeView?.encounter_projection, activeView?.encounter_rotation_offset);
 
   return (
     <>
@@ -951,6 +957,7 @@ function SharedConsole() {
           shipDeckTotalDecks={activeView?.ship_deck_total_decks}
           shipDeckAllDecks={activeView?.ship_deck_all_decks}
           revealKey={bridgeRevealKey}
+          viewOrientation={viewOrientation}
         >
           {/* Map components - only visible when map tab is active */}
           <>
@@ -1053,6 +1060,7 @@ function SharedConsole() {
           roomVisibility={activeView?.encounter_room_visibility}
           doorStatus={activeView?.encounter_door_status}
           ventsVisible={activeView?.encounter_vents_visible}
+          viewOrientation={viewOrientation}
           tokens={encounterTokens}
           isGM={false}
           onTokenMove={handleTokenMove}

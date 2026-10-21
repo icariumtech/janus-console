@@ -23,6 +23,7 @@ import { GalaxyMap } from '@/components/domain/maps/GalaxyMap';
 import { SystemMap } from '@/components/domain/maps/SystemMap';
 import { OrbitMap } from '@/components/domain/maps/OrbitMap';
 import type { StarMapData } from '@/types/starMap';
+import { toViewOrientation, type ViewOrientation } from '@/components/domain/encounter/geometry/viewOrientation';
 import './BridgeView.css';
 
 const { Text } = Typography;
@@ -634,6 +635,8 @@ interface GmBridgeDashboardProps {
 
 function GmBridgeDashboard({ activeView, locations, starMapData, shipData, shipDeckData, shipDeckTotalDecks }: GmBridgeDashboardProps) {
   const [gmTab, setGmTab] = useState<GmBridgeTab>('map');
+  // Ship thumbnail mirrors the broadcast view read-only (no controls)
+  const viewOrientation = toViewOrientation(activeView?.encounter_projection, activeView?.encounter_rotation_offset);
 
   return (
     <div className="gm-bridge-view__main">
@@ -642,7 +645,7 @@ function GmBridgeDashboard({ activeView, locations, starMapData, shipData, shipD
           <GmBridgeMapPanel activeView={activeView} locations={locations} starMapData={starMapData} />
         )}
         {gmTab === 'ship' && (
-          <GmBridgeShipPanel shipData={shipData} shipDeckData={shipDeckData} shipDeckTotalDecks={shipDeckTotalDecks} />
+          <GmBridgeShipPanel shipData={shipData} shipDeckData={shipDeckData} shipDeckTotalDecks={shipDeckTotalDecks} viewOrientation={viewOrientation} />
         )}
       </div>
       <div className="gm-bridge-tab-bar">
@@ -729,9 +732,10 @@ interface GmBridgeShipPanelProps {
   shipData: ShipStatusData | null;
   shipDeckData?: ShipDeckData;
   shipDeckTotalDecks?: number;
+  viewOrientation?: ViewOrientation;
 }
 
-function GmBridgeShipPanel({ shipData, shipDeckData, shipDeckTotalDecks }: GmBridgeShipPanelProps) {
+function GmBridgeShipPanel({ shipData, shipDeckData, shipDeckTotalDecks, viewOrientation }: GmBridgeShipPanelProps) {
   if (!shipData) {
     return (
       <div className="gm-bridge-ship-panel" style={{ flexDirection: 'column' }}>
@@ -764,6 +768,7 @@ function GmBridgeShipPanel({ shipData, shipDeckData, shipDeckTotalDecks }: GmBri
             currentLevel={1}
             totalLevels={shipDeckTotalDecks || 1}
             viewPadding={5}
+            viewOrientation={viewOrientation}
           />
         ) : (
           <div style={{ color: '#444', fontSize: 11, padding: 12, textAlign: 'center', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

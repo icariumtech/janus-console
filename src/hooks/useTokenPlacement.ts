@@ -64,7 +64,7 @@ export function useTokenPlacement({
     // Only preventDefault on success — failed drops snap back via browser default
     e.preventDefault();
     onTokenPlace(template.type, template.name, gridX, gridY, template.imageUrl || '', room.id);
-  }, [isGM, onTokenPlace, view, isCellOccupied, findRoomAtCell, svgRef]);
+  }, [isGM, onTokenPlace, view, isCellOccupied, findRoomAtCell, svgRef, mapRotation, mapCenterX, mapCenterY]);
 
   return { handleDragOver, handleDrop };
 }

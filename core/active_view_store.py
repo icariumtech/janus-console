@@ -7,6 +7,8 @@ import tempfile
 import threading
 from pathlib import Path
 
+from core.encounter_view import PROJECTIONS, ROTATION_OFFSETS
+
 _lock = threading.Lock()
 
 _DEFAULT_STATE: dict = {
@@ -33,6 +35,13 @@ _DEFAULT_STATE: dict = {
     # migration.
     'encounter_door_status': {},
     'encounter_vents_visible': False,
+    'encounter_projection': 'top-down',
+    'encounter_rotation_offset': 0,
+    # Slug of the encounter location whose authored default view was last
+    # applied. Internal only (not in the SSE payload): BRIDGE/STANDBY switches
+    # clear location_slug, so it cannot detect a return to the same location
+    # and the GM's live view would be reset on every return (D-16).
+    'encounter_view_location_slug': '',
     'encounter_tokens_by_location': {},
     'encounter_active_portraits': [],
 }
@@ -41,6 +50,23 @@ _DEFAULT_STATE: dict = {
 # (max_requests in docker/gunicorn.conf.py) and container restarts.
 _BASE_DIR = Path(__file__).resolve().parent.parent
 _STATE_PATH = Path(os.environ.get('JANUS_STATE_PATH', _BASE_DIR / 'var' / 'active_view.json'))
+
+
+def normalize_view_fields(state: dict) -> dict:
+    """Coerce the persisted view-orientation fields to their closed enums.
+
+    Applied at the disk-load boundary so hand-edited or older-build values
+    (a non-multiple of 90, a non-int, an unknown projection) can never reach
+    `rotate_view` or the SSE payload. Invalid values fall back to the defaults.
+    Mutates and returns `state`.
+    """
+    projection = state.get('encounter_projection')
+    if not (isinstance(projection, str) and projection in PROJECTIONS):
+        state['encounter_projection'] = _DEFAULT_STATE['encounter_projection']
+    offset = state.get('encounter_rotation_offset')
+    if not (isinstance(offset, int) and not isinstance(offset, bool) and offset in ROTATION_OFFSETS):
+        state['encounter_rotation_offset'] = _DEFAULT_STATE['encounter_rotation_offset']
+    return state
 
 
 def _load_from_disk() -> dict:
@@ -58,7 +84,7 @@ def _load_from_disk() -> dict:
         pass
     except (OSError, ValueError) as exc:
         print(f'active_view_store: failed to load {_STATE_PATH}: {exc}', file=sys.stderr)
-    return state
+    return normalize_view_fields(state)
 
 
 def _write_to_disk(state: dict) -> None:
@@ -93,6 +119,22 @@ def get_state() -> dict:
 def update_state(**kwargs) -> dict:
     with _lock:
         _state.update(kwargs)
+        snapshot = dict(_state)
+        _write_to_disk(snapshot)
+        return snapshot
+
+
+def update_state_fn(fn) -> dict:
+    """Atomic read-modify-write: apply `fn(current_state) -> updates` under the lock.
+
+    `fn` receives a deep copy of the current state and returns a dict of
+    updates. Use this when the new value depends on the current one, so the
+    read and the write form a single critical section (no lost updates).
+    Exceptions from `fn` propagate and leave the state untouched.
+    """
+    with _lock:
+        updates = fn(copy.deepcopy(_state))
+        _state.update(updates)
         snapshot = dict(_state)
         _write_to_disk(snapshot)
         return snapshot

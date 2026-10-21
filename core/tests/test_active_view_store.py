@@ -53,6 +53,39 @@ class UpdateStateTests(IsolatedStateMixin, TestCase):
         self.assertEqual(siblings, [active_view_store._STATE_PATH])
 
 
+class UpdateStateFnTests(IsolatedStateMixin, TestCase):
+    def test_fn_sees_current_state_under_lock_and_result_persists(self):
+        active_view_store.update_state(encounter_rotation_offset=90)
+        seen = {}
+
+        def step(state):
+            seen['locked'] = active_view_store._lock.locked()
+            return {'encounter_rotation_offset': state['encounter_rotation_offset'] + 90}
+
+        result = active_view_store.update_state_fn(step)
+        self.assertTrue(seen['locked'])
+        self.assertEqual(result['encounter_rotation_offset'], 180)
+        self.assertEqual(active_view_store.get_state()['encounter_rotation_offset'], 180)
+        self.assertEqual(active_view_store._load_from_disk()['encounter_rotation_offset'], 180)
+
+    def test_fn_receives_a_copy(self):
+        def mutate(state):
+            state['encounter_room_visibility']['x'] = True
+            return {}
+
+        active_view_store.update_state_fn(mutate)
+        self.assertEqual(active_view_store.get_state()['encounter_room_visibility'], {})
+
+    def test_fn_exception_leaves_state_untouched_and_releases_lock(self):
+        def boom(state):
+            raise RuntimeError('nope')
+
+        with self.assertRaises(RuntimeError):
+            active_view_store.update_state_fn(boom)
+        self.assertFalse(active_view_store._lock.locked())
+        self.assertEqual(active_view_store.get_state()['encounter_rotation_offset'], 0)
+
+
 class LoadFromDiskTests(IsolatedStateMixin, TestCase):
     def test_missing_file_returns_defaults(self):
         # _STATE_PATH points at a tmpdir file that doesn't exist yet
@@ -82,3 +115,53 @@ class LoadFromDiskTests(IsolatedStateMixin, TestCase):
 
         state = active_view_store._load_from_disk()
         self.assertEqual(state, active_view_store._DEFAULT_STATE)
+
+
+class LoadFromDiskViewNormalizationTests(IsolatedStateMixin, TestCase):
+    """Stored projection/offset are coerced to the closed enums on load (WR-02)."""
+
+    def _load_with(self, **stored):
+        active_view_store._STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        active_view_store._STATE_PATH.write_text(json.dumps(stored), encoding='utf-8')
+        return active_view_store._load_from_disk()
+
+    def test_invalid_offsets_fall_back_to_zero(self):
+        for bad in (135, -90, 360, '90', 90.5, None, True, [90]):
+            with self.subTest(offset=bad):
+                self.assertEqual(self._load_with(encounter_rotation_offset=bad)['encounter_rotation_offset'], 0)
+
+    def test_invalid_projections_fall_back_to_top_down(self):
+        for bad in ('isometric', 'ISO', 3, None, ['iso']):
+            with self.subTest(projection=bad):
+                self.assertEqual(self._load_with(encounter_projection=bad)['encounter_projection'], 'top-down')
+
+    def test_valid_values_are_preserved(self):
+        state = self._load_with(encounter_projection='iso', encounter_rotation_offset=270)
+        self.assertEqual(state['encounter_projection'], 'iso')
+        self.assertEqual(state['encounter_rotation_offset'], 270)
+
+    def test_each_field_falls_back_independently(self):
+        state = self._load_with(encounter_projection='iso', encounter_rotation_offset=135)
+        self.assertEqual(state['encounter_projection'], 'iso')
+        self.assertEqual(state['encounter_rotation_offset'], 0)
+
+
+class ViewStateDefaultsTests(IsolatedStateMixin, TestCase):
+    """Phase 34 view-orientation keys and their defaults (D-12)."""
+
+    def test_default_state_holds_view_orientation_defaults(self):
+        defaults = active_view_store._DEFAULT_STATE
+        self.assertEqual(defaults['encounter_projection'], 'top-down')
+        self.assertEqual(defaults['encounter_rotation_offset'], 0)
+        self.assertEqual(defaults['encounter_view_location_slug'], '')
+
+    def test_older_state_file_without_the_keys_loads_with_defaults(self):
+        active_view_store._STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with active_view_store._STATE_PATH.open('w', encoding='utf-8') as f:
+            json.dump({'view_type': 'ENCOUNTER'}, f)
+
+        state = active_view_store._load_from_disk()
+        self.assertEqual(state['view_type'], 'ENCOUNTER')
+        self.assertEqual(state['encounter_projection'], 'top-down')
+        self.assertEqual(state['encounter_rotation_offset'], 0)
+        self.assertEqual(state['encounter_view_location_slug'], '')

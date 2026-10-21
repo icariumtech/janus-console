@@ -82,6 +82,12 @@
   justify-self: end;
 }
 
+/* UI-SPEC narrow viewports: the legend yields to the view-control cluster
+   below 480px. The control cluster is never hidden. */
+@media (max-width: 479px) {
+  .encounter-map__legend { display: none; }
+}
+
 /* Room wall lines — amber blueprint aesthetic */
 .encounter-map__wall {
   shape-rendering: crispEdges;
@@ -297,4 +303,23 @@
 @keyframes tokenRevealFadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+/* Rotation fade wrapper (D-08). Reproduces the container's box so the svg's
+   existing absolute oversized box and its flex fallback keep identical
+   geometry. Its opacity is driven only by GSAP (never a React style). */
+.encounter-map-renderer__fade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.encounter-map-renderer__fade > svg {
+  pointer-events: auto;
 }

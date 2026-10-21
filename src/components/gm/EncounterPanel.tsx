@@ -25,6 +25,7 @@ import type {
   TokenType,
   TokenStatus,
 } from '@/types/encounterMap';
+import { toViewOrientation } from '@/components/domain/encounter/geometry/viewOrientation';
 import { MapPreview } from './MapPreview';
 import { TokenPalette } from './TokenPalette';
 
@@ -64,6 +65,11 @@ export function EncounterPanel({ activeView, onViewUpdate }: EncounterPanelProps
   const locationSlug = activeView?.location_slug || '';
   const currentDeckId = activeView?.encounter_deck_id || '';
   const locationType = activeView?.location_type || '';
+  // Read-only mirror of the broadcast view (D-02): no view controls in the side panel
+  const viewOrientation = useMemo(
+    () => toViewOrientation(activeView?.encounter_projection, activeView?.encounter_rotation_offset),
+    [activeView?.encounter_projection, activeView?.encounter_rotation_offset],
+  );
 
   // Check if we're in encounter view with a valid location
   const isActive = activeView?.view_type === 'ENCOUNTER' && !!locationSlug;
@@ -450,6 +456,8 @@ export function EncounterPanel({ activeView, onViewUpdate }: EncounterPanelProps
             onTokenStatusToggle={handleTokenStatusToggle}
             onRoomToggle={handleRoomToggle}
             hull={manifest?.hull as HullDef | undefined}
+            viewOrientation={viewOrientation}
+            locationKey={locationSlug}
           />
         ) : (
           <div style={{

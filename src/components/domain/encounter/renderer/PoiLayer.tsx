@@ -12,6 +12,7 @@ import { MapView } from '../geometry/mapView';
 import { ENCOUNTER_ICONS, iconSymbolId } from '../EncounterIcons';
 import { screenToSVG, inverseRotatePoint, getGridCellViaView } from '../../../../utils/svgCoordinates';
 import { COLORS } from './mapColors';
+import { shouldCancelDrag } from '../viewTransition';
 
 const POI_DRAG_THRESHOLD = 5;
 
@@ -31,6 +32,8 @@ interface PoiLayerProps {
   onPoiHover?: (poi: PoiData, screenX: number, screenY: number) => void;
   onPoiHoverEnd?: () => void;
   containerRef: React.RefObject<HTMLDivElement | null>;
+  /** Changes with the requested orientation/location; cancels an in-progress drag (D-18). */
+  viewKey?: string;
 }
 
 export function PoiLayer({
@@ -48,6 +51,7 @@ export function PoiLayer({
   onPoiHover,
   onPoiHoverEnd,
   containerRef,
+  viewKey,
 }: PoiLayerProps) {
   const poiPendingDrag = useRef<{ id: string; startX: number; startY: number } | null>(null);
   const poiIsDraggingRef = useRef(false);
@@ -59,6 +63,20 @@ export function PoiLayer({
     ghostX: number;
     ghostY: number;
   } | null>(null);
+
+  // D-18: cancel a pending/active POI drag when the view changes under it.
+  // Never calls onPoiMove/onPoiClick; poiCommittedPos is left untouched.
+  const prevViewRef = useRef({ viewKey, view });
+  useEffect(() => {
+    const prev = prevViewRef.current;
+    const next = { viewKey, view };
+    prevViewRef.current = next;
+    if (shouldCancelDrag(prev, next, !!(poiPendingDrag.current || poiIsDraggingRef.current))) {
+      poiPendingDrag.current = null;
+      poiIsDraggingRef.current = false;
+      setPoiDragState(null);
+    }
+  }, [viewKey, view]);
 
   // Stable refs for editable callbacks (avoids closure staleness in document handlers)
   const editableRef = useRef(editable);

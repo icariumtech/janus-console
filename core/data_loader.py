@@ -13,6 +13,8 @@ from pathlib import Path
 from datetime import datetime
 from typing import Callable, Dict, List, Any, Optional
 
+from core.encounter_view import DEFAULT_VIEW, normalize_default_view
+
 logger = logging.getLogger(__name__)
 
 # Serializes read-modify-write cycles on ship.yaml across threads.
@@ -694,12 +696,14 @@ class DataLoader:
           - decks: list of deck dicts sorted by level (ascending)
           - hull: top-level hull dict (or None if not present)
           - total_decks: len(decks)
+          - default_view: {'projection': 'top-down'|'iso', 'rotation_offset': 0|90|180|270}
+            (normalized per field; defaults to top-down / 0)
 
         Replaces load_encounter_manifest() for locations using the new deckplan format.
         """
         deckplan_path = Path(location_dir) / 'deckplan.yaml'
         if not deckplan_path.exists():
-            return {'decks': [], 'hull': None, 'total_decks': 0}
+            return {'decks': [], 'hull': None, 'total_decks': 0, 'default_view': dict(DEFAULT_VIEW)}
 
         with open(deckplan_path) as f:
             data = yaml.safe_load(f)
@@ -712,6 +716,7 @@ class DataLoader:
             'decks': decks_sorted,
             'hull': hull,
             'total_decks': len(decks_sorted),
+            'default_view': normalize_default_view(data.get('default_view')),
         }
 
     def load_ship_status(self) -> Dict[str, Any]:

@@ -7,9 +7,12 @@ Each function under test calls through to the real `sync_state()` (via
 payload via PayloadBuilder. IsolatedStateMixin keeps that off the real
 var/active_view.json file used by the dev server.
 """
+from unittest import mock
+
 from django.test import TestCase
 
-from core import encounter_state
+from core import active_view_store, encounter_state
+from core.active_view_store import get_state
 from core.tests.state_test_utils import IsolatedStateMixin
 
 
@@ -131,3 +134,88 @@ class PortraitTests(IsolatedStateMixin, TestCase):
         encounter_state.toggle_portrait('npc_1')
         portraits = encounter_state.toggle_portrait('npc_1')
         self.assertNotIn('npc_1', portraits)
+
+
+class RotateViewTests(IsolatedStateMixin, TestCase):
+    def test_four_clockwise_steps_wrap_to_zero(self):
+        offsets = [encounter_state.rotate_view(90)['encounter_rotation_offset'] for _ in range(4)]
+        self.assertEqual(offsets, [90, 180, 270, 0])
+
+    def test_counter_clockwise_from_zero_gives_270(self):
+        state = encounter_state.rotate_view(-90)
+        self.assertEqual(state['encounter_rotation_offset'], 270)
+
+    def test_invalid_deltas_raise_and_leave_state_unchanged(self):
+        # 90.0 compares equal to 90, so only an int-only guard rejects it.
+        for bad in (90.0, True, '90', None, 0, 45, 180, -180):
+            with self.subTest(delta=bad):
+                with self.assertRaises(ValueError):
+                    encounter_state.rotate_view(bad)
+                self.assertEqual(get_state()['encounter_rotation_offset'], 0)
+
+    def test_off_grid_stored_offset_is_treated_as_zero(self):
+        # Simulates a bad in-memory value (e.g. loaded before normalization existed).
+        for bad in (135, 'x', None, 90.0, True):
+            with self.subTest(stored=bad):
+                active_view_store.update_state(encounter_rotation_offset=bad)
+                state = encounter_state.rotate_view(90)
+                self.assertEqual(state['encounter_rotation_offset'], 90)
+
+    def test_step_is_computed_inside_the_store_lock(self):
+        # The read-modify-write must be one critical section: the lock is held
+        # while the step function reads current state.
+        seen = {}
+        real = active_view_store.update_state_fn
+
+        def spy(fn):
+            def wrapped(state):
+                seen['locked'] = active_view_store._lock.locked()
+                return fn(state)
+            return real(wrapped)
+
+        with mock.patch('core.views.active_view.update_state_fn', spy):
+            encounter_state.rotate_view(90)
+        self.assertTrue(seen['locked'])
+
+    def test_rotation_survives_store_reload(self):
+        encounter_state.rotate_view(90)
+        self.assertEqual(active_view_store._load_from_disk()['encounter_rotation_offset'], 90)
+
+
+class SetProjectionTests(IsolatedStateMixin, TestCase):
+    def test_set_iso_then_top_down(self):
+        state = encounter_state.set_projection('iso')
+        self.assertEqual(state['encounter_projection'], 'iso')
+        state = encounter_state.set_projection('top-down')
+        self.assertEqual(state['encounter_projection'], 'top-down')
+
+    def test_projection_survives_store_reload(self):
+        encounter_state.set_projection('iso')
+        self.assertEqual(active_view_store._load_from_disk()['encounter_projection'], 'iso')
+
+    def test_invalid_values_raise_and_leave_state_unchanged(self):
+        for bad in ('isometric', 'ISO', '', None, 5, ['iso'], {'p': 'iso'}):
+            with self.subTest(projection=bad):
+                with self.assertRaises(ValueError):
+                    encounter_state.set_projection(bad)
+                self.assertEqual(get_state()['encounter_projection'], 'top-down')
+
+    def test_setting_same_projection_twice_is_idempotent(self):
+        encounter_state.set_projection('iso')
+        state = encounter_state.set_projection('iso')
+        self.assertEqual(state['encounter_projection'], 'iso')
+
+    def test_set_projection_leaves_rotation_unchanged(self):
+        encounter_state.rotate_view(90)
+        state = encounter_state.set_projection('iso')
+        self.assertEqual(state['encounter_rotation_offset'], 90)
+
+
+class DeckSwitchKeepsViewTests(IsolatedStateMixin, TestCase):
+    def test_switch_level_leaves_projection_and_rotation_untouched(self):
+        encounter_state.set_projection('iso')
+        encounter_state.rotate_view(90)
+        state = encounter_state.switch_level(2, 'deck_2')
+        self.assertEqual(state['encounter_projection'], 'iso')
+        self.assertEqual(state['encounter_rotation_offset'], 90)
+        self.assertEqual(state['encounter_level'], 2)

@@ -12,6 +12,7 @@
 
 import './EncounterMapDisplay.css';
 import { EncounterMapRenderer } from './EncounterMapRenderer';
+import type { ViewOrientation } from './geometry/viewOrientation';
 import {
   GridEncounterMapData,
   HullDef,
@@ -83,6 +84,8 @@ interface EncounterMapDisplayProps {
   /** Vent visibility state (per-vent) */
   ventsVisible?: boolean;
   onVentsToggle?: (visible: boolean) => void;
+  /** GM-broadcast projection + rotation; always rendered read-only here (no view controls) */
+  viewOrientation?: ViewOrientation;
 }
 
 export function EncounterMapDisplay({
@@ -102,8 +105,11 @@ export function EncounterMapDisplay({
   showLegend = true,
   ventsVisible,
   onVentsToggle,
+  viewOrientation,
 }: EncounterMapDisplayProps) {
   const mapData = locationData?.map;
+  // A location change cuts instead of fading through the wrong map
+  const locationKey = locationData?.slug;
 
   // Check if this is a multi-deck map
   if (mapData && isMultiDeckMap(mapData)) {
@@ -129,6 +135,8 @@ export function EncounterMapDisplay({
       showLegend,
       ventsVisible,
       onVentsToggle,
+      viewOrientation,
+      locationKey,
     };
 
     // IMPORTANT: check the deck's own format before choosing a renderer.
@@ -178,6 +186,8 @@ export function EncounterMapDisplay({
           showLegend={showLegend}
           ventsVisible={ventsVisible}
           onVentsToggle={onVentsToggle}
+          viewOrientation={viewOrientation}
+          locationKey={locationKey}
         />
       </div>
     );
@@ -202,6 +212,8 @@ export function EncounterMapDisplay({
           onTokenStatusToggle={onTokenStatusToggle}
           viewPadding={viewPadding}
           showLegend={showLegend}
+          viewOrientation={viewOrientation}
+          locationKey={locationKey}
         />
       </div>
     );

@@ -11,6 +11,7 @@ import { Token } from './Token';
 import { screenToSVG, getGridCellViaView, inverseRotatePoint } from '@/utils/svgCoordinates';
 import { pointInPolygon } from '@/utils/polygon2d';
 import type { MapView } from './geometry/mapView';
+import { shouldCancelDrag } from './viewTransition';
 
 interface RoomVisibilityState {
   [roomId: string]: boolean;
@@ -32,6 +33,8 @@ interface TokenLayerProps {
   mapRotation?: number;
   mapCenterX?: number;
   mapCenterY?: number;
+  /** Changes with the requested orientation/location; cancels an in-progress drag (D-18). */
+  viewKey?: string;
 }
 
 export function TokenLayer({
@@ -46,6 +49,7 @@ export function TokenLayer({
   mapRotation = 0,
   mapCenterX = 0,
   mapCenterY = 0,
+  viewKey,
 }: TokenLayerProps) {
   // Rendering state (drives JSX)
   const [isDragging, setIsDragging] = useState(false);
@@ -185,6 +189,21 @@ export function TokenLayer({
     setDragTokenId(null);
     setGhostPosition(null);
   };
+
+  // D-18: a pending or active drag is cancelled (no move applied, no toast)
+  // whenever the requested orientation key or the displayed view changes.
+  const prevViewRef = useRef({ viewKey, view });
+  useEffect(() => {
+    const prev = prevViewRef.current;
+    const next = { viewKey, view };
+    prevViewRef.current = next;
+    if (shouldCancelDrag(prev, next, !!(pendingDrag.current || isDraggingRef.current))) {
+      pendingDrag.current = null;
+      tokenTouchActive = false;
+      stopDrag();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewKey, view]);
 
   // Stable event handlers — read all values from refs, never from closure
   const handlePointerMove = useCallback((clientX: number, clientY: number) => {

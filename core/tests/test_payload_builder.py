@@ -56,6 +56,27 @@ def _deckplan(deck_id='main_deck', default=True):
     }
 
 
+class BuildViewOrientationTests(TestCase):
+    """The two public view keys default and pass through; the internal marker never leaks."""
+
+    def setUp(self):
+        self.builder = PayloadBuilder(FakeLoader(data_dir=Path('/nonexistent')))
+
+    def test_empty_state_yields_default_projection_and_rotation(self):
+        response = self.builder.build({})
+        self.assertEqual(response['encounter_projection'], 'top-down')
+        self.assertEqual(response['encounter_rotation_offset'], 0)
+
+    def test_stored_values_pass_through(self):
+        response = self.builder.build({'encounter_projection': 'iso', 'encounter_rotation_offset': 180})
+        self.assertEqual(response['encounter_projection'], 'iso')
+        self.assertEqual(response['encounter_rotation_offset'], 180)
+
+    def test_internal_location_marker_is_never_exposed(self):
+        response = self.builder.build({'encounter_view_location_slug': 'somnus'})
+        self.assertNotIn('encounter_view_location_slug', response)
+
+
 class BuildBasicFieldsTests(TestCase):
     def setUp(self):
         self.loader = FakeLoader(data_dir=Path('/nonexistent'))

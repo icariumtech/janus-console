@@ -7,11 +7,18 @@ the get → copy → mutate → sync_state pattern inline.
 """
 
 from core.active_view_store import get_state
+from core.encounter_view import PROJECTIONS, ROTATION_DELTAS, ROTATION_OFFSETS
 
 
 def _sync(*args, **kwargs) -> dict:
     from core.views.active_view import sync_state
     return sync_state(**kwargs)
+
+
+def _sync_fn(fn) -> dict:
+    """Atomic read-modify-write variant of `_sync` (see active_view.sync_state_fn)."""
+    from core.views.active_view import sync_state_fn
+    return sync_state_fn(fn)
 
 
 # ---------------------------------------------------------------------------
@@ -66,6 +73,40 @@ def set_door_status(connection_id: str, door_status: str) -> dict:
 def set_vents_visible(visible: bool) -> dict:
     """Show or hide all vents for players."""
     return _sync(encounter_vents_visible=bool(visible))
+
+
+# ---------------------------------------------------------------------------
+# View orientation (Phase 34)
+# ---------------------------------------------------------------------------
+
+def rotate_view(delta: int) -> dict:
+    """Rotate the shared encounter view one 90-degree step.
+
+    The new offset is computed from current server state inside the store
+    lock (one critical section with the write), never taken from the client,
+    so a double click or two GM clients each apply exactly one step. A stored
+    offset outside ROTATION_OFFSETS is treated as 0. Raises ValueError for any delta outside ROTATION_DELTAS; only a
+    real int qualifies (bool and 90.0 compare equal to ints but are rejected).
+    """
+    if isinstance(delta, bool) or not isinstance(delta, int) or delta not in ROTATION_DELTAS:
+        raise ValueError(f"Invalid rotation delta {delta!r}. Must be 90 or -90.")
+
+    def _step(state: dict) -> dict:
+        current = state.get('encounter_rotation_offset', 0)
+        if isinstance(current, bool) or not isinstance(current, int) or current not in ROTATION_OFFSETS:
+            current = 0
+        return {'encounter_rotation_offset': (current + delta) % 360}
+
+    return _sync_fn(_step)
+
+
+def set_projection(projection: str) -> dict:
+    """Set the shared encounter projection. Raises ValueError for any value outside PROJECTIONS."""
+    if not (isinstance(projection, str) and projection in PROJECTIONS):
+        raise ValueError(
+            f"Invalid projection {projection!r}. Must be one of: {', '.join(PROJECTIONS)}"
+        )
+    return _sync(encounter_projection=projection)
 
 
 # ---------------------------------------------------------------------------

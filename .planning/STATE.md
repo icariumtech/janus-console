@@ -2,36 +2,39 @@
 gsd_state_version: "1.0"
 milestone: v3.0
 milestone_name: Better Deckplans
-current_phase: 34
-current_phase_name: GM-Controlled Projection and Iso Rotation
-status: completed
-stopped_at: Phase 34 UI-SPEC approved
-last_updated: "2026-10-14T19:34:42.059Z"
-last_activity: 2026-09-07
-last_activity_desc: Phase 33 complete
-state_head: 9fa59c9ab36c462c885db7306f5b0ebed10a185b
+current_phase: 35
+current_phase_name: Stacked Deck View with Animated Transitions
+current_plan: Not started
+status: planning
+stopped_at: Phase 34 complete, ready to plan Phase 35
+last_updated: "2026-10-16T23:44:29.772Z"
+last_activity: 2026-10-16
+last_activity_desc: Phase 34 complete, transitioned to Phase 35
+state_head: 0cec3f49c489fc85c6511bc84569a476424a825f
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 21
-  completed_plans: 16
-  percent: 71
+  completed_phases: 6
+  total_plans: 23
+  completed_plans: 23
+  percent: 29
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-12)
+See: .planning/PROJECT.md (updated 2026-10-16)
 
 **Core value:** Give the GM a single tool that enhances the tabletop experience with atmospheric digital interfaces without interrupting gameplay flow.
-**Current focus:** Phase 33 — Isometric View
+**Current focus:** Phase 35 — Stacked Deck View with Animated Transitions
 
 ## Current Position
 
-Phase: 34 (GM-Controlled Projection and Iso Rotation) — READY TO EXECUTE
-Status: All phases complete
-Last activity: 2026-09-07 — Phase 33 complete
+Phase: 35 — Stacked Deck View with Animated Transitions
+Current Plan: Not started
+Total Plans in Phase: 7
+Status: Ready to plan
+Last activity: 2026-10-16 — Phase 34 complete, transitioned to Phase 35
 
 ## v1.0 Milestone Archive
 
@@ -83,11 +86,11 @@ Items acknowledged and deferred at v2.0 milestone close on 2026-06-12 (all pre-d
 
 ## Session Continuity
 
-**Resume file:** .planning/phases/34-gm-controlled-projection-and-iso-rotation/34-UI-SPEC.md
+**Resume file:** None
 
-Last session: 2026-10-14T18:52:17.234Z
-Stopped at: Phase 34 UI-SPEC approved
-Next step: /gsd-plan-phase 32 (or /gsd-next)
+Last session: 2026-10-16T20:00:47.649Z
+Stopped at: Phase 34 complete, ready to plan Phase 35
+Next step: /gsd-discuss-phase 35 (no CONTEXT.md yet)
 
 ## Performance Metrics
 
@@ -110,10 +113,16 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 | Phase 32 P02 | ~7min | 2 tasks | 3 files |
 | Phase 32 P03 | ~15min | 2 tasks | 3 files |
 | Phase 33 P01 | ~15min | 2 tasks | 7 files |
+| Phase 34 P02 | 15 min | 3 tasks | 14 files |
+| Phase 34 P03 | 6 min | 2 tasks | 6 files |
+| Phase 34 P04 | 8 min | 2 tasks | 8 files |
+| Phase 34 P05 | 3 min | 3 tasks | 11 files |
+| Phase 34 P06 | 12 min | 2 tasks | 5 files |
+| Phase 34 P07 | 4 min | 2 tasks | 4 files |
 
 ## Operator Next Steps
 
-- Milestone v3.0 (Better Deckplans) is not yet complete — Phase 31 of 3 is done; Phase 32 (SVG Converter) and Phase 33 (Isometric View) remain. Run /gsd-plan-phase 32 next.
+- Milestone v3.0 (Better Deckplans) is not yet complete — Phase 34 done; Phase 35 (Stacked Deck View with Animated Transitions) remains. Run /gsd-discuss-phase 35 next.
 
 ## Decisions
 
@@ -125,6 +134,15 @@ Next step: /gsd-plan-phase 32 (or /gsd-next)
 - [Phase 32]: 32-02: HULL-03 satisfied via shared `_extract_hull_layer()`/`_write_hull_block()` for both root and per-deck Hull sublayers (multi-deck-only scoping, Pitfall 4); the plan's assumed regression-test fixture content did not match reality (both ship_template*.svg Hull layers hold only a placeholder `<rect>`, no `<path>`) — corrected via source-grounding, test adjusted to true pre-refactor behavior plus an added controlled-fixture test proving the compact-form case
 - [Phase 32]: 32-03: DET-02 satisfied via `_extract_details_layer()` — closed/open read from the raw d string directly (never `parse_path_d()`'s return value, per Pattern 4/Pitfall 3); room association reuses `_find_room_at()` unchanged; circle details reuse Plan 01's circle-shape helpers. Phase-gate: full 19-test suite green, both fixture SVGs re-converted with zero output drift — Phase 32 (all 3 plans) complete.
 - [Phase 33]: 33-01: isoProjection uses fixed tilt:30/rotation:45 constants (true 30-degree isometric, not 26.565-degree dimetric); circleTransform's matrix field names mirror SVG matrix(a,b,c,d,e,f) order; added vectorEffect=non-scaling-stroke on circle-as-ellipse strokes to prevent stroke-width inflation from the scaling transform
+- [Phase 34]: 34-02: default_view keys are default_view/projection/rotation_offset (rotation_offset avoids collision with per-deck rotation)
+- [Phase 34]: 34-02: authored default view applies only when encounter_view_location_slug differs from the requested slug (BRIDGE/STANDBY clear location_slug, so it cannot detect a return)
+- [Phase 34]: 34-03: authored deck rotation folded into iso azimuth (45 + offset + authored); screenRotationFor('iso') is 0; top-down keeps authored rotation as outer screen rotate
+- [Phase 34]: 34-03: offset-only changes fade, projection/location changes (alone or with offset) cut; planTransition returns restore (fadeIn only, no snap/reset) when displayed orientation already equals the latest request
+- [Phase 34]: 34-04: mapRotation now holds the residual screen rotation (screenRotationFor), keeping rotViewBox math and inverse-rotate call sites unchanged
+- [Phase 34]: 34-04: renderer local mode is structurally server-free (private useState, explicit branch, no service import); GM EncounterView passes broadcast mode with onRotate only until 34-05
+- [Phase 34]: 34-05: Only the GM tactical map passes viewControl mode 'broadcast'; player terminal, side panel and all thumbnails mirror viewOrientation read-only; editor preview uses mode 'local' with no service import
+- [Phase 34]: 34-06: rotate buttons flank projection toggle with 18px glyph style (ROTATE_BUTTON_STYLE); CONTEXT D-02 amended at GM request (G-34-5)
+- [Phase 34]: 34-07: GM encounter map renders from a slug-bound unit (useLocationMapBundle); previous map frozen in its own view until the new map+manifest arrive; mutating controls withheld during the freeze (endpoints take no slug)
 
 ### Blockers
 
